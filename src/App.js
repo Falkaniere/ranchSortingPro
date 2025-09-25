@@ -1,13 +1,15 @@
 // App.jsx
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Registration from './screens/Registration';
-import Duos from './screens/Duos';
+
 import EventRegister from './screens/EventRegister';
-import QualifiersResults from './screens/QualifiersResults';
+import Duos from './screens/Duos';
+import QualifiersResults from './screens/QualifiersResults/index';
+import Registration from './screens/Registration';
 import Final from './screens/Final';
 import FinalResults from './screens/FinalResults';
 import Home from './screens/Home';
+
 export default function App() {
   const [competitors, setCompetitors] = useState([]);
   const [numRounds, setNumRounds] = useState(1);

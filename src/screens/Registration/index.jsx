@@ -65,7 +65,7 @@ export default function Registration({
           disabled={competitors.length < 2}
           onClick={handleNext}
         >
-          Sort Duos
+          Sortear Duplas
         </button>
       </div>
     </div>
