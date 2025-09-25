@@ -2,13 +2,13 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import EventRegister from './screens/EventRegister';
-import Duos from './screens/Duos';
-import QualifiersResults from './screens/QualifiersResults/index';
-import Registration from './screens/Registration';
-import Final from './screens/Final';
-import FinalResults from './screens/FinalResults';
-import Home from './screens/Home';
+import EventRegister from '@screens/EventRegister';
+import Duos from '@screens/Duos';
+import QualifiersResults from '@screens/QualifiersResults';
+import Registration from '@screens/Registration';
+import Final from '@screens/Final';
+import FinalResults from '@screens/FinalResults';
+import Home from '@screens/Home';
 
 export default function App() {
   const [competitors, setCompetitors] = useState([]);
