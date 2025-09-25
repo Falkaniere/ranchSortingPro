@@ -20,7 +20,7 @@ export default function Registration({
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Register Competitors</h2>
+      <h2>Registrar competidores</h2>
       <input
         type="text"
         placeholder="Competitor Name"
@@ -30,7 +30,7 @@ export default function Registration({
       <button onClick={addCompetitor}>Add</button>
 
       <div style={{ marginTop: 20 }}>
-        <label>Number of Rounds: </label>
+        <label>Quantidade de passadas: </label>
         <input
           type="number"
           value={numRounds}
@@ -49,7 +49,7 @@ export default function Registration({
         disabled={competitors.length < 2}
         onClick={() => navigate('/duos')}
       >
-        Sort Duos
+        Sortear Duplas
       </button>
     </div>
   );

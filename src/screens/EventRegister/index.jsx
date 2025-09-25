@@ -29,10 +29,11 @@ export default function EventRegister({ rounds, results, setResults }) {
   };
 
   const saveRound = () => {
-    if (selectedDuo.length === 0) return alert('Select a duo.');
-    if (bullNumber < 0 || bullNumber > 9) return alert('Bull number 0-9.');
-    if (cattleCount < 0 || cattleCount > 10) return alert('Cattle 0-10.');
-    if (!time || time <= 0) return alert('Enter a valid time.');
+    if (selectedDuo.length === 0) return alert('Selecione a dupla.');
+    if (bullNumber < 0 || bullNumber > 9) return alert('Boi de número 0-9.');
+    if (cattleCount < 0 || cattleCount > 10)
+      return alert('Quantidade de bois 0-10.');
+    if (!time || time <= 0) return alert('Insira um tempo válido.');
 
     setResults([
       ...results,
@@ -58,14 +59,14 @@ export default function EventRegister({ rounds, results, setResults }) {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Event Registration - Round {currentRound + 1}</h2>
+      <h2>Passada - número {currentRound + 1}</h2>
 
-      <h3>Pending Duos</h3>
+      <h3>Duplas pendentes</h3>
       <ul>
         {pendingDuos.map((d, i) => (
           <li key={i}>
             {d[0]} 🤝 {d[1]}{' '}
-            <button onClick={() => setSelectedDuo(d)}>Register</button>
+            <button onClick={() => setSelectedDuo(d)}>Registrar</button>
           </li>
         ))}
       </ul>
@@ -73,17 +74,17 @@ export default function EventRegister({ rounds, results, setResults }) {
       {selectedDuo.length > 0 && (
         <div style={{ marginTop: 20 }}>
           <h3>
-            Register: {selectedDuo[0]} & {selectedDuo[1]}
+            Registrar: {selectedDuo[0]} & {selectedDuo[1]}
           </h3>
           <input
             type="number"
-            placeholder="Bull number (0-9)"
+            placeholder="Boi de número (0-9)"
             value={bullNumber}
             onChange={(e) => setBullNumber(e.target.value)}
           />
           <input
             type="number"
-            placeholder="Cattle count (0-10)"
+            placeholder="Quantidade de bois (0-10)"
             value={cattleCount}
             onChange={(e) => setCattleCount(e.target.value)}
           />
@@ -93,18 +94,18 @@ export default function EventRegister({ rounds, results, setResults }) {
             value={time}
             onChange={(e) => setTime(e.target.value)}
           />
-          <button onClick={saveRound}>Save</button>
+          <button onClick={saveRound}>Salvar</button>
         </div>
       )}
 
-      <h3>Registered Results</h3>
+      <h3>Resultados Registrados</h3>
       <ul>
         {results
           .filter((r) => r.round === currentRound)
           .map((r, i) => (
             <li key={i}>
-              {r.duo[0]} & {r.duo[1]} → 🐂 {r.bullNumber} | {r.cattle} cattle |
-              ⏱ {r.time}s
+              {r.duo[0]} & {r.duo[1]} → 🐂 {r.bullNumber} | {r.cattle} bois | ⏱{' '}
+              {r.time}s
               <button style={{ marginLeft: 10 }} onClick={() => handleEdit(r)}>
                 Corrigir
               </button>
@@ -115,8 +116,8 @@ export default function EventRegister({ rounds, results, setResults }) {
       {pendingDuos.length === 0 && (
         <button style={{ marginTop: 20 }} onClick={handleNext}>
           {currentRound < rounds.length - 1
-            ? 'Next Round'
-            : 'Finish Qualifiers'}
+            ? 'Próxima Rodada'
+            : 'Finalizar Qualificatórias'}
         </button>
       )}
     </div>

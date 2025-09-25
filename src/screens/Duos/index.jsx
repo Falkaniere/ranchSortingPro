@@ -40,10 +40,10 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
 
   return (
     <div style={{ padding: 20 }}>
-      <h2>Rounds & Duos</h2>
+      <h2>Passadas & Duplas</h2>
       {rounds.map((r, idx) => (
         <div key={idx}>
-          <h3>Round {idx + 1}</h3>
+          <h3>Passadas {idx + 1}</h3>
           <ul>
             {r.map((d, i) => (
               <li key={i}>
@@ -53,7 +53,9 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
           </ul>
         </div>
       ))}
-      <button onClick={() => navigate('/record')}>Start Qualifiers</button>
+      <button onClick={() => navigate('/record')}>
+        Iniciar Qualificatórias
+      </button>
     </div>
   );
 }

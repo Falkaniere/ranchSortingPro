@@ -41,17 +41,17 @@ export default function Home({
           marginBottom: 20,
         }}
       >
-        <button onClick={startNewCompetition}>Start New Competition</button>
+        <button onClick={startNewCompetition}>Iniciar Nova Competição</button>
         {competitors.length > 1 && (
           <button onClick={continueWithExisting}>
-            Continue with Current Competitors
+            Continuar com os mesmos competidores
           </button>
         )}
       </div>
 
       {competitors.length > 0 && (
         <div style={{ marginTop: 30 }}>
-          <h2>Registered Competitors</h2>
+          <h2>Competidores Registrados</h2>
           <p>Total: {competitors.length}</p>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {competitors.map((c, i) => (
