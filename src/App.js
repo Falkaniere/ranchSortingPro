@@ -4,11 +4,10 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Registration from './screens/Registration';
 import Duos from './screens/Duos';
 import EventRegister from './screens/EventRegister';
-import Home from './screens/Home';
 import QualifiersResults from './screens/QualifiersResults';
 import Final from './screens/Final';
 import FinalResults from './screens/FinalResults';
-
+import Home from './screens/Home';
 export default function App() {
   const [competitors, setCompetitors] = useState([]);
   const [numRounds, setNumRounds] = useState(1);
