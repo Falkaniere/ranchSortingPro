@@ -39,6 +39,9 @@ export default function App() {
               setCompetitors={setCompetitors}
               numRounds={numRounds}
               setNumRounds={setNumRounds}
+              setRounds={setRounds}
+              setResults={setResults}
+              setFinalResults={setFinalResults}
             />
           }
         />

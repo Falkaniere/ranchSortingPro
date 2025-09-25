@@ -7,6 +7,9 @@ export default function Registration({
   setCompetitors,
   numRounds,
   setNumRounds,
+  setRounds,
+  setResults,
+  setFinalResults,
 }) {
   const [name, setName] = useState('');
   const navigate = useNavigate();
@@ -18,39 +21,53 @@ export default function Registration({
     }
   };
 
+  const handleNext = () => {
+    if (competitors.length < 2) return alert('Add at least 2 competitors.');
+    // Reset rounds e resultados
+    setRounds([]);
+    setResults([]);
+    setFinalResults([]);
+    navigate('/duos');
+  };
+
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Registrar competidores</h2>
-      <input
-        type="text"
-        placeholder="Competitor Name"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-      />
-      <button onClick={addCompetitor}>Add</button>
+    <div className="container">
+      <div className="card">
+        <h2>Registrar Competidores</h2>
+        <div className="flex">
+          <input
+            type="text"
+            placeholder="Nome do Competidor"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+          <button onClick={addCompetitor}>Adicionar</button>
+        </div>
 
-      <div style={{ marginTop: 20 }}>
-        <label>Quantidade de passadas: </label>
-        <input
-          type="number"
-          value={numRounds}
-          min={1}
-          onChange={(e) => setNumRounds(Number(e.target.value))}
-        />
+        <div style={{ marginTop: 20 }}>
+          <label>Quantidade de Passadas: </label>
+          <input
+            type="number"
+            value={numRounds}
+            min={1}
+            onChange={(e) => setNumRounds(Number(e.target.value))}
+          />
+        </div>
+
+        <ul style={{ marginTop: 20 }}>
+          {competitors.map((c, i) => (
+            <li key={i}>👤 {c}</li>
+          ))}
+        </ul>
+
+        <button
+          style={{ marginTop: 20 }}
+          disabled={competitors.length < 2}
+          onClick={handleNext}
+        >
+          Sort Duos
+        </button>
       </div>
-
-      <ul>
-        {competitors.map((c, i) => (
-          <li key={i}>{c}</li>
-        ))}
-      </ul>
-
-      <button
-        disabled={competitors.length < 2}
-        onClick={() => navigate('/duos')}
-      >
-        Sortear Duplas
-      </button>
     </div>
   );
 }

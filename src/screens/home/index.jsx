@@ -31,29 +31,22 @@ export default function Home({
   };
 
   return (
-    <div style={{ textAlign: 'center', marginTop: 50 }}>
+    <div className="container" style={{ textAlign: 'center' }}>
       <h1>🏇 Ranch Sorting</h1>
-      <div
-        style={{
-          display: 'flex',
-          gap: 10,
-          justifyContent: 'center',
-          marginBottom: 20,
-        }}
-      >
-        <button onClick={startNewCompetition}>Iniciar Nova Competição</button>
+      <div className="flex" style={{ justifyContent: 'center', margin: 20 }}>
+        <button onClick={startNewCompetition}>Start New Competition</button>
         {competitors.length > 1 && (
-          <button onClick={continueWithExisting}>
-            Continuar com os mesmos competidores
+          <button onClick={continueWithExisting} className="secondary">
+            Continue with Current Competitors
           </button>
         )}
       </div>
 
       {competitors.length > 0 && (
-        <div style={{ marginTop: 30 }}>
-          <h2>Competidores Registrados</h2>
+        <div className="card">
+          <h2>Registered Competitors</h2>
           <p>Total: {competitors.length}</p>
-          <ul style={{ listStyle: 'none', padding: 0 }}>
+          <ul>
             {competitors.map((c, i) => (
               <li key={i}>👤 {c}</li>
             ))}

@@ -30,20 +30,18 @@ export default function QualifiersResults({ results }) {
   });
 
   return (
-    <div style={{ padding: '20px' }}>
+    <div className="container">
       <h2>Ranking das Qualificatórias</h2>
-      <ol>
-        {ranking.map((r) => (
-          <li key={r.key}>
-            {r.duo[0]} & {r.duo[1]} → {r.totalCattle} bois | ⏱ {r.bestTime}s
-          </li>
-        ))}
-      </ol>
-
-      <button
-        style={{ marginTop: '20px' }}
-        onClick={() => navigate('/final', { state: { ranking } })}
-      >
+      <div className="card">
+        <ol>
+          {ranking.map((r) => (
+            <li key={r.key}>
+              {r.duo[0]} & {r.duo[1]} → {r.totalCattle} bois | ⏱ {r.bestTime}s
+            </li>
+          ))}
+        </ol>
+      </div>
+      <button onClick={() => navigate('/final', { state: { ranking } })}>
         Ir para a Final
       </button>
     </div>
