@@ -1,57 +1,58 @@
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-function Qualifiers() {
-  const location = useLocation();
+function Qualifiers({ results }) {
   const navigate = useNavigate();
-  const resultados = location.state?.resultados || [];
+  const resultados = results || [];
+  console.log('Resultados recebidos em Qualifiers:', resultados);
 
   // agrupar por dupla
   const ranking = [];
   resultados.forEach((r) => {
-    const key = r.dupla.join('-');
+    const key = r.duo.join('-');
     let item = ranking.find((x) => x.key === key);
 
     if (!item) {
       item = {
         key,
-        dupla: r.dupla,
-        totalBois: 0,
-        menorTempo: Infinity,
+        duo: r.duo,
+        totalCattle: 0,
+        bestTime: Infinity,
       };
       ranking.push(item);
     }
 
-    item.totalBois += r.quantidade;
-    if (r.tempo < item.menorTempo) {
-      item.menorTempo = r.tempo;
+    item.totalCattle += r.cattle; // ✅ nome correto
+    if (r.time < item.bestTime) {
+      // ✅ nome correto
+      item.bestTime = r.time;
     }
   });
 
-  // ordenar: maior bois → menor tempo
+  // ordenar: maior gado → menor tempo
   ranking.sort((a, b) => {
-    if (b.totalBois !== a.totalBois) {
-      return b.totalBois - a.totalBois;
+    if (b.totalCattle !== a.totalCattle) {
+      return b.totalCattle - a.totalCattle;
     }
-    return a.menorTempo - b.menorTempo;
+    return a.bestTime - b.bestTime;
   });
 
   return (
     <div style={{ padding: '20px' }}>
-      <h2>Classificação</h2>
+      <h2>Qualifiers Ranking</h2>
       <ol>
         {ranking.map((r) => (
           <li key={r.key}>
-            {r.dupla[0]} & {r.dupla[1]} → {r.totalBois} bois | ⏱ {r.menorTempo}s
+            {r.duo[0]} & {r.duo[1]} → {r.totalCattle} cattle | ⏱ {r.bestTime}s
           </li>
         ))}
       </ol>
 
       <button
         style={{ marginTop: '20px' }}
-        onClick={() => navigate('/final', { state: { ranking } })}
+        onClick={() => navigate('/finals', { state: { ranking } })}
       >
-        Iniciar Final
+        Start Finals
       </button>
     </div>
   );

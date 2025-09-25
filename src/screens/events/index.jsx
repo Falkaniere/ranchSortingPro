@@ -1,118 +1,108 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-function RegistroProvas({ competidores }) {
+export function EventRegister({ rounds, results, setResults }) {
+  const [currentRound, setCurrentRound] = useState(0);
+  const [selectedDuo, setSelectedDuo] = useState([]);
+  const [bullNumber, setBullNumber] = useState('');
+  const [cattleCount, setCattleCount] = useState('');
+  const [time, setTime] = useState('');
   const navigate = useNavigate();
 
-  // Gera duplas aleatórias
-  function gerarDuplas(lista) {
-    const copia = [...lista].sort(() => Math.random() - 0.5);
-    const pares = [];
-    for (let i = 0; i < copia.length; i += 2) {
-      pares.push([copia[i], copia[i + 1]]);
-    }
-    return pares;
+  const duos = rounds[currentRound] || [];
+
+  const registeredDuos = results
+    .filter((r) => r.round === currentRound)
+    .map((r) => r.duo.join('🤝'));
+
+  const allDuosRegistered = duos.every((d) =>
+    registeredDuos.includes(d.join('🤝'))
+  );
+
+  function saveRound() {
+    if (selectedDuo.length === 0) return alert('Select a duo.');
+    if (bullNumber < 0 || bullNumber > 9)
+      return alert('Bull number must be between 0 and 9.');
+    if (cattleCount < 0 || cattleCount > 10)
+      return alert('Cattle count must be up to 10.');
+    if (!time || time <= 0) return alert('Enter a valid time.');
+
+    const alreadyRegistered = results.find(
+      (r) =>
+        r.round === currentRound && r.duo.join('🤝') === selectedDuo.join('🤝')
+    );
+    if (alreadyRegistered)
+      return alert('This duo already registered this round.');
+
+    setResults([
+      ...results,
+      {
+        round: currentRound,
+        duo: selectedDuo, // ✅ agora sempre array
+        bullNumber: Number(bullNumber),
+        cattle: Number(cattleCount),
+        time: Number(time),
+      },
+    ]);
+
+    setSelectedDuo([]);
+    setBullNumber('');
+    setCattleCount('');
+    setTime('');
   }
 
-  const [duplas] = useState(gerarDuplas(competidores));
-  const [resultados, setResultados] = useState([]);
-  const [duplaSelecionada, setDuplaSelecionada] = useState(null);
-  const [form, setForm] = useState({
-    numeroBoi: '',
-    quantidade: '',
-    tempo: '',
-  });
-
-  function handleSalvar() {
-    if (!duplaSelecionada) return;
-
-    // quantas rodadas já existem para essa dupla?
-    const rodadasDaDupla = resultados.filter(
-      (r) =>
-        r.dupla[0] === duplaSelecionada[0] && r.dupla[1] === duplaSelecionada[1]
-    );
-
-    if (rodadasDaDupla.length >= 2) {
-      alert('⚠️ Essa dupla já possui 2 rodadas registradas!');
-      return;
+  function handleNext() {
+    if (currentRound < rounds.length - 1) {
+      setCurrentRound(currentRound + 1);
+    } else {
+      navigate('/qualifiers');
     }
-
-    const novaRodada = {
-      dupla: duplaSelecionada,
-      numeroRodada: rodadasDaDupla.length + 1,
-      numeroBoi: form.numeroBoi,
-      quantidade: Number(form.quantidade),
-      tempo: Number(form.tempo),
-    };
-
-    setResultados([...resultados, novaRodada]);
-    setForm({ numeroBoi: '', quantidade: '', tempo: '' });
-    setDuplaSelecionada(null);
   }
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h2>Registro de Provas</h2>
+    <div style={{ padding: 20 }}>
+      <h2>Event Registration - Round {currentRound + 1}</h2>
 
-      {/* Lista de duplas */}
-      <h3>Duplas</h3>
-      <ul>
-        {duplas.map((d, i) => (
-          <li key={i}>
-            {d[0]} 🤝 {d[1]}{' '}
-            <button onClick={() => setDuplaSelecionada(d)}>Selecionar</button>
-          </li>
-        ))}
-      </ul>
-
-      {/* Formulário */}
-      {duplaSelecionada && (
-        <div style={{ marginTop: '20px' }}>
-          <h3>
-            Registrar Prova - {duplaSelecionada[0]} & {duplaSelecionada[1]}
-          </h3>
-          <input
-            type="text"
-            placeholder="Número do boi"
-            value={form.numeroBoi}
-            onChange={(e) => setForm({ ...form, numeroBoi: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Quantidade de bois"
-            value={form.quantidade}
-            onChange={(e) => setForm({ ...form, quantidade: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Tempo (segundos)"
-            value={form.tempo}
-            onChange={(e) => setForm({ ...form, tempo: e.target.value })}
-          />
-          <button onClick={handleSalvar}>Salvar</button>
-        </div>
-      )}
-
-      {/* Resultados */}
-      <h3 style={{ marginTop: '30px' }}>Resultados</h3>
-      <ul>
-        {resultados.map((r, i) => (
-          <li key={i}>
-            {r.dupla[0]} & {r.dupla[1]} → Rodada {r.numeroRodada} | 🐂{' '}
-            {r.numeroBoi} | {r.quantidade} bois | ⏱ {r.tempo}s
-          </li>
-        ))}
-      </ul>
-
-      <button
-        style={{ marginTop: '20px' }}
-        disabled={resultados.length === 0}
-        onClick={() => navigate('/qualifiers', { state: { resultados } })}
+      <select
+        value={selectedDuo.join('🤝')}
+        onChange={(e) => setSelectedDuo(e.target.value.split('🤝'))}
       >
-        Ver Classificação
-      </button>
+        <option value="">Select a duo</option>
+        {duos.map((d, i) => (
+          <option key={i} value={d.join('🤝')}>
+            {d[0]} 🤝 {d[1]}
+          </option>
+        ))}
+      </select>
+
+      <input
+        type="number"
+        placeholder="Bull number (0-9)"
+        value={bullNumber}
+        onChange={(e) => setBullNumber(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Cattle count (0-10)"
+        value={cattleCount}
+        onChange={(e) => setCattleCount(e.target.value)}
+      />
+      <input
+        type="number"
+        placeholder="Time (s)"
+        value={time}
+        onChange={(e) => setTime(e.target.value)}
+      />
+
+      <button onClick={saveRound}>Save</button>
+
+      <div style={{ marginTop: 20 }}>
+        <button disabled={!allDuosRegistered} onClick={handleNext}>
+          {currentRound < rounds.length - 1
+            ? 'Next Round'
+            : 'Finish Qualifiers'}
+        </button>
+      </div>
     </div>
   );
 }
-
-export default RegistroProvas;

@@ -50,7 +50,7 @@ function Final() {
   return (
     <div style={{ padding: '20px' }}>
       <h2>Final</h2>
-      <h3>Ordem das Duplas (pior → melhor)</h3>
+      <h3>Ordem das Duplas</h3>
       <ol>
         {classificados.map((d, i) => (
           <li key={i}>
