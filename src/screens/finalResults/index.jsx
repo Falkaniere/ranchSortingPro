@@ -14,23 +14,27 @@ export default function FinalResults() {
     if (!rankingMap[key]) {
       rankingMap[key] = {
         duo: r.duo,
-        passes: [], // tempos de cada passada
+        passes: [], // tempos de cada passada qualificatória
         finalTime: 0,
-        totalCattle: 0,
+        finalCattle: 0,
       };
     }
     rankingMap[key].passes.push(r.previousTime);
     rankingMap[key].finalTime = r.time;
-    rankingMap[key].totalCattle += r.cattle;
+    rankingMap[key].finalCattle = r.cattle;
   });
 
   const ranking = Object.values(rankingMap).map((r) => {
-    const allTimes = [...r.passes, r.finalTime];
-    const averageTime = allTimes.reduce((a, b) => a + b, 0) / allTimes.length;
+    const totalCattleQualifiers = r.passes.length; // assume 1 boi por passada qualif? ajustável
+    const totalCattle = totalCattleQualifiers + r.finalCattle;
+    const averageTime =
+      (r.passes.reduce((a, b) => a + b, 0) + r.finalTime) /
+      (r.passes.length + 1);
     return {
       ...r,
-      allTimes,
+      totalCattle,
       averageTime,
+      totalCattleQualifiers,
     };
   });
 
@@ -57,12 +61,14 @@ export default function FinalResults() {
                 borderRadius: 4,
               }}
             >
-              <span>
+              <span style={{ fontWeight: 'bold' }}>
                 {index + 1}. {r.duo[0]} & {r.duo[1]}
               </span>
-              <span>
-                Passadas: {r.passes.join('s, ')}s | Final: {r.finalTime}s |
-                Média: {r.averageTime.toFixed(2)}s | Bois: {r.totalCattle}
+              <span style={{ textAlign: 'right', minWidth: 400 }}>
+                Qualif: {r.passes.join('s, ')}s | Qtd Boi:{' '}
+                {r.totalCattleQualifiers} | Final: {r.finalTime}s | Qtd Boi
+                Final: {r.finalCattle} | Média: {r.averageTime.toFixed(2)}s |
+                Total Bois: {r.totalCattle}
               </span>
             </li>
           ))}
