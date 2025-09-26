@@ -1,4 +1,5 @@
-import React, { useMemo, useState } from 'react';
+// screens/Final/index.jsx
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
 import { getDuoKey } from '../Qualifiers';
@@ -12,6 +13,8 @@ export default function Final({
   const navigate = useNavigate();
   const [selected, setSelected] = useState(null);
   const [form, setForm] = useState({ bullNumber: '', cattle: '', time: '' });
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const bottomRef = useRef(null);
 
   // Flatten rounds
   const allDuosWithPass = useMemo(() => {
@@ -110,6 +113,22 @@ export default function Final({
     setForm({ bullNumber: '', cattle: '', time: '' });
   }
 
+  // 🔹 Scroll automático até o fim quando selecionar
+  useEffect(() => {
+    if (selected && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [selected]);
+
+  // 🔹 Mostrar botão "voltar ao topo"
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 200);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
     <div className="container">
       <h2>🏆 Final</h2>
@@ -189,7 +208,7 @@ export default function Final({
       </div>
 
       {selected && (
-        <div className="card" style={{ marginTop: 20 }}>
+        <div className="card" style={{ marginTop: 20 }} ref={bottomRef}>
           <h3>
             Registrar Final — #{selected.pass} {selected.duo[0].name} &{' '}
             {selected.duo[1].name}
@@ -245,6 +264,28 @@ export default function Final({
           Ver Resultado Final
         </button>
       </div>
+
+      {/* 🔹 Botão flutuante para voltar ao topo */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            padding: '10px 14px',
+            borderRadius: '50%',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '18px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          }}
+        >
+          ⬆️
+        </button>
+      )}
     </div>
   );
 }
