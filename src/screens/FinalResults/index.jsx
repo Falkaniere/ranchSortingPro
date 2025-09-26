@@ -1,176 +1,257 @@
-// src/screens/FinalResults/index.jsx
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { getDuoKey } from '@screens/Qualifiers';
+import { getDuoKey } from '../Qualifiers';
 
-export default function FinalResults({ finalResults = [] }) {
+export default function FinalResults() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const results = state?.results || [];
+  const finalResults = state?.finalResults || [];
+  const [selectedCompetitor, setSelectedCompetitor] = useState('');
 
-  // Agrupar resultados por dupla
-  const rankingMap = {};
-  finalResults.forEach((r) => {
-    const key = getDuoKey(r.duo);
+  // 🔹 Montar ranking geral
+  const ranking = useMemo(() => {
+    const map = {};
 
-    if (!rankingMap[key]) {
-      rankingMap[key] = {
-        duo: r.duo,
-        pass: r.pass,
-        qualifTime: r.previousTime || 0,
-        finalTime: r.time || 0,
-        finalCattle: r.cattle || 0,
-        qualifBois: r.previousBois || 0,
-      };
-    }
-  });
+    results.forEach((r) => {
+      const key = getDuoKey(r.duo);
+      if (!map[key]) {
+        map[key] = { duo: r.duo, qualif: [], final: [] };
+      }
+      map[key].qualif.push(r);
+    });
 
-  // Calcular médias combinadas
-  const ranking = Object.values(rankingMap).map((r) => {
-    const avgTime =
-      r.qualifTime > 0 ? (r.qualifTime + r.finalTime) / 2 : r.finalTime;
+    finalResults.forEach((r) => {
+      const key = getDuoKey(r.duo);
+      if (!map[key]) {
+        map[key] = { duo: r.duo, qualif: [], final: [] };
+      }
+      map[key].final.push(r);
+    });
 
-    const avgBois =
-      r.qualifBois > 0 ? (r.qualifBois + r.finalCattle) / 2 : r.finalCattle;
+    return Object.values(map)
+      .map((entry) => {
+        const totalQualifBois = entry.qualif.reduce((s, r) => s + r.cattle, 0);
+        const bestQualifTime = entry.qualif.length
+          ? Math.min(...entry.qualif.map((r) => r.time))
+          : 0;
 
-    return {
-      ...r,
-      avgTime,
-      avgBois,
-    };
-  });
+        const finalBois = entry.final.reduce((s, r) => s + r.cattle, 0);
+        const finalTime = entry.final.length
+          ? entry.final.reduce((s, r) => s + r.time, 0) / entry.final.length
+          : 0;
 
-  // Ordenar: maior bois → menor tempo
-  ranking.sort((a, b) => {
-    if (b.avgBois !== a.avgBois) return b.avgBois - a.avgBois;
-    return a.avgTime - b.avgTime;
-  });
+        const avgBois =
+          entry.qualif.length || entry.final.length
+            ? (totalQualifBois + finalBois) /
+              (entry.qualif.length + entry.final.length)
+            : 0;
 
-  // Função para gerar PDF
-  const generatePDF = () => {
+        const avgTime =
+          entry.qualif.length && entry.final.length
+            ? (bestQualifTime + finalTime) / 2
+            : bestQualifTime || finalTime;
+
+        return {
+          duo: entry.duo,
+          qualifBois: totalQualifBois,
+          bestQualifTime,
+          finalBois,
+          finalTime,
+          avgBois,
+          avgTime,
+        };
+      })
+      .sort((a, b) => {
+        if (b.avgBois !== a.avgBois) return b.avgBois - a.avgBois;
+        return a.avgTime - b.avgTime;
+      });
+  }, [results, finalResults]);
+
+  // 🔹 Exportar PDF geral
+  const exportPDFAll = () => {
     const doc = new jsPDF();
-
     doc.setFontSize(14);
-    doc.text('Resultado Final Geral', 14, 20); // <-- sempre com x, y
+    doc.text('Resultado Final Geral', 14, 20);
 
-    const tableData = ranking.map((r, index) => [
-      index + 1,
-      [r.duo[0]?.name || '', r.duo[1]?.name || ''], // 🔹 cada linha em array
-      (r.qualifTime || 0).toFixed(3),
-      (r.finalTime || 0).toFixed(3),
-      r.finalCattle || 0,
-      (r.avgTime || 0).toFixed(3),
-      (r.avgBois || 0).toFixed(2),
+    const body = ranking.map((r, i) => [
+      i + 1,
+      `${r.duo[0].name} & ${r.duo[1].name}`,
+      r.qualifBois,
+      r.bestQualifTime ? r.bestQualifTime.toFixed(3) : '-',
+      r.finalBois,
+      r.finalTime ? r.finalTime.toFixed(3) : '-',
+      r.avgBois.toFixed(2),
+      r.avgTime.toFixed(3),
     ]);
 
     autoTable(doc, {
       startY: 30,
       head: [
         [
-          'ORD',
-          'Competidor',
-          'Qualif (s)',
-          'Final (s)',
+          '#',
+          'Dupla',
+          'Bois Qualif',
+          'Melhor Tempo',
           'Bois Final',
-          'Média (s)',
+          'Tempo Final',
           'Média Bois',
+          'Média Tempo',
         ],
       ],
-      body: tableData,
-      styles: {
-        fontSize: 12,
-        cellPadding: 4,
-        halign: 'center',
-        valign: 'middle',
-      },
-      columnStyles: {
-        0: { halign: 'center', cellWidth: 15 },
-        1: { halign: 'left', cellWidth: 50, valign: 'top' }, // 🔹 ajusta só essa coluna
-        2: { halign: 'center', cellWidth: 25 },
-        3: { halign: 'center', cellWidth: 25 },
-        4: { halign: 'center', cellWidth: 25 },
-        5: { halign: 'center', cellWidth: 25 },
-        6: { halign: 'center', cellWidth: 25 },
-      },
+      body,
     });
 
     doc.save('resultado_final.pdf');
   };
 
-  // Função para exportar Excel
-  const handleExportExcel = () => {
-    const data = ranking.map((r, index) => ({
-      ORD: index + 1,
-      Competidores: `${r.duo[0].name}\n${r.duo[1].name}`,
-      'Qualif (s)': r.qualifTime.toFixed(3),
-      'Final (s)': r.finalTime.toFixed(3),
-      'Bois Final': r.finalCattle,
-      'Média (s)': r.avgTime.toFixed(3),
-      'Média Bois': r.avgBois.toFixed(2),
+  // 🔹 Exportar Excel geral
+  const exportExcelAll = () => {
+    const data = ranking.map((r, i) => ({
+      ORD: i + 1,
+      Dupla: `${r.duo[0].name} & ${r.duo[1].name}`,
+      'Bois Qualif': r.qualifBois,
+      'Melhor Tempo': r.bestQualifTime,
+      'Bois Final': r.finalBois,
+      'Tempo Final': r.finalTime,
+      'Média Bois': r.avgBois,
+      'Média Tempo': r.avgTime,
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(data, { skipHeader: false });
-    worksheet['!cols'] = [
-      { wch: 5 }, // ORD
-      { wch: 30 }, // Competidores
-      { wch: 12 }, // Qualif
-      { wch: 12 }, // Final
-      { wch: 12 }, // Bois Final
-      { wch: 12 }, // Média Tempo
-      { wch: 12 }, // Média Bois
-    ];
-
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Resultado Final');
-
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: 'xlsx',
-      type: 'array',
-    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Resultado Final');
+    const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
     const blob = new Blob([excelBuffer], { type: 'application/octet-stream' });
     saveAs(blob, 'resultado_final.xlsx');
   };
 
+  // 🔹 Exportar PDF por competidor (já existia)
+  const generatePDFByCompetitor = (competitorName) => {
+    const doc = new jsPDF();
+    doc.setFontSize(14);
+    doc.text(`Histórico de ${competitorName}`, 14, 20);
+
+    const qualifPassadas = results.filter((r) =>
+      r.duo.some((p) => p.name === competitorName)
+    );
+    const qualifData = qualifPassadas.map((r, idx) => [
+      idx + 1,
+      `${r.duo[0].name} & ${r.duo[1].name}`,
+      r.cattle,
+      r.time.toFixed(3),
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [['#', 'Dupla', 'Bois', 'Tempo (s)']],
+      body: qualifData.length ? qualifData : [['-', '-', '-', '-']],
+    });
+
+    const finalPassadas = finalResults.filter((r) =>
+      r.duo.some((p) => p.name === competitorName)
+    );
+    if (finalPassadas.length) {
+      doc.addPage();
+      doc.setFontSize(14);
+      doc.text(`Final - ${competitorName}`, 14, 20);
+      const finalData = finalPassadas.map((r, idx) => [
+        idx + 1,
+        `${r.duo[0].name} & ${r.duo[1].name}`,
+        r.cattle,
+        r.time.toFixed(3),
+      ]);
+      autoTable(doc, {
+        startY: 30,
+        head: [['#', 'Dupla', 'Bois', 'Tempo (s)']],
+        body: finalData,
+      });
+    }
+
+    doc.save(`historico_${competitorName}.pdf`);
+  };
+
+  // 🔹 Lista de competidores únicos
+  const competitorsList = [
+    ...new Set([
+      ...results.flatMap((r) => r.duo.map((p) => p.name)),
+      ...finalResults.flatMap((r) => r.duo.map((p) => p.name)),
+    ]),
+  ];
+
   return (
     <div className="container">
       <h2>🏆 Resultado Final</h2>
+
+      {/* 🔹 Tabela geral */}
       <div className="card">
-        <ol style={{ paddingLeft: 20 }}>
-          {ranking.map((r, index) => (
-            <li
-              key={index}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '8px 12px',
-                borderBottom: '1px solid #ccc',
-                marginBottom: 4,
-                borderRadius: 4,
-              }}
-            >
-              <span style={{ fontWeight: 'bold' }}>
-                {index + 1}. {r.duo[0].name} & {r.duo[1].name}
-              </span>
-              <span style={{ textAlign: 'right', minWidth: 400 }}>
-                Qualif: {r.qualifTime.toFixed(3)}s | Final:{' '}
-                {r.finalTime.toFixed(3)}s | Bois Final: {r.finalCattle} |{' '}
-                <strong>
-                  Média: {r.avgTime.toFixed(3)}s • Bois: {r.avgBois.toFixed(2)}
-                </strong>
-              </span>
-            </li>
-          ))}
-        </ol>
+        <table className="results-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Dupla</th>
+              <th>Bois Qualif</th>
+              <th>Melhor Tempo</th>
+              <th>Bois Final</th>
+              <th>Tempo Final</th>
+              <th>Média Bois</th>
+              <th>Média Tempo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {ranking.map((r, i) => (
+              <tr key={i}>
+                <td>{i + 1}</td>
+                <td>
+                  {r.duo[0].name} & {r.duo[1].name}
+                </td>
+                <td>{r.qualifBois}</td>
+                <td>{r.bestQualifTime ? r.bestQualifTime.toFixed(3) : '-'}</td>
+                <td>{r.finalBois}</td>
+                <td>{r.finalTime ? r.finalTime.toFixed(3) : '-'}</td>
+                <td>{r.avgBois.toFixed(2)}</td>
+                <td>{r.avgTime.toFixed(3)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
+      {/* 🔹 Exportações */}
       <div style={{ marginTop: 20, display: 'flex', gap: '10px' }}>
-        <button onClick={generatePDF}>Gerar PDF</button>
-        <button onClick={handleExportExcel}>Exportar Excel</button>
-        <button onClick={() => navigate('/')} style={{ marginLeft: 'auto' }}>
-          Voltar para Home
+        <button onClick={exportPDFAll}>Exportar PDF Geral</button>
+        <button onClick={exportExcelAll}>Exportar Excel Geral</button>
+      </div>
+
+      {/* 🔹 Exportar por competidor */}
+      <div className="card" style={{ marginTop: 20 }}>
+        <h3>Exportar Histórico por Competidor</h3>
+        <select
+          value={selectedCompetitor}
+          onChange={(e) => setSelectedCompetitor(e.target.value)}
+        >
+          <option value="">Selecione um competidor</option>
+          {competitorsList.map((c, idx) => (
+            <option key={idx} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+        <button
+          disabled={!selectedCompetitor}
+          onClick={() => generatePDFByCompetitor(selectedCompetitor)}
+          style={{ marginLeft: 10 }}
+        >
+          Exportar PDF
         </button>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
+        <button onClick={() => navigate('/')}>Voltar para Home</button>
       </div>
     </div>
   );
