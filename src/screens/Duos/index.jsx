@@ -16,39 +16,65 @@ export default function Duos({
 }) {
   const navigate = useNavigate();
 
-  const generateRounds = (list, totalRounds) => {
-    const roundsArray = [];
+  // Gera rounds de duplas aleatórias sem repetição
+  const generateRounds = (list, totalPassadasPorCompetidor) => {
     const n = list.length;
-    const copy = [...list];
-    if (n % 2 !== 0) copy.push({ name: 'ghost', category: '' });
+    if (n < 2) return [];
 
-    for (let r = 0; r < totalRounds; r++) {
-      const duos = [];
-      const used = new Set();
-      for (let i = 0; i < copy.length; i++) {
-        if (used.has(copy[i]) || copy[i].name === 'ghost') continue;
-        for (let j = i + 1; j < copy.length; j++) {
-          if (!used.has(copy[j]) && copy[j].name !== 'ghost') {
-            duos.push([copy[i], copy[j]]);
-            used.add(copy[i]);
-            used.add(copy[j]);
-            break;
-          }
-        }
+    // 🔹 Criar todas as combinações possíveis de duplas (sem repetição)
+    let allCombos = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        allCombos.push([list[i], list[j]]);
       }
-      roundsArray.push(duos);
-      const first = copy.shift();
-      copy.push(first);
     }
-    return roundsArray;
+
+    // 🔹 Embaralhar
+    allCombos = allCombos.sort(() => Math.random() - 0.5);
+
+    // 🔹 Contador de passadas de cada competidor
+    const count = {};
+    list.forEach((c) => {
+      count[c.name] = 0;
+    });
+
+    const rounds = [];
+    const usedCombos = new Set();
+
+    while (true) {
+      // 🔹 Escolher a próxima dupla que:
+      // - ainda não foi usada
+      // - nenhum competidor ultrapassou o limite
+      const duo = allCombos.find(
+        ([a, b]) =>
+          !usedCombos.has(a.name + '🤝' + b.name) &&
+          count[a.name] < totalPassadasPorCompetidor &&
+          count[b.name] < totalPassadasPorCompetidor
+      );
+
+      if (!duo) break; // acabou as combinações possíveis
+
+      // Marcar como usada
+      usedCombos.add(duo[0].name + '🤝' + duo[1].name);
+
+      // Atualizar contador
+      count[duo[0].name]++;
+      count[duo[1].name]++;
+
+      rounds.push(duo);
+    }
+
+    return [rounds]; // mantém compatibilidade com seu código (array de rounds)
   };
 
+  // 🔹 Garante que rounds só sejam gerados caso não venham do import
   useEffect(() => {
-    if (rounds.length === 0) {
+    if (rounds.length === 0 && competitors.length > 0) {
       setRounds(generateRounds(competitors, numRounds));
     }
   }, [competitors, numRounds, rounds, setRounds]);
 
+  // Flatten para tabela
   const duosWithIds = rounds.flat().map((duo, index) => ({
     id: index + 1,
     duo,
@@ -144,14 +170,14 @@ export default function Duos({
         <button onClick={generatePDF}>Gerar PDF de Duplas</button>
         <button onClick={handleExportExcel}>Exportar Excel</button>
 
-        {/* 🔹 Botão para exportar sorteio */}
+        {/* 🔹 Exportar sorteio */}
         <button
           onClick={() => exportJSON({ competitors, rounds }, 'sorteio.json')}
         >
           Exportar Sorteio
         </button>
 
-        {/* 🔹 Input para importar sorteio */}
+        {/* 🔹 Importar sorteio */}
         <label className="secondary" style={{ cursor: 'pointer' }}>
           Importar Sorteio
           <input
@@ -160,8 +186,26 @@ export default function Duos({
             style={{ display: 'none' }}
             onChange={(e) =>
               importJSON(e, (data) => {
-                if (data.competitors) setCompetitors(data.competitors);
-                if (data.rounds) setRounds(data.rounds);
+                if (
+                  data &&
+                  Array.isArray(data.competitors) &&
+                  Array.isArray(data.rounds)
+                ) {
+                  // 🔹 Reset antes para garantir re-render
+                  setCompetitors([]);
+                  setRounds([]);
+
+                  setTimeout(() => {
+                    setCompetitors(data.competitors);
+                    setRounds(data.rounds);
+                  }, 0);
+
+                  alert('✅ Sorteio importado com sucesso!');
+                } else {
+                  alert(
+                    '❌ Erro ao importar arquivo JSON. Verifique o formato.'
+                  );
+                }
               })
             }
           />

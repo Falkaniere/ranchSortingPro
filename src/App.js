@@ -55,6 +55,7 @@ export default function App() {
               numRounds={numRounds}
               rounds={rounds}
               setRounds={setRounds}
+              setCompetitors={setCompetitors} // 👈 agora passa o setter
             />
           }
         />
