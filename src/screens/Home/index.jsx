@@ -64,6 +64,11 @@ export default function Home({
       <h1>🏇 Ranch Sorting</h1>
       <div className="flex" style={{ justifyContent: 'center', margin: 20 }}>
         <button onClick={startNewCompetition}>Iniciar Nova Competição</button>
+
+        {/* 🔹 Novo botão para ir direto à tela de Duos e importar */}
+        <button className="secondary" onClick={() => navigate('/duos')}>
+          Já tenho sorteio
+        </button>
         {competitors.length > 1 && (
           <button onClick={continueWithExisting} className="secondary">
             Continuar com os mesmos competidores
