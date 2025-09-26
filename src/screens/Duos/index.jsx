@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function Duos({ competitors, numRounds, rounds, setRounds }) {
   const navigate = useNavigate();
@@ -43,6 +45,39 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
     duo,
   }));
 
+  // Função para gerar PDF
+  const generatePDF = () => {
+    const doc = new jsPDF();
+
+    doc.setFontSize(14);
+    doc.text('Lista de Duplas - Ordem de Passada', 14, 20);
+
+    const tableData = duosWithIds.map((item) => [
+      item.id, // ORD
+      `${item.duo[0]}\n${item.duo[1]}`, // Competidores um embaixo do outro
+      '', // Tempo vazio
+    ]);
+
+    autoTable(doc, {
+      startY: 30,
+      head: [['ORD', 'Competidor', 'Tempo']],
+      body: tableData,
+      styles: {
+        fontSize: 12,
+        cellPadding: 4,
+        halign: 'center',
+        valign: 'middle',
+      },
+      columnStyles: {
+        0: { halign: 'center', cellWidth: 20 }, // ORD
+        1: { halign: 'left', cellWidth: 100 }, // Competidor
+        2: { halign: 'center', cellWidth: 40 }, // Tempo
+      },
+    });
+
+    doc.save('duplas.pdf');
+  };
+
   return (
     <div className="container">
       <h2>Passadas & Duplas</h2>
@@ -66,9 +101,10 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
         </tbody>
       </table>
 
-      <button onClick={() => navigate('/record')} style={{ marginTop: 20 }}>
-        Start Qualifiers
-      </button>
+      <div style={{ marginTop: 20, display: 'flex', gap: '10px' }}>
+        <button onClick={() => navigate('/record')}>Start Qualifiers</button>
+        <button onClick={generatePDF}>Gerar PDF de Duplas</button>
+      </div>
     </div>
   );
 }

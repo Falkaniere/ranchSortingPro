@@ -127,7 +127,7 @@ export default function Final({
       <div className="final-grid">
         {/* Duplas restantes (cards) */}
         <div className="card">
-          <h3>Duplas Restantes (ordem de largada: pior → melhor)</h3>
+          <h3>Duplas Restantes</h3>
           <div className="duo-cards">
             {pendingDuos.length === 0 && <p>Todas as duplas já registradas.</p>}
             {pendingDuos.map((d, i) => (

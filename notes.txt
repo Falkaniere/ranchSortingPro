@@ -9,3 +9,6 @@ fica em primeiro nas finais, apesar dessa ordenação o número da passada preci
 com a dupla
 
 gerar os relatorios
+
+cadastro de categoria
+classificar competidor de acordo com categoria
