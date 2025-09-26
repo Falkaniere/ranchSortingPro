@@ -1,21 +1,22 @@
-// App.jsx
+// src/App.jsx (ou App.js) — atualize imports e rotas
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-import EventRegister from '@screens/EventRegister';
-import Duos from '@screens/Duos';
-import QualifiersResults from '@screens/QualifiersResults';
-import Registration from '@screens/Registration';
-import Final from '@screens/Final';
-import FinalResults from '@screens/FinalResults';
-import Home from '@screens/Home';
+import Home from './screens/Home';
+import Registration from './screens/Registration';
+import Duos from './screens/Duos';
+import EventRegister from './screens/EventRegister';
+import QualifiersResults from './screens/QualifiersResults';
+import Final from './screens/Final';
+import FinalResults from './screens/FinalResults';
+import RoundsOverview from './screens/RoundsOverview';
 
 export default function App() {
   const [competitors, setCompetitors] = useState([]);
   const [numRounds, setNumRounds] = useState(1);
-  const [rounds, setRounds] = useState([]); // array de rounds com duplas
-  const [results, setResults] = useState([]); // resultados qualificatórias
-  const [finalResults, setFinalResults] = useState([]); // resultados final
+  const [rounds, setRounds] = useState([]);
+  const [results, setResults] = useState([]);
+  const [finalResults, setFinalResults] = useState([]);
 
   return (
     <Router>
@@ -68,6 +69,10 @@ export default function App() {
           }
         />
         <Route
+          path="/overview"
+          element={<RoundsOverview rounds={rounds} results={results} />}
+        />
+        <Route
           path="/qualifiers-results"
           element={<QualifiersResults results={results} />}
         />
@@ -78,6 +83,7 @@ export default function App() {
               results={results}
               finalResults={finalResults}
               setFinalResults={setFinalResults}
+              rounds={rounds}
             />
           }
         />
