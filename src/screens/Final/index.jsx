@@ -1,136 +1,206 @@
-// screens/Final/index.jsx
-import React, { useState } from 'react';
+// src/screens/Final/index.jsx
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
 
-export default function Final({ results, finalResults, setFinalResults }) {
-  const [selectedDuo, setSelectedDuo] = useState(null);
-  const [form, setForm] = useState({ bullNumber: '', cattle: '', time: '' });
+export default function Final({
+  rounds = [],
+  results = [], // qualificatórias
+  finalResults = [],
+  setFinalResults,
+}) {
   const navigate = useNavigate();
+  const [selected, setSelected] = useState(null); // { duo, pass, avgTempo, avgBois }
+  const [form, setForm] = useState({ bullNumber: '', cattle: '', time: '' });
 
-  // 🔹 Calcular médias das qualificatórias
+  // Flatten rounds and keep pass number fixed (sequential index)
+  const allDuosWithPass = useMemo(() => {
+    return rounds.flat().map((duo, idx) => ({
+      duo,
+      pass: idx + 1,
+    }));
+  }, [rounds]);
+
+  // calcula médias das qualificatórias para uma dupla (avg bois e avg tempo)
   const calcQualifAvg = (duo) => {
-    const qualif = results.filter((r) => r.duo.join('🤝') === duo.join('🤝'));
+    const key = duo.join('🤝');
+    const qualif = results.filter((r) => r.duo.join('🤝') === key);
     if (qualif.length === 0) return { avgBois: 0, avgTempo: 0 };
 
-    const avgBois =
-      qualif.reduce((sum, r) => sum + r.cattle, 0) / qualif.length;
-    const avgTempo = qualif.reduce((sum, r) => sum + r.time, 0) / qualif.length;
-
+    const avgBois = qualif.reduce((s, r) => s + r.cattle, 0) / qualif.length;
+    const avgTempo = qualif.reduce((s, r) => s + r.time, 0) / qualif.length;
     return { avgBois, avgTempo };
   };
 
-  // 🔹 Registrar resultado na Final
-  const saveFinal = (isSAT = false) => {
-    if (!selectedDuo) return alert('Selecione uma dupla.');
+  // Anotar todas as duplas com as médias da qualif
+  const annotatedDuos = useMemo(() => {
+    return allDuosWithPass.map((item) => {
+      const { avgBois, avgTempo } = calcQualifAvg(item.duo);
+      return {
+        ...item,
+        avgBois,
+        avgTempo,
+      };
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [allDuosWithPass, results]);
+
+  // Ordenar para final: do pior (maior avgTempo) para o melhor (menor avgTempo)
+  const orderedDuos = useMemo(() => {
+    return [...annotatedDuos].sort((a, b) => {
+      // maior tempo qualif primeiro
+      if (b.avgTempo !== a.avgTempo) return b.avgTempo - a.avgTempo;
+      // tie-breaker: menor avgBois primeiro (optional) - keeps deterministic
+      return a.avgBois - b.avgBois;
+    });
+  }, [annotatedDuos]);
+
+  // Duplas ainda pendentes na final (não registradas)
+  const pendingDuos = orderedDuos.filter(
+    (d) =>
+      !finalResults.some(
+        (fr) => fr.pass === d.pass && fr.duo.join('🤝') === d.duo.join('🤝')
+      )
+  );
+
+  function handleSelect(d) {
+    setSelected(d);
+    setForm({ bullNumber: '', cattle: '', time: '' });
+  }
+
+  function validateForm(isSAT = false) {
+    if (!selected) return 'Selecione uma dupla.';
+    if (isSAT) return null;
+
+    const bullNum = Number(form.bullNumber);
+    const cattleNum = Number(form.cattle);
+    const timeNum = Number(form.time);
+
+    if (isNaN(bullNum) || bullNum < 0 || bullNum > 9)
+      return 'Número do boi inválido (0-9).';
+    if (isNaN(cattleNum) || cattleNum < 0 || cattleNum > 10)
+      return 'Quantidade de bois inválida (0-10).';
+    if (isNaN(timeNum) || timeNum <= 0) return 'Tempo inválido (maior que 0).';
+    return null;
+  }
+
+  function saveFinal(isSAT = false) {
+    const err = validateForm(isSAT);
+    if (err) return alert(err);
 
     const bullNum = isSAT ? 0 : Number(form.bullNumber);
     const cattleNum = isSAT ? 0 : Number(form.cattle);
     const timeNum = isSAT ? 120 : Number(form.time);
 
-    if (!isSAT) {
-      if (isNaN(bullNum) || bullNum < 0 || bullNum > 9)
-        return alert('Número do boi inválido! Use 0-9.');
-      if (isNaN(cattleNum) || cattleNum < 0 || cattleNum > 10)
-        return alert('Quantidade de bois inválida! Use 0-10.');
-      if (isNaN(timeNum) || timeNum <= 0)
-        return alert('Tempo inválido! Deve ser maior que 0.');
+    // prev time is the avg qualif tempo (could be 0 if not present)
+    const previousTime = selected.avgTempo || 0;
+
+    // avoid double registration
+    const already = finalResults.find(
+      (r) =>
+        r.pass === selected.pass && r.duo.join('🤝') === selected.duo.join('🤝')
+    );
+    if (already) {
+      alert('Essa dupla já foi registrada na final.');
+      setSelected(null);
+      return;
     }
 
-    const newResult = {
-      duo: selectedDuo,
+    const newRecord = {
+      duo: selected.duo,
+      pass: selected.pass,
+      previousTime,
       bullNumber: bullNum,
       cattle: cattleNum,
       time: timeNum,
     };
 
-    setFinalResults([...finalResults, newResult]);
-    setSelectedDuo(null);
+    setFinalResults([...finalResults, newRecord]);
+    setSelected(null);
     setForm({ bullNumber: '', cattle: '', time: '' });
-  };
-
-  // 🔹 Juntar todas as duplas que participaram
-  const allDuos = [...new Set(results.map((r) => r.duo.join('🤝')))].map((d) =>
-    d.split('🤝')
-  );
+  }
 
   return (
     <div className="container">
       <h2>🏆 Final</h2>
 
       <div className="final-grid">
+        {/* Duplas restantes (cards) */}
         <div className="card">
-          <h3>Duplas Restantes</h3>
+          <h3>Duplas Restantes (ordem de largada: pior → melhor)</h3>
           <div className="duo-cards">
-            {allDuos
-              .filter(
-                (d) =>
-                  !finalResults.some((r) => r.duo.join('🤝') === d.join('🤝'))
-              )
-              .map((d, i) => {
-                const prev = results.find(
-                  (r) => r.duo.join('🤝') === d.join('🤝')
-                );
-                return (
-                  <div key={i} className="duo-card">
-                    <div className="duo-info">
-                      <strong>
-                        {d[0]} & {d[1]}
-                      </strong>
-                      <span>
-                        Passada anterior: {prev ? prev.time + 's' : '-'}
-                      </span>
-                    </div>
-                    <button onClick={() => setSelectedDuo(d)}>
-                      Selecionar
-                    </button>
-                  </div>
-                );
-              })}
+            {pendingDuos.length === 0 && <p>Todas as duplas já registradas.</p>}
+            {pendingDuos.map((d, i) => (
+              <div key={d.pass} className="duo-card">
+                <div className="duo-info">
+                  <strong>
+                    #{d.pass} — {d.duo[0]} & {d.duo[1]}
+                  </strong>
+                  <span>
+                    Qualif avg:{' '}
+                    {d.avgTempo > 0 ? `${d.avgTempo.toFixed(3)}s` : '-'} • Avg
+                    bois: {d.avgBois ? d.avgBois.toFixed(2) : '-'}
+                  </span>
+                </div>
+                <button onClick={() => handleSelect(d)}>Selecionar</button>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* 🔹 Painel de médias */}
+        {/* Painel de médias (Qualif + Final) */}
         <div className="card">
           <h3>Médias (Qualif + Final)</h3>
           <table className="results-table">
             <thead>
               <tr>
                 <th>#</th>
+                <th>Passada</th>
                 <th>Dupla</th>
-                <th>Med Bois</th>
-                <th>Med Tempo</th>
+                <th>Qualif Avg (s)</th>
+                <th>Final Time (s)</th>
                 <th>Final Bois</th>
-                <th>Final Tempo</th>
-                <th>Total Med Bois</th>
-                <th>Total Med Tempo</th>
+                <th>Avg Bois Total</th>
+                <th>Avg Time Total (s)</th>
               </tr>
             </thead>
             <tbody>
-              {allDuos.map((d, i) => {
-                const { avgBois, avgTempo } = calcQualifAvg(d);
-                const final = finalResults.find(
-                  (r) => r.duo.join('🤝') === d.join('🤝')
+              {orderedDuos.map((d, idx) => {
+                const finalRec = finalResults.find(
+                  (fr) =>
+                    fr.pass === d.pass && fr.duo.join('🤝') === d.duo.join('🤝')
                 );
-                const totalBois = final
-                  ? (avgBois + final.cattle) / 2
-                  : avgBois;
-                const totalTempo = final
-                  ? (avgTempo + final.time) / 2
-                  : avgTempo;
+                // Avg combined: if final exists, average qualif avgTempo and final time; else just qualif avg
+                const combinedTime =
+                  finalRec && d.avgTempo > 0
+                    ? (d.avgTempo + finalRec.time) / 2
+                    : d.avgTempo;
+                const combinedBois = finalRec
+                  ? (d.avgBois + finalRec.cattle) / (d.avgBois ? 2 : 1)
+                  : d.avgBois;
 
                 return (
-                  <tr key={i}>
-                    <td>{i + 1}</td>
+                  <tr key={d.pass}>
+                    <td>{idx + 1}</td>
+                    <td>{d.pass}</td>
                     <td>
-                      {d[0]} & {d[1]}
+                      {d.duo[0]} & {d.duo[1]}
                     </td>
-                    <td>{avgBois.toFixed(2)}</td>
-                    <td>{avgTempo.toFixed(2)}</td>
-                    <td>{final ? final.cattle : '-'}</td>
-                    <td>{final ? final.time : '-'}</td>
-                    <td>{totalBois.toFixed(2)}</td>
-                    <td>{totalTempo.toFixed(2)}</td>
+                    <td style={{ textAlign: 'right' }}>
+                      {d.avgTempo > 0 ? d.avgTempo.toFixed(3) : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {finalRec ? finalRec.time.toFixed(3) : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {finalRec ? finalRec.cattle : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {combinedBois ? combinedBois.toFixed(2) : '-'}
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      {combinedTime ? combinedTime.toFixed(3) : '-'}
+                    </td>
                   </tr>
                 );
               })}
@@ -139,11 +209,12 @@ export default function Final({ results, finalResults, setFinalResults }) {
         </div>
       </div>
 
-      {/* 🔹 Formulário de registro */}
-      {selectedDuo && (
+      {/* Formulário para registrar final da dupla selecionada */}
+      {selected && (
         <div className="card" style={{ marginTop: 20 }}>
           <h3>
-            Registrar Final: {selectedDuo[0]} & {selectedDuo[1]}
+            Registrar Final — #{selected.pass} {selected.duo[0]} &{' '}
+            {selected.duo[1]}
           </h3>
           <div className="flex">
             <input
@@ -151,18 +222,24 @@ export default function Final({ results, finalResults, setFinalResults }) {
               placeholder="Número do boi (0-9)"
               value={form.bullNumber}
               onChange={(e) => setForm({ ...form, bullNumber: e.target.value })}
+              min={0}
+              max={9}
             />
             <input
               type="number"
               placeholder="Qtd bois (0-10)"
               value={form.cattle}
               onChange={(e) => setForm({ ...form, cattle: e.target.value })}
+              min={0}
+              max={10}
             />
             <input
               type="number"
               placeholder="Tempo (s)"
               value={form.time}
               onChange={(e) => setForm({ ...form, time: e.target.value })}
+              step="0.001"
+              min="0.001"
             />
             <button onClick={() => saveFinal(false)}>Salvar</button>
             <button className="danger" onClick={() => saveFinal(true)}>
@@ -172,15 +249,27 @@ export default function Final({ results, finalResults, setFinalResults }) {
         </div>
       )}
 
-      {finalResults.length === allDuos.length && (
+      {/* Lista de resultados parciais da final */}
+      <div className="card" style={{ marginTop: 20 }}>
+        <h3>Resultados Finais Registrados</h3>
+        <ul>
+          {finalResults.map((r, i) => (
+            <li key={`${r.pass}-${i}`}>
+              #{r.pass} — {r.duo[0]} & {r.duo[1]} → 🐂 {r.cattle} | ⏱ {r.time}s
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div style={{ marginTop: 20 }}>
         <button
           className="primary"
-          style={{ marginTop: 20 }}
+          disabled={finalResults.length < orderedDuos.length}
           onClick={() => navigate('/final-results')}
         >
           Ver Resultado Final
         </button>
-      )}
+      </div>
     </div>
   );
 }
