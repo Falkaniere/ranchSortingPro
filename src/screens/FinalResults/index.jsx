@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { getDuoKey } from '@screens/Qualifiers';
 
 export default function FinalResults({ finalResults = [] }) {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ export default function FinalResults({ finalResults = [] }) {
   // Agrupar resultados por dupla
   const rankingMap = {};
   finalResults.forEach((r) => {
-    const key = r.duo.join('🤝');
+    const key = getDuoKey(r.duo);
+
     if (!rankingMap[key]) {
       rankingMap[key] = {
         duo: r.duo,
@@ -51,16 +53,16 @@ export default function FinalResults({ finalResults = [] }) {
     const doc = new jsPDF();
 
     doc.setFontSize(14);
-    doc.text('Resultado Final Geral');
+    doc.text('Resultado Final Geral', 14, 20); // <-- sempre com x, y
 
     const tableData = ranking.map((r, index) => [
-      index + 1, // ORD
-      `${r.duo[0]}\n${r.duo[1]}`, // Competidores um embaixo do outro
-      r.qualifTime.toFixed(3),
-      r.finalTime.toFixed(3),
-      r.finalCattle,
-      r.avgTime.toFixed(3),
-      r.avgBois.toFixed(2),
+      index + 1,
+      [r.duo[0]?.name || '', r.duo[1]?.name || ''], // 🔹 cada linha em array
+      (r.qualifTime || 0).toFixed(3),
+      (r.finalTime || 0).toFixed(3),
+      r.finalCattle || 0,
+      (r.avgTime || 0).toFixed(3),
+      (r.avgBois || 0).toFixed(2),
     ]);
 
     autoTable(doc, {
@@ -85,7 +87,7 @@ export default function FinalResults({ finalResults = [] }) {
       },
       columnStyles: {
         0: { halign: 'center', cellWidth: 15 },
-        1: { halign: 'left', cellWidth: 50 },
+        1: { halign: 'left', cellWidth: 50, valign: 'top' }, // 🔹 ajusta só essa coluna
         2: { halign: 'center', cellWidth: 25 },
         3: { halign: 'center', cellWidth: 25 },
         4: { halign: 'center', cellWidth: 25 },
@@ -101,7 +103,7 @@ export default function FinalResults({ finalResults = [] }) {
   const handleExportExcel = () => {
     const data = ranking.map((r, index) => ({
       ORD: index + 1,
-      Competidores: `${r.duo[0]}\n${r.duo[1]}`,
+      Competidores: `${r.duo[0].name}\n${r.duo[1].name}`,
       'Qualif (s)': r.qualifTime.toFixed(3),
       'Final (s)': r.finalTime.toFixed(3),
       'Bois Final': r.finalCattle,
@@ -149,7 +151,7 @@ export default function FinalResults({ finalResults = [] }) {
               }}
             >
               <span style={{ fontWeight: 'bold' }}>
-                {index + 1}. {r.duo[0]} & {r.duo[1]}
+                {index + 1}. {r.duo[0].name} & {r.duo[1].name}
               </span>
               <span style={{ textAlign: 'right', minWidth: 400 }}>
                 Qualif: {r.qualifTime.toFixed(3)}s | Final:{' '}

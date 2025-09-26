@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
 
+export const getDuoKey = (duo) => duo.map((p) => p.name).join('🤝');
+
 export default function Qualifiers({ rounds, results, setResults }) {
   const [selectedDuo, setSelectedDuo] = useState(null);
   const [form, setForm] = useState({ bullNumber: '', cattle: '', time: '' });
@@ -33,17 +35,17 @@ export default function Qualifiers({ rounds, results, setResults }) {
     };
 
     setResults([
-      ...results.filter((r) => r.duo.join('🤝') !== selectedDuo.join('🤝')),
+      ...results.filter((r) => getDuoKey(r.duo) !== getDuoKey(selectedDuo)),
       newResult,
     ]);
-
     setSelectedDuo(null);
     setForm({ bullNumber: '', cattle: '', time: '' });
   };
 
   // 🔹 Calcular médias da qualif
   const calcQualifAvg = (duo) => {
-    const qualif = results.filter((r) => r.duo.join('🤝') === duo.join('🤝'));
+    const key = getDuoKey(duo);
+    const qualif = results.filter((r) => getDuoKey(r.duo) === key);
     if (qualif.length === 0) return { avgBois: 0, avgTempo: 0 };
 
     const avgBois =
@@ -67,13 +69,13 @@ export default function Qualifiers({ rounds, results, setResults }) {
           <div className="duo-cards">
             {allDuos
               .filter(
-                (d) => !results.some((r) => r.duo.join('🤝') === d.join('🤝'))
+                (d) => !results.some((r) => getDuoKey(r.duo) === getDuoKey(d))
               )
               .map((d, i) => (
                 <div key={i} className="duo-card">
                   <div className="duo-info">
                     <strong>
-                      {d[0]} & {d[1]}
+                      {d[0].name} & {d[1].name}
                     </strong>
                     <span>Passada #{i + 1}</span>
                   </div>
@@ -96,15 +98,18 @@ export default function Qualifiers({ rounds, results, setResults }) {
               </tr>
             </thead>
             <tbody>
-              {[...new Set(results.map((r) => r.duo.join('🤝')))].map(
+              {[...new Set(results.map((r) => getDuoKey(r.duo)))].map(
                 (duoKey, i) => {
-                  const duo = duoKey.split('🤝');
+                  const originalResult = results.find(
+                    (r) => getDuoKey(r.duo) === duoKey
+                  );
+                  const duo = originalResult.duo; // aqui volta a ser array de objetos
                   const { avgBois, avgTempo } = calcQualifAvg(duo);
                   return (
                     <tr key={i}>
                       <td>{i + 1}</td>
                       <td>
-                        {duo[0]} & {duo[1]}
+                        {duo[0].name} & {duo[1].name}
                       </td>
                       <td>{avgBois.toFixed(2)}</td>
                       <td>{avgTempo.toFixed(2)}</td>
@@ -131,7 +136,8 @@ export default function Qualifiers({ rounds, results, setResults }) {
       {selectedDuo && (
         <div className="card" style={{ marginTop: 20 }}>
           <h3>
-            Registrar Qualificatória: {selectedDuo[0]} & {selectedDuo[1]}
+            Registrar Qualificatória: {selectedDuo[0].name} &{' '}
+            {selectedDuo[1].name}
           </h3>
           <div className="flex">
             <input
