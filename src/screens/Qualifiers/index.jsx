@@ -1,5 +1,5 @@
 // screens/Qualifiers/index.jsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './index.css';
 
@@ -8,7 +8,9 @@ export const getDuoKey = (duo) => duo.map((p) => p.name).join('🤝');
 export default function Qualifiers({ rounds, results, setResults }) {
   const [selectedDuo, setSelectedDuo] = useState(null);
   const [form, setForm] = useState({ bullNumber: '', cattle: '', time: '' });
+  const [showScrollTop, setShowScrollTop] = useState(false);
   const navigate = useNavigate();
+  const bottomRef = useRef(null);
 
   const saveResult = (isSAT = false) => {
     if (!selectedDuo) return alert('Selecione uma dupla.');
@@ -28,7 +30,7 @@ export default function Qualifiers({ rounds, results, setResults }) {
 
     const newResult = {
       duo: selectedDuo,
-      round: 0, // sempre round 0, já que mostramos todas as passadas juntas
+      round: 0,
       bullNumber: bullNum,
       cattle: cattleNum,
       time: timeNum,
@@ -57,6 +59,26 @@ export default function Qualifiers({ rounds, results, setResults }) {
 
   // 🔹 Todas as duplas (flatten dos rounds)
   const allDuos = rounds.flat().map((d) => d);
+
+  // 🔹 Scroll automático até o fim quando selecionar
+  useEffect(() => {
+    if (selectedDuo && bottomRef.current) {
+      bottomRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [selectedDuo]);
+
+  // 🔹 Mostrar botão "voltar ao topo" quando rolar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 200) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <div className="container">
@@ -103,7 +125,7 @@ export default function Qualifiers({ rounds, results, setResults }) {
                   const originalResult = results.find(
                     (r) => getDuoKey(r.duo) === duoKey
                   );
-                  const duo = originalResult.duo; // aqui volta a ser array de objetos
+                  const duo = originalResult.duo;
                   const { avgBois, avgTempo } = calcQualifAvg(duo);
                   return (
                     <tr key={i}>
@@ -134,7 +156,7 @@ export default function Qualifiers({ rounds, results, setResults }) {
 
       {/* 🔹 Formulário de registro */}
       {selectedDuo && (
-        <div className="card" style={{ marginTop: 20 }}>
+        <div className="card" style={{ marginTop: 20 }} ref={bottomRef}>
           <h3>
             Registrar Qualificatória: {selectedDuo[0].name} &{' '}
             {selectedDuo[1].name}
@@ -164,6 +186,28 @@ export default function Qualifiers({ rounds, results, setResults }) {
             </button>
           </div>
         </div>
+      )}
+
+      {/* 🔹 Botão flutuante para voltar ao topo */}
+      {showScrollTop && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          style={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            padding: '10px 14px',
+            borderRadius: '50%',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            cursor: 'pointer',
+            fontSize: '18px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
+          }}
+        >
+          ⬆️
+        </button>
       )}
     </div>
   );

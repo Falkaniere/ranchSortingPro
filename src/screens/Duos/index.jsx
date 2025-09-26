@@ -16,32 +16,31 @@ export default function Duos({
 }) {
   const navigate = useNavigate();
 
-  const generateRounds = (list, totalRounds) => {
-    const roundsArray = [];
-    const n = list.length;
-    const copy = [...list];
-    if (n % 2 !== 0) copy.push({ name: 'ghost', category: '' });
+  function generateRounds(competitors, numPassadas) {
+    const duos = [];
+    const counts = new Map(competitors.map((c) => [c.name, 0]));
 
-    for (let r = 0; r < totalRounds; r++) {
-      const duos = [];
-      const used = new Set();
-      for (let i = 0; i < copy.length; i++) {
-        if (used.has(copy[i]) || copy[i].name === 'ghost') continue;
-        for (let j = i + 1; j < copy.length; j++) {
-          if (!used.has(copy[j]) && copy[j].name !== 'ghost') {
-            duos.push([copy[i], copy[j]]);
-            used.add(copy[i]);
-            used.add(copy[j]);
-            break;
-          }
-        }
-      }
-      roundsArray.push(duos);
-      const first = copy.shift();
-      copy.push(first);
+    // Enquanto alguém ainda não fez todas as passadas
+    while (Array.from(counts.values()).some((c) => c < numPassadas)) {
+      // Escolher dois competidores aleatórios que ainda não completaram
+      const available = competitors.filter(
+        (c) => counts.get(c.name) < numPassadas
+      );
+      if (available.length < 2) break;
+
+      let c1, c2;
+      do {
+        c1 = available[Math.floor(Math.random() * available.length)];
+        c2 = available[Math.floor(Math.random() * available.length)];
+      } while (c1.name === c2.name);
+
+      duos.push([c1, c2]);
+      counts.set(c1.name, counts.get(c1.name) + 1);
+      counts.set(c2.name, counts.get(c2.name) + 1);
     }
-    return roundsArray;
-  };
+
+    return [duos]; // formato compatível: rounds[0] = lista de duplas
+  }
 
   // 🔹 Garante que rounds só sejam gerados caso não venham do import
   useEffect(() => {
