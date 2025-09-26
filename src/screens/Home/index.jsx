@@ -59,16 +59,17 @@ export default function Home({
           </button>
         )}
       </div>
-
-      <div style={{ marginBottom: 20 }}>
-        <input
-          type="text"
-          placeholder="Adicionar competidor"
-          value={newCompetitor}
-          onChange={(e) => setNewCompetitor(e.target.value)}
-        />
-        <button onClick={addCompetitor}>Adicionar</button>
-      </div>
+      {competitors.length > 1 && (
+        <div style={{ marginBottom: 20 }}>
+          <input
+            type="text"
+            placeholder="Adicionar competidor"
+            value={newCompetitor}
+            onChange={(e) => setNewCompetitor(e.target.value)}
+          />
+          <button onClick={addCompetitor}>Adicionar</button>
+        </div>
+      )}
 
       {competitors.length > 0 && (
         <div className="card">
