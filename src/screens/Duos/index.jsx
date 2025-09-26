@@ -16,31 +16,50 @@ export default function Duos({
 }) {
   const navigate = useNavigate();
 
-  function generateRounds(competitors, numPassadas) {
-    const duos = [];
-    const counts = new Map(competitors.map((c) => [c.name, 0]));
+  // Gera rounds de duplas aleatórias sem repetição
+  const generateRounds = (list, totalPassadasPorCompetidor) => {
+    const n = list.length;
+    if (n < 2) return [];
 
-    // Enquanto alguém ainda não fez todas as passadas
-    while (Array.from(counts.values()).some((c) => c < numPassadas)) {
-      // Escolher dois competidores aleatórios que ainda não completaram
-      const available = competitors.filter(
-        (c) => counts.get(c.name) < numPassadas
-      );
-      if (available.length < 2) break;
-
-      let c1, c2;
-      do {
-        c1 = available[Math.floor(Math.random() * available.length)];
-        c2 = available[Math.floor(Math.random() * available.length)];
-      } while (c1.name === c2.name);
-
-      duos.push([c1, c2]);
-      counts.set(c1.name, counts.get(c1.name) + 1);
-      counts.set(c2.name, counts.get(c2.name) + 1);
+    let allCombos = [];
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        allCombos.push([list[i], list[j]]);
+      }
     }
 
-    return [duos]; // formato compatível: rounds[0] = lista de duplas
-  }
+    allCombos = allCombos.sort(() => Math.random() - 0.5);
+
+    const count = {};
+    list.forEach((c) => {
+      count[c.name] = 0;
+    });
+
+    const rounds = [];
+    const usedCombos = new Set();
+
+    while (true) {
+      const duo = allCombos.find(
+        ([a, b]) =>
+          !usedCombos.has(a.name + '🤝' + b.name) &&
+          count[a.name] < totalPassadasPorCompetidor &&
+          count[b.name] < totalPassadasPorCompetidor
+      );
+
+      if (!duo) break; // acabou as combinações possíveis
+
+      // Marcar como usada
+      usedCombos.add(duo[0].name + '🤝' + duo[1].name);
+
+      // Atualizar contador
+      count[duo[0].name]++;
+      count[duo[1].name]++;
+
+      rounds.push(duo);
+    }
+
+    return [rounds]; // mantém compatibilidade com seu código (array de rounds)
+  };
 
   // 🔹 Garante que rounds só sejam gerados caso não venham do import
   useEffect(() => {
