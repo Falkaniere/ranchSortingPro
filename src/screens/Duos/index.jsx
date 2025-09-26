@@ -49,15 +49,17 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
   }));
 
   // Função para gerar PDF
+
   const generatePDF = () => {
     const doc = new jsPDF();
 
     doc.setFontSize(14);
     doc.text('Lista de Duplas - Ordem de Passada', 14, 20);
 
+    // 🔹 Usando array em vez de \n
     const tableData = duosWithIds.map((item) => [
       item.id, // ORD
-      `${item.duo[0]?.name}\n${item.duo[1]?.name}`, // Competidores (apenas nomes)
+      [item.duo[0]?.name || '', item.duo[1]?.name || ''], // cada nome em uma linha
       '', // Tempo vazio
     ]);
 
@@ -73,7 +75,7 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
       },
       columnStyles: {
         0: { halign: 'center', cellWidth: 20 }, // ORD
-        1: { halign: 'left', cellWidth: 100 }, // Competidor
+        1: { halign: 'left', cellWidth: 100, valign: 'top' }, // Competidor alinhado ao topo
         2: { halign: 'center', cellWidth: 40 }, // Tempo
       },
     });
@@ -84,7 +86,9 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
   const handleExportExcel = () => {
     const data = duosWithIds.map((item) => ({
       ORD: item.id,
-      Competidores: `${item.duo[0]?.name}\n${item.duo[1]?.name}`,
+      Competidores: [item.duo[0]?.name || '', item.duo[1]?.name || ''].join(
+        '\n'
+      ),
       Tempo: '', // coluna vazia
     }));
 
