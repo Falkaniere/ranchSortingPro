@@ -14,12 +14,25 @@ export const exportJSON = (data, filename = 'dados.json') => {
 export const importJSON = (event, callback) => {
   const file = event.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
   reader.onload = (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      callback(data);
+
+      // 🔹 Validação mínima
+      if (
+        data &&
+        Array.isArray(data.competitors) &&
+        Array.isArray(data.rounds)
+      ) {
+        callback(data);
+        alert('✅ Sorteio importado com sucesso!');
+      } else {
+        throw new Error('Formato inválido');
+      }
     } catch (err) {
+      console.error('Erro ao importar JSON:', err);
       alert('Erro ao importar arquivo JSON. Verifique o formato.');
     }
   };

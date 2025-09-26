@@ -43,12 +43,14 @@ export default function Duos({
     return roundsArray;
   };
 
+  // 🔹 Garante que rounds só sejam gerados caso não venham do import
   useEffect(() => {
-    if (rounds.length === 0) {
+    if (rounds.length === 0 && competitors.length > 0) {
       setRounds(generateRounds(competitors, numRounds));
     }
   }, [competitors, numRounds, rounds, setRounds]);
 
+  // Flatten para tabela
   const duosWithIds = rounds.flat().map((duo, index) => ({
     id: index + 1,
     duo,
@@ -144,14 +146,14 @@ export default function Duos({
         <button onClick={generatePDF}>Gerar PDF de Duplas</button>
         <button onClick={handleExportExcel}>Exportar Excel</button>
 
-        {/* 🔹 Botão para exportar sorteio */}
+        {/* 🔹 Exportar sorteio */}
         <button
           onClick={() => exportJSON({ competitors, rounds }, 'sorteio.json')}
         >
           Exportar Sorteio
         </button>
 
-        {/* 🔹 Input para importar sorteio */}
+        {/* 🔹 Importar sorteio */}
         <label className="secondary" style={{ cursor: 'pointer' }}>
           Importar Sorteio
           <input
@@ -160,8 +162,26 @@ export default function Duos({
             style={{ display: 'none' }}
             onChange={(e) =>
               importJSON(e, (data) => {
-                if (data.competitors) setCompetitors(data.competitors);
-                if (data.rounds) setRounds(data.rounds);
+                if (
+                  data &&
+                  Array.isArray(data.competitors) &&
+                  Array.isArray(data.rounds)
+                ) {
+                  // 🔹 Reset antes para garantir re-render
+                  setCompetitors([]);
+                  setRounds([]);
+
+                  setTimeout(() => {
+                    setCompetitors(data.competitors);
+                    setRounds(data.rounds);
+                  }, 0);
+
+                  alert('✅ Sorteio importado com sucesso!');
+                } else {
+                  alert(
+                    '❌ Erro ao importar arquivo JSON. Verifique o formato.'
+                  );
+                }
               })
             }
           />
