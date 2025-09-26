@@ -1,28 +1,20 @@
-// src/components/PartialResultsPanel.jsx
 import React, { useMemo } from 'react';
+import { getDuoKey } from '../../utils/getDuoKey';
 
-/**
- * props:
- * - rounds: array of rounds (array of arrays of duo)
- * - results: array of result entries { round, duo, id, cattle, time, bullNumber }
- */
 export default function PartialResultsPanel({ rounds = [], results = [] }) {
-  // cria mapa duoKey -> id (passada fixa)
   const duoIdMap = useMemo(() => {
     const map = new Map();
     rounds.flat().forEach((duo, idx) => {
       if (!duo) return;
-      const key = duo.join('🤝');
-      map.set(key, idx + 1); // id começando em 1
+      map.set(getDuoKey(duo), idx + 1);
     });
     return map;
   }, [rounds]);
 
-  // agrupa resultados por dupla
   const ranking = useMemo(() => {
     const map = new Map();
     results.forEach((r) => {
-      const key = r.duo.join('🤝');
+      const key = getDuoKey(r.duo);
       if (!map.has(key)) {
         map.set(key, {
           duo: r.duo,
@@ -38,7 +30,6 @@ export default function PartialResultsPanel({ rounds = [], results = [] }) {
       item.sumTime += Number(r.time || 0);
     });
 
-    // transformar em array com médias
     const arr = Array.from(map.values()).map((it) => ({
       duo: it.duo,
       id: it.id,
@@ -47,7 +38,6 @@ export default function PartialResultsPanel({ rounds = [], results = [] }) {
       avgTime: it.count ? it.sumTime / it.count : 0,
     }));
 
-    // ordenar: maior avgCattle desc, menor avgTime asc
     arr.sort((a, b) => {
       if (b.avgCattle !== a.avgCattle) return b.avgCattle - a.avgCattle;
       return a.avgTime - b.avgTime;
@@ -76,12 +66,12 @@ export default function PartialResultsPanel({ rounds = [], results = [] }) {
           <tbody>
             {ranking.map((r, i) => (
               <tr
-                key={r.duo.join('-')}
+                key={getDuoKey(r.duo)}
                 style={{ borderBottom: '1px solid #fafafa' }}
               >
                 <td style={{ padding: '6px', width: 32 }}>{r.id ?? i + 1}</td>
                 <td style={{ padding: '6px' }}>
-                  {r.duo[0]} & {r.duo[1]}
+                  {r.duo[0].name} & {r.duo[1].name}
                 </td>
                 <td style={{ padding: '6px', textAlign: 'right' }}>
                   {r.avgCattle.toFixed(2)}

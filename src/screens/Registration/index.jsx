@@ -1,5 +1,5 @@
-// screens/Registration.jsx
-import React, { useState, useMemo } from 'react';
+// src/screens/Registration/index.jsx
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const categories = ['Aberta', 'Amador 19', 'Amador Light', 'Principiante'];
@@ -28,18 +28,18 @@ export default function Registration({
   const handleNext = () => {
     if (competitors.length < 2)
       return alert('Adicione pelo menos 2 competidores.');
+    if (numRounds < 1)
+      return alert('Número de passadas deve ser pelo menos 1.');
+    if (numRounds > competitors.length - 1)
+      return alert(
+        'Número de passadas não pode ser maior que o total de competidores - 1.'
+      );
+
     setRounds([]);
     setResults([]);
     setFinalResults([]);
     navigate('/duos');
   };
-
-  // 🔹 Cálculo de duplas totais
-  const totalDuplas = useMemo(() => {
-    const n = competitors.length;
-    if (n < 2 || numRounds < 1) return 0;
-    return (n * numRounds) / 2;
-  }, [competitors, numRounds]);
 
   return (
     <div className="container">
@@ -51,9 +51,7 @@ export default function Registration({
             placeholder="Nome do Competidor"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') addCompetitor(); // 🔹 Pressionou Enter → adicionar
-            }}
+            onKeyDown={(e) => e.key === 'Enter' && addCompetitor()}
           />
           <select
             value={category}
@@ -69,26 +67,19 @@ export default function Registration({
         </div>
 
         <div style={{ marginTop: 20 }}>
-          <label>Quantidade de Passadas por Competidor: </label>
+          <label>Quantidade de Passadas: </label>
           <input
             type="number"
             value={numRounds}
             min={1}
+            max={competitors.length > 1 ? competitors.length - 1 : 1}
             onChange={(e) => setNumRounds(Number(e.target.value))}
           />
         </div>
 
-        {/* 🔹 Contagem total */}
         <div style={{ marginTop: 20 }}>
           <strong>Total: {competitors.length} competidores registrados</strong>
         </div>
-
-        {/* 🔹 Preview de quantas duplas serão formadas */}
-        {totalDuplas > 0 && (
-          <div style={{ marginTop: 10, color: '#007bff' }}>
-            Serão geradas <strong>{totalDuplas}</strong> duplas no total.
-          </div>
-        )}
 
         <ul style={{ marginTop: 10 }}>
           {competitors.map((c, i) => (

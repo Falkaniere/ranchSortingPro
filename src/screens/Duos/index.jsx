@@ -16,11 +16,17 @@ export default function Duos({
 }) {
   const navigate = useNavigate();
 
-  // Gera rounds de duplas aleatórias sem repetição
+  // Gera rounds de duplas aleatórias sem repetição// Gera rounds respeitando regras do Ranch Sorting
   const generateRounds = (list, totalPassadasPorCompetidor) => {
     const n = list.length;
     if (n < 2) return [];
 
+    // 🔹 Total de duplas necessárias
+    const totalDuplasNecessarias = Math.floor(
+      (n * totalPassadasPorCompetidor) / 2
+    );
+
+    // 🔹 Todas as combinações possíveis de duplas
     let allCombos = [];
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
@@ -28,43 +34,44 @@ export default function Duos({
       }
     }
 
-    allCombos = allCombos.sort(() => Math.random() - 0.5);
+    // 🔹 Embaralhar
+    const shuffle = (arr) => [...arr].sort(() => Math.random() - 0.5);
+    allCombos = shuffle(allCombos);
 
+    // 🔹 Contadores
     const count = {};
-    list.forEach((c) => {
-      count[c.name] = 0;
-    });
+    list.forEach((c) => (count[c.name] = 0));
 
-    const rounds = [];
-    const usedCombos = new Set();
+    const selectedDuos = [];
 
-    while (true) {
-      const duo = allCombos.find(
-        ([a, b]) =>
-          !usedCombos.has(a.name + '🤝' + b.name) &&
-          count[a.name] < totalPassadasPorCompetidor &&
-          count[b.name] < totalPassadasPorCompetidor
-      );
+    // 🔹 Selecionar duplas
+    for (const [a, b] of allCombos) {
+      if (
+        count[a.name] < totalPassadasPorCompetidor &&
+        count[b.name] < totalPassadasPorCompetidor
+      ) {
+        selectedDuos.push([a, b]);
+        count[a.name]++;
+        count[b.name]++;
 
-      if (!duo) break; // acabou as combinações possíveis
-
-      // Marcar como usada
-      usedCombos.add(duo[0].name + '🤝' + duo[1].name);
-
-      // Atualizar contador
-      count[duo[0].name]++;
-      count[duo[1].name]++;
-
-      rounds.push(duo);
+        if (selectedDuos.length >= totalDuplasNecessarias) break;
+      }
     }
 
-    return [rounds]; // mantém compatibilidade com seu código (array de rounds)
+    // 🔹 Transformar em rounds (cada round tem várias duplas)
+    const rounds = [];
+    for (let i = 0; i < selectedDuos.length; i += n / 2) {
+      rounds.push(selectedDuos.slice(i, i + n / 2));
+    }
+
+    return rounds;
   };
 
   // 🔹 Garante que rounds só sejam gerados caso não venham do import
   useEffect(() => {
     if (rounds.length === 0 && competitors.length > 0) {
-      setRounds(generateRounds(competitors, numRounds));
+      const generated = generateRounds(competitors, numRounds);
+      setRounds(generated);
     }
   }, [competitors, numRounds, rounds, setRounds]);
 

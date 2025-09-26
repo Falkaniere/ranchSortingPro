@@ -1,32 +1,36 @@
 // utils/classification.js
+// 🔹 Determina a categoria da dupla
 export function getDuoCategory(duo) {
   const [c1, c2] = duo.map((c) => c.category);
-
   const is = (cat) => [c1, c2].includes(cat);
 
-  // 1D combinações
+  // 🔹 1D combinações — qualquer dupla que tenha pelo menos um competidor "mais forte"
   if (
-    (is('Aberta') && is('Amador 19')) ||
-    (is('Aberta') && is('Amador Light')) ||
-    (is('Amador 19') && is('Amador Light'))
+    (c1 === 'Aberta' && c2 === 'Aberta') ||
+    (c1 === 'Amador 19' && c2 === 'Amador 19') ||
+    (c1 === 'Aberta' && c2 === 'Amador 19') ||
+    (c1 === 'Aberta' && c2 === 'Amador Light') ||
+    (c1 === 'Amador 19' && c2 === 'Amador Light')
   ) {
     return '1D';
   }
 
-  // 2D combinações
+  // 🔹 2D combinações
   if (
-    (is('Aberta') && is('Principiante')) ||
-    (is('Amador 19') && is('Principiante')) ||
+    (c1 === 'Aberta' && c2 === 'Principiante') ||
+    (c1 === 'Amador 19' && c2 === 'Principiante') ||
     (c1 === 'Amador Light' && c2 === 'Amador Light') ||
-    (is('Amador Light') && is('Principiante')) ||
+    (c1 === 'Amador Light' && c2 === 'Principiante') ||
     (c1 === 'Principiante' && c2 === 'Principiante')
   ) {
     return '2D';
   }
 
+  // Se não encaixar em nenhuma regra → inválido
   return 'INVALID';
 }
 
+// 🔹 Classificação final respeitando regras
 export function classifyFinal(ranking) {
   const final1D = [];
   const final2D = [];
@@ -34,21 +38,20 @@ export function classifyFinal(ranking) {
   for (const r of ranking) {
     const cat = getDuoCategory(r.duo);
 
-    // Se for 1D → só pode entrar em 1D
-    if (cat === '1D' && final1D.length < 10) {
-      final1D.push({ ...r, category: '1D' });
-    }
-
-    // Se for 2D → pode entrar em 1D OU 2D
-    else if (cat === '2D') {
+    if (cat === '1D') {
+      // 1D só entra no 1D
       if (final1D.length < 10) {
-        // tenta classificar no 1D
+        final1D.push({ ...r, category: '1D' });
+      }
+    } else if (cat === '2D') {
+      // 2D pode entrar no 1D
+      if (final1D.length < 10) {
         final1D.push({ ...r, category: '2D->1D' });
       } else if (final2D.length < 10) {
-        // se não couber no 1D, vai para 2D
         final2D.push({ ...r, category: '2D' });
       }
     }
+    // duplas INVALID ficam de fora (desclassificadas)
   }
 
   return { oneD: final1D, twoD: final2D };
