@@ -1,52 +1,50 @@
+// src/screens/FinalResults/index.jsx
 import React from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
-export default function FinalResults() {
+export default function FinalResults({ finalResults = [] }) {
   const navigate = useNavigate();
-  const location = useLocation();
-  const finalResults = location.state?.finalResults || [];
 
   // Agrupar resultados por dupla
   const rankingMap = {};
-
   finalResults.forEach((r) => {
-    const key = r.duo.join('-');
+    const key = r.duo.join('🤝');
     if (!rankingMap[key]) {
       rankingMap[key] = {
         duo: r.duo,
-        passes: [], // tempos de cada passada qualificatória
-        finalTime: 0,
-        finalCattle: 0,
+        pass: r.pass,
+        qualifTime: r.previousTime || 0,
+        finalTime: r.time || 0,
+        finalCattle: r.cattle || 0,
+        qualifBois: r.previousBois || 0, // caso precise futuramente
       };
     }
-    rankingMap[key].passes.push(r.previousTime);
-    rankingMap[key].finalTime = r.time;
-    rankingMap[key].finalCattle = r.cattle;
   });
 
+  // Calcular médias combinadas
   const ranking = Object.values(rankingMap).map((r) => {
-    const totalCattleQualifiers = r.passes.length; // assume 1 boi por passada qualif? ajustável
-    const totalCattle = totalCattleQualifiers + r.finalCattle;
-    const averageTime =
-      (r.passes.reduce((a, b) => a + b, 0) + r.finalTime) /
-      (r.passes.length + 1);
+    const avgTime =
+      r.qualifTime > 0 ? (r.qualifTime + r.finalTime) / 2 : r.finalTime;
+
+    const avgBois =
+      r.qualifBois > 0 ? (r.qualifBois + r.finalCattle) / 2 : r.finalCattle;
+
     return {
       ...r,
-      totalCattle,
-      averageTime,
-      totalCattleQualifiers,
+      avgTime,
+      avgBois,
     };
   });
 
-  // Ordenar: maior quantidade de bois → menor média
+  // Ordenar: maior bois → menor tempo
   ranking.sort((a, b) => {
-    if (b.totalCattle !== a.totalCattle) return b.totalCattle - a.totalCattle;
-    return a.averageTime - b.averageTime;
+    if (b.avgBois !== a.avgBois) return b.avgBois - a.avgBois;
+    return a.avgTime - b.avgTime;
   });
 
   return (
     <div className="container">
-      <h2>Resultado Final 🏆</h2>
+      <h2>🏆 Resultado Final</h2>
       <div className="card">
         <ol style={{ paddingLeft: 20 }}>
           {ranking.map((r, index) => (
@@ -65,10 +63,11 @@ export default function FinalResults() {
                 {index + 1}. {r.duo[0]} & {r.duo[1]}
               </span>
               <span style={{ textAlign: 'right', minWidth: 400 }}>
-                Qualif: {r.passes.join('s, ')}s | Qtd Boi:{' '}
-                {r.totalCattleQualifiers} | Final: {r.finalTime}s | Qtd Boi
-                Final: {r.finalCattle} | Média: {r.averageTime.toFixed(2)}s |
-                Total Bois: {r.totalCattle}
+                Qualif Med: {r.qualifTime.toFixed(3)}s | Final:{' '}
+                {r.finalTime.toFixed(3)}s | Bois Final: {r.finalCattle} |{' '}
+                <strong>
+                  Média: {r.avgTime.toFixed(3)}s • Bois: {r.avgBois.toFixed(2)}
+                </strong>
               </span>
             </li>
           ))}

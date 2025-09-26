@@ -1,0 +1,14 @@
+está duplicando duplas
+
+terminar este prompt:
+sim, faça a mesma lógica de médias combinadas (Qualif + Final) direto na tela de 
+Resultados Finais, para ficar tudo padronizado. Vamos também fazer um ajuste na 
+ordem dos participantes. Após a primeira passada, a segunda passada será ordenado 
+do pior para o melhor tempo, sendo assim quem fez o pior tempo nas qualificatorias 
+fica em primeiro nas finais, apesar dessa ordenação o número da passada precisa permanecer 
+com a dupla
+
+gerar os relatorios
+
+cadastro de categoria
+classificar competidor de acordo com categoria
