@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import * as XLSX from 'xlsx';
+import { saveAs } from 'file-saver';
 
 export default function Duos({ competitors, numRounds, rounds, setRounds }) {
   const navigate = useNavigate();
@@ -78,6 +80,41 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
     doc.save('duplas.pdf');
   };
 
+  const handleExportExcel = () => {
+    // Montar os dados para a planilha
+    const data = duosWithIds.map((item) => ({
+      ORD: item.id,
+      Competidores: `${item.duo[0]}\n${item.duo[1]}`, // nomes embaixo um do outro
+      Tempo: '', // coluna vazia
+    }));
+
+    // Criar worksheet
+    const worksheet = XLSX.utils.json_to_sheet(data, { skipHeader: false });
+
+    // Ajustar largura das colunas
+    worksheet['!cols'] = [
+      { wch: 5 }, // ORD
+      { wch: 30 }, // Competidores
+      { wch: 10 }, // Tempo
+    ];
+
+    // Criar workbook
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Duplas');
+
+    // Gerar arquivo
+    const excelBuffer = XLSX.write(workbook, {
+      bookType: 'xlsx',
+      type: 'array',
+    });
+
+    const blob = new Blob([excelBuffer], {
+      type: 'application/octet-stream',
+    });
+
+    saveAs(blob, 'Duplas.xlsx');
+  };
+
   return (
     <div className="container">
       <h2>Passadas & Duplas</h2>
@@ -104,6 +141,9 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
       <div style={{ marginTop: 20, display: 'flex', gap: '10px' }}>
         <button onClick={() => navigate('/record')}>Start Qualifiers</button>
         <button onClick={generatePDF}>Gerar PDF de Duplas</button>
+        <button onClick={handleExportExcel} style={{ marginTop: 10 }}>
+          Exportar Excel
+        </button>
       </div>
     </div>
   );
