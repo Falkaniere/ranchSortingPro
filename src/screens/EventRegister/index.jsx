@@ -8,6 +8,12 @@ export default function EventRegister({ rounds, results, setResults }) {
   const [editIndex, setEditIndex] = useState(null);
   const navigate = useNavigate();
 
+  // Geração de IDs fixos de passadas
+  const duosWithIds = rounds.flat().map((duo, index) => ({
+    id: index + 1, // número fixo da passada
+    duo,
+  }));
+
   const duos = rounds[currentRound] || [];
   const pendingDuos = duos.filter(
     (d) =>
@@ -16,26 +22,15 @@ export default function EventRegister({ rounds, results, setResults }) {
       )
   );
 
-  const saveRound = () => {
-    if (selectedDuo.length === 0) return alert('Selecione uma dupla.');
-
-    const bullNum = Number(form.bullNumber);
-    const cattleNum = Number(form.cattle);
-    const timeNum = Number(form.time);
-
-    if (isNaN(bullNum) || bullNum < 0 || bullNum > 9)
-      return alert('Número do boi inválido! Use 0-9.');
-    if (isNaN(cattleNum) || cattleNum < 0 || cattleNum > 10)
-      return alert('Quantidade de bois inválida! Use 0-10.');
-    if (isNaN(timeNum) || timeNum <= 0)
-      return alert('Tempo inválido! Deve ser maior que 0.');
-
+  const saveRound = (duo, bullNum, cattleNum, timeNum) => {
     const newResult = {
       round: currentRound,
-      duo: selectedDuo,
+      duo,
       bullNumber: bullNum,
       cattle: cattleNum,
       time: timeNum,
+      id: duosWithIds.find((item) => item.duo.join('🤝') === duo.join('🤝'))
+        ?.id, // mantém ID fixo
     };
 
     if (editIndex !== null) {
@@ -49,6 +44,28 @@ export default function EventRegister({ rounds, results, setResults }) {
 
     setSelectedDuo([]);
     setForm({ bullNumber: '', cattle: '', time: '' });
+  };
+
+  const handleSave = () => {
+    if (selectedDuo.length === 0) return alert('Selecione uma dupla.');
+
+    const bullNum = Number(form.bullNumber);
+    const cattleNum = Number(form.cattle);
+    const timeNum = Number(form.time);
+
+    if (isNaN(bullNum) || bullNum < 0 || bullNum > 9)
+      return alert('Número do boi inválido! Use 0-9.');
+    if (isNaN(cattleNum) || cattleNum < 0 || cattleNum > 10)
+      return alert('Quantidade de bois inválida! Use 0-10.');
+    if (isNaN(timeNum) || timeNum <= 0)
+      return alert('Tempo inválido! Deve ser maior que 0.');
+
+    saveRound(selectedDuo, bullNum, cattleNum, timeNum);
+  };
+
+  const handleSAT = () => {
+    if (selectedDuo.length === 0) return alert('Selecione uma dupla.');
+    saveRound(selectedDuo, 0, 0, 120); // automaticamente S.A.T
   };
 
   const handleEdit = (index) => {
@@ -74,14 +91,19 @@ export default function EventRegister({ rounds, results, setResults }) {
       <div className="card">
         <h3>Duplas pendentes</h3>
         <ul>
-          {pendingDuos.map((d, i) => (
-            <li key={i}>
-              {d[0]} 🤝 {d[1]}
-              <button onClick={() => setSelectedDuo(d)} className="secondary">
-                Registrar
-              </button>
-            </li>
-          ))}
+          {pendingDuos.map((d, i) => {
+            const duoId = duosWithIds.find(
+              (item) => item.duo.join('🤝') === d.join('🤝')
+            )?.id;
+            return (
+              <li key={i}>
+                Passada {duoId}: {d[0]} 🤝 {d[1]}
+                <button onClick={() => setSelectedDuo(d)} className="secondary">
+                  Registrar
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         {selectedDuo.length > 0 && (
@@ -89,7 +111,7 @@ export default function EventRegister({ rounds, results, setResults }) {
             <h3>
               Registrar: {selectedDuo[0]} & {selectedDuo[1]}
             </h3>
-            <div className="flex">
+            <div className="flex" style={{ gap: 10 }}>
               <input
                 type="number"
                 placeholder="Número do boi (0-9)"
@@ -108,7 +130,6 @@ export default function EventRegister({ rounds, results, setResults }) {
                 max={10}
                 onChange={(e) => setForm({ ...form, cattle: e.target.value })}
               />
-
               <input
                 type="number"
                 placeholder="Tempo (s)"
@@ -117,8 +138,11 @@ export default function EventRegister({ rounds, results, setResults }) {
                 step={0.001}
                 onChange={(e) => setForm({ ...form, time: e.target.value })}
               />
-              <button onClick={saveRound}>
+              <button onClick={handleSave}>
                 {editIndex !== null ? 'Atualizar' : 'Salvar'}
+              </button>
+              <button className="secondary" onClick={handleSAT}>
+                Marcar S.A.T
               </button>
             </div>
           </div>
@@ -126,13 +150,14 @@ export default function EventRegister({ rounds, results, setResults }) {
       </div>
 
       <div className="card" style={{ marginTop: 20 }}>
-        <h3>Registered Results</h3>
+        <h3>Resultados</h3>
         <ul>
           {results
             .filter((r) => r.round === currentRound)
             .map((r, i) => (
               <li key={i}>
-                {r.duo[0]} & {r.duo[1]} → 🐂 {r.cattle} | ⏱ {r.time}s
+                Passada {r.id}: {r.duo[0]} & {r.duo[1]} → 🐂 {r.cattle} | ⏱{' '}
+                {r.time}s
                 <button
                   onClick={() => handleEdit(results.indexOf(r))}
                   className="secondary"

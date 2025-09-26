@@ -1,4 +1,3 @@
-// screens/Duos.jsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -38,22 +37,38 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
     }
   }, [competitors, numRounds, rounds, setRounds]);
 
+  // Flatten para criar lista sequencial de passadas
+  const duosWithIds = rounds.flat().map((duo, index) => ({
+    id: index + 1,
+    duo,
+  }));
+
   return (
     <div className="container">
       <h2>Passadas & Duplas</h2>
-      {rounds.map((r, idx) => (
-        <div key={idx} className="card">
-          <h3>Passadas {idx + 1}</h3>
-          <ul>
-            {r.map((d, i) => (
-              <li key={i}>
-                {d[0]} 🤝 {d[1]}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-      <button onClick={() => navigate('/record')}>Start Qualifiers</button>
+
+      <table className="card" style={{ width: '100%', textAlign: 'left' }}>
+        <thead>
+          <tr>
+            <th>Passada</th>
+            <th>Competidores</th>
+          </tr>
+        </thead>
+        <tbody>
+          {duosWithIds.map((item) => (
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>
+                {item.duo[0]} 🤝 {item.duo[1]}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <button onClick={() => navigate('/record')} style={{ marginTop: 20 }}>
+        Start Qualifiers
+      </button>
     </div>
   );
 }
