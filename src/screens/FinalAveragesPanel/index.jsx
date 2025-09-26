@@ -1,23 +1,16 @@
-// src/components/FinalAveragesPanel.jsx
 import React, { useMemo } from 'react';
+import { getDuoKey } from '../utils/getDuoKey';
 
-/**
- * props:
- * - rounds
- * - qualifiersResults: array (qualificatórias)
- * - finalResults: array (final)
- */
 export default function FinalAveragesPanel({
   rounds = [],
   qualifiersResults = [],
   finalResults = [],
 }) {
-  // duo -> id map
   const duoIdMap = useMemo(() => {
     const map = new Map();
     rounds.flat().forEach((duo, idx) => {
       if (!duo) return;
-      map.set(duo.join('🤝'), idx + 1);
+      map.set(getDuoKey(duo), idx + 1);
     });
     return map;
   }, [rounds]);
@@ -25,9 +18,8 @@ export default function FinalAveragesPanel({
   const combined = useMemo(() => {
     const map = new Map();
 
-    // qualificatórias
     qualifiersResults.forEach((r) => {
-      const key = r.duo.join('🤝');
+      const key = getDuoKey(r.duo);
       if (!map.has(key))
         map.set(key, {
           duo: r.duo,
@@ -44,9 +36,8 @@ export default function FinalAveragesPanel({
       item.qualSumT += Number(r.time || 0);
     });
 
-    // final results
     finalResults.forEach((r) => {
-      const key = r.duo.join('🤝');
+      const key = getDuoKey(r.duo);
       if (!map.has(key))
         map.set(key, {
           duo: r.duo,
@@ -63,33 +54,23 @@ export default function FinalAveragesPanel({
       item.finalSumT += Number(r.time || 0);
     });
 
-    // transformar em array com médias
     const arr = Array.from(map.values()).map((it) => {
       const totalCount = it.qualCount + it.finalCount;
       const totalC = it.qualSumC + it.finalSumC;
       const totalT = it.qualSumT + it.finalSumT;
-      const avgQualC = it.qualCount ? it.qualSumC / it.qualCount : 0;
-      const avgQualT = it.qualCount ? it.qualSumT / it.qualCount : 0;
-      const avgFinalC = it.finalCount ? it.finalSumC / it.finalCount : 0;
-      const avgFinalT = it.finalCount ? it.finalSumT / it.finalCount : 0;
-      const avgCombinedC = totalCount ? totalC / totalCount : 0;
-      const avgCombinedT = totalCount ? totalT / totalCount : 0;
+
       return {
         duo: it.duo,
-        id: duoIdMap.get(it.duo.join('🤝')) || null,
-        qualCount: it.qualCount,
-        avgQualC,
-        avgQualT,
-        finalCount: it.finalCount,
-        avgFinalC,
-        avgFinalT,
-        avgCombinedC,
-        avgCombinedT,
-        totalCount,
+        id: duoIdMap.get(getDuoKey(it.duo)) || null,
+        avgQualC: it.qualCount ? it.qualSumC / it.qualCount : 0,
+        avgQualT: it.qualCount ? it.qualSumT / it.qualCount : 0,
+        avgFinalC: it.finalCount ? it.finalSumC / it.finalCount : 0,
+        avgFinalT: it.finalCount ? it.finalSumT / it.finalCount : 0,
+        avgCombinedC: totalCount ? totalC / totalCount : 0,
+        avgCombinedT: totalCount ? totalT / totalCount : 0,
       };
     });
 
-    // ordenar por avgCombinedC desc, avgCombinedT asc
     arr.sort((a, b) => {
       if (b.avgCombinedC !== a.avgCombinedC)
         return b.avgCombinedC - a.avgCombinedC;
@@ -108,52 +89,32 @@ export default function FinalAveragesPanel({
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr style={{ textAlign: 'left', borderBottom: '1px solid #eee' }}>
-              <th style={{ padding: '6px' }}>#</th>
-              <th style={{ padding: '6px' }}>Dupla</th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>Avg Q Bois</th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>
-                Avg Q Tempo
-              </th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>Final Bois</th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>
-                Final Tempo
-              </th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>
-                Avg Total Bois
-              </th>
-              <th style={{ padding: '6px', textAlign: 'right' }}>
-                Avg Total Tempo
-              </th>
+              <th>#</th>
+              <th>Dupla</th>
+              <th>Avg Q Bois</th>
+              <th>Avg Q Tempo</th>
+              <th>Final Bois</th>
+              <th>Final Tempo</th>
+              <th>Avg Total Bois</th>
+              <th>Avg Total Tempo</th>
             </tr>
           </thead>
           <tbody>
             {combined.map((r, i) => (
               <tr
-                key={r.duo.join('-')}
+                key={getDuoKey(r.duo)}
                 style={{ borderBottom: '1px solid #fafafa' }}
               >
-                <td style={{ padding: '6px', width: 28 }}>{r.id ?? i + 1}</td>
-                <td style={{ padding: '6px' }}>
-                  {r.duo[0]} & {r.duo[1]}
+                <td>{r.id ?? i + 1}</td>
+                <td>
+                  {r.duo[0].name} & {r.duo[1].name}
                 </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgQualC.toFixed(2)}
-                </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgQualT.toFixed(2)}
-                </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgFinalC ? r.avgFinalC.toFixed(2) : '-'}
-                </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgFinalT ? r.avgFinalT.toFixed(2) : '-'}
-                </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgCombinedC.toFixed(2)}
-                </td>
-                <td style={{ padding: '6px', textAlign: 'right' }}>
-                  {r.avgCombinedT.toFixed(2)}
-                </td>
+                <td>{r.avgQualC.toFixed(2)}</td>
+                <td>{r.avgQualT.toFixed(2)}</td>
+                <td>{r.avgFinalC ? r.avgFinalC.toFixed(2) : '-'}</td>
+                <td>{r.avgFinalT ? r.avgFinalT.toFixed(2) : '-'}</td>
+                <td>{r.avgCombinedC.toFixed(2)}</td>
+                <td>{r.avgCombinedT.toFixed(2)}</td>
               </tr>
             ))}
           </tbody>

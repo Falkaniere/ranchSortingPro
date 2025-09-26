@@ -1,4 +1,4 @@
-// Home.jsx
+// src/screens/Home/index.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -24,7 +24,7 @@ export default function Home({
 
   const continueWithExisting = () => {
     if (competitors.length < 2) {
-      alert('⚠️ You need at least 2 competitors to continue.');
+      alert('⚠️ Você precisa de pelo menos 2 competidores.');
       return;
     }
     setRounds([]);
@@ -37,7 +37,7 @@ export default function Home({
     if (newCompetitor.trim() === '') return;
     setCompetitors([
       ...competitors,
-      { name: newCompetitor.trim(), category: 'Aberta' }, // default category
+      { name: newCompetitor.trim(), category: 'Aberta' }, // categoria padrão
     ]);
     setNewCompetitor('');
   };
@@ -51,7 +51,6 @@ export default function Home({
     setEditingName('');
   };
 
-  // 🔹 Nova função para remover competidor
   const removeCompetitor = (index) => {
     if (window.confirm('Tem certeza que deseja remover este competidor?')) {
       const updated = competitors.filter((_, i) => i !== index);
@@ -64,8 +63,6 @@ export default function Home({
       <h1>🏇 Ranch Sorting</h1>
       <div className="flex" style={{ justifyContent: 'center', margin: 20 }}>
         <button onClick={startNewCompetition}>Iniciar Nova Competição</button>
-
-        {/* 🔹 Novo botão para ir direto à tela de Duos e importar */}
         <button className="secondary" onClick={() => navigate('/duos')}>
           Já tenho sorteio
         </button>
@@ -75,17 +72,18 @@ export default function Home({
           </button>
         )}
       </div>
-      {competitors.length > 1 && (
-        <div style={{ marginBottom: 20 }}>
-          <input
-            type="text"
-            placeholder="Adicionar competidor"
-            value={newCompetitor}
-            onChange={(e) => setNewCompetitor(e.target.value)}
-          />
-          <button onClick={addCompetitor}>Adicionar</button>
-        </div>
-      )}
+
+      {/* 🔹 Input de adicionar competidores sempre visível */}
+      <div style={{ marginBottom: 20 }}>
+        <input
+          type="text"
+          placeholder="Adicionar competidor"
+          value={newCompetitor}
+          onChange={(e) => setNewCompetitor(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addCompetitor()}
+        />
+        <button onClick={addCompetitor}>Adicionar</button>
+      </div>
 
       {competitors.length > 0 && (
         <div className="card">
@@ -100,6 +98,7 @@ export default function Home({
                       type="text"
                       value={editingName}
                       onChange={(e) => setEditingName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && saveEdit(i)}
                     />
                     <button onClick={() => saveEdit(i)}>Salvar</button>
                     <button onClick={() => setEditingIndex(null)}>
