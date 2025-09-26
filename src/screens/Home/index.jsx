@@ -1,3 +1,4 @@
+// Home.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +27,6 @@ export default function Home({
       alert('⚠️ You need at least 2 competitors to continue.');
       return;
     }
-    // Resetar tudo exceto nomes
     setRounds([]);
     setResults([]);
     setFinalResults([]);
@@ -35,17 +35,28 @@ export default function Home({
 
   const addCompetitor = () => {
     if (newCompetitor.trim() === '') return;
-    setCompetitors([...competitors, newCompetitor.trim()]);
+    setCompetitors([
+      ...competitors,
+      { name: newCompetitor.trim(), category: 'Aberta' }, // default category
+    ]);
     setNewCompetitor('');
   };
 
   const saveEdit = (index) => {
     if (editingName.trim() === '') return;
     const updated = [...competitors];
-    updated[index] = editingName.trim();
+    updated[index] = { ...updated[index], name: editingName.trim() };
     setCompetitors(updated);
     setEditingIndex(null);
     setEditingName('');
+  };
+
+  // 🔹 Nova função para remover competidor
+  const removeCompetitor = (index) => {
+    if (window.confirm('Tem certeza que deseja remover este competidor?')) {
+      const updated = competitors.filter((_, i) => i !== index);
+      setCompetitors(updated);
+    }
   };
 
   return (
@@ -92,15 +103,22 @@ export default function Home({
                   </>
                 ) : (
                   <>
-                    👤 {c}{' '}
+                    👤 {c.name} — <strong>{c.category}</strong>{' '}
                     <button
                       onClick={() => {
                         setEditingIndex(i);
-                        setEditingName(c);
+                        setEditingName(c.name);
                       }}
                       className="secondary"
                     >
                       Editar
+                    </button>
+                    <button
+                      onClick={() => removeCompetitor(i)}
+                      className="danger"
+                      style={{ marginLeft: 10 }}
+                    >
+                      Remover
                     </button>
                   </>
                 )}

@@ -134,11 +134,11 @@ export default function Final({
               <div key={d.pass} className="duo-card">
                 <div className="duo-info">
                   <strong>
-                    #{d.pass} — {d.duo[0]} & {d.duo[1]}
+                    #{d.pass} — {d.duo[0].name} & {d.duo[1].name}
                   </strong>
                   <span>
-                    Qualif avg:{' '}
-                    {d.avgTempo > 0 ? `${d.avgTempo.toFixed(3)}s` : '-'} • Avg
+                    Qualif med:{' '}
+                    {d.avgTempo > 0 ? `${d.avgTempo.toFixed(3)}s` : '-'} • med
                     bois: {d.avgBois ? d.avgBois.toFixed(2) : '-'}
                   </span>
                 </div>
@@ -184,7 +184,7 @@ export default function Final({
                     <td>{idx + 1}</td>
                     <td>{d.pass}</td>
                     <td>
-                      {d.duo[0]} & {d.duo[1]}
+                      {d.duo[0].name} & {d.duo[1].name}
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       {d.avgTempo > 0 ? d.avgTempo.toFixed(3) : '-'}
@@ -213,8 +213,9 @@ export default function Final({
       {selected && (
         <div className="card" style={{ marginTop: 20 }}>
           <h3>
-            Registrar Final — #{selected.pass} {selected.duo[0]} &{' '}
-            {selected.duo[1]}
+            Registrar Final — #{selected.pass} {selected.duo[0].name} &{' '}
+            {selected.duo[1].name}
+            {selected.duo[1].pass}
           </h3>
           <div className="flex">
             <input
@@ -255,7 +256,8 @@ export default function Final({
         <ul>
           {finalResults.map((r, i) => (
             <li key={`${r.pass}-${i}`}>
-              #{r.pass} — {r.duo[0]} & {r.duo[1]} → 🐂 {r.cattle} | ⏱ {r.time}s
+              #{r.pass} — {r.duo[0].name} & {r.duo[1].name} → 🐂 {r.cattle} | ⏱{' '}
+              {r.time}s
             </li>
           ))}
         </ul>

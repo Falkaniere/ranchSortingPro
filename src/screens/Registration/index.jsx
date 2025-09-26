@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+const categories = ['Aberta', 'Amador 19', 'Amador Light', 'Principiante'];
+
 export default function Registration({
   competitors,
   setCompetitors,
@@ -12,18 +14,20 @@ export default function Registration({
   setFinalResults,
 }) {
   const [name, setName] = useState('');
+  const [category, setCategory] = useState(categories[0]);
   const navigate = useNavigate();
 
   const addCompetitor = () => {
     if (name.trim() !== '') {
-      setCompetitors([...competitors, name.trim()]);
+      setCompetitors([...competitors, { name: name.trim(), category }]);
       setName('');
+      setCategory(categories[0]);
     }
   };
 
   const handleNext = () => {
-    if (competitors.length < 2) return alert('Add at least 2 competitors.');
-    // Reset rounds e resultados
+    if (competitors.length < 2)
+      return alert('Adicione pelo menos 2 competidores.');
     setRounds([]);
     setResults([]);
     setFinalResults([]);
@@ -41,6 +45,16 @@ export default function Registration({
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
+          <select
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+          >
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
           <button onClick={addCompetitor}>Adicionar</button>
         </div>
 
@@ -56,7 +70,9 @@ export default function Registration({
 
         <ul style={{ marginTop: 20 }}>
           {competitors.map((c, i) => (
-            <li key={i}>👤 {c}</li>
+            <li key={i}>
+              👤 {c.name} — <strong>{c.category}</strong>
+            </li>
           ))}
         </ul>
 

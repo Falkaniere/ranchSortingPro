@@ -5,6 +5,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
+import { getDuoKey } from '@screens/Qualifiers';
 
 export default function FinalResults({ finalResults = [] }) {
   const navigate = useNavigate();
@@ -12,7 +13,8 @@ export default function FinalResults({ finalResults = [] }) {
   // Agrupar resultados por dupla
   const rankingMap = {};
   finalResults.forEach((r) => {
-    const key = r.duo.join('🤝');
+    const key = getDuoKey(r.duo);
+
     if (!rankingMap[key]) {
       rankingMap[key] = {
         duo: r.duo,
@@ -55,7 +57,7 @@ export default function FinalResults({ finalResults = [] }) {
 
     const tableData = ranking.map((r, index) => [
       index + 1, // ORD
-      `${r.duo[0]}\n${r.duo[1]}`, // Competidores um embaixo do outro
+      `${r.duo[0].name}\n${r.duo[1].name}`, // Competidores um embaixo do outro
       r.qualifTime.toFixed(3),
       r.finalTime.toFixed(3),
       r.finalCattle,
@@ -101,7 +103,7 @@ export default function FinalResults({ finalResults = [] }) {
   const handleExportExcel = () => {
     const data = ranking.map((r, index) => ({
       ORD: index + 1,
-      Competidores: `${r.duo[0]}\n${r.duo[1]}`,
+      Competidores: `${r.duo[0].name}\n${r.duo[1].name}`,
       'Qualif (s)': r.qualifTime.toFixed(3),
       'Final (s)': r.finalTime.toFixed(3),
       'Bois Final': r.finalCattle,
@@ -149,7 +151,7 @@ export default function FinalResults({ finalResults = [] }) {
               }}
             >
               <span style={{ fontWeight: 'bold' }}>
-                {index + 1}. {r.duo[0]} & {r.duo[1]}
+                {index + 1}. {r.duo[0].name} & {r.duo[1].name}
               </span>
               <span style={{ textAlign: 'right', minWidth: 400 }}>
                 Qualif: {r.qualifTime.toFixed(3)}s | Final:{' '}

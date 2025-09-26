@@ -1,3 +1,4 @@
+// src/screens/Duos.jsx
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import jsPDF from 'jspdf';
@@ -12,15 +13,15 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
     const roundsArray = [];
     const n = list.length;
     const copy = [...list];
-    if (n % 2 !== 0) copy.push('ghost');
+    if (n % 2 !== 0) copy.push({ name: 'ghost', category: '' });
 
     for (let r = 0; r < totalRounds; r++) {
       const duos = [];
       const used = new Set();
       for (let i = 0; i < copy.length; i++) {
-        if (used.has(copy[i]) || copy[i] === 'ghost') continue;
+        if (used.has(copy[i]) || copy[i].name === 'ghost') continue;
         for (let j = i + 1; j < copy.length; j++) {
-          if (!used.has(copy[j]) && copy[j] !== 'ghost') {
+          if (!used.has(copy[j]) && copy[j].name !== 'ghost') {
             duos.push([copy[i], copy[j]]);
             used.add(copy[i]);
             used.add(copy[j]);
@@ -56,7 +57,7 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
 
     const tableData = duosWithIds.map((item) => [
       item.id, // ORD
-      `${item.duo[0]}\n${item.duo[1]}`, // Competidores um embaixo do outro
+      `${item.duo[0]?.name}\n${item.duo[1]?.name}`, // Competidores (apenas nomes)
       '', // Tempo vazio
     ]);
 
@@ -81,28 +82,23 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
   };
 
   const handleExportExcel = () => {
-    // Montar os dados para a planilha
     const data = duosWithIds.map((item) => ({
       ORD: item.id,
-      Competidores: `${item.duo[0]}\n${item.duo[1]}`, // nomes embaixo um do outro
+      Competidores: `${item.duo[0]?.name}\n${item.duo[1]?.name}`,
       Tempo: '', // coluna vazia
     }));
 
-    // Criar worksheet
     const worksheet = XLSX.utils.json_to_sheet(data, { skipHeader: false });
 
-    // Ajustar largura das colunas
     worksheet['!cols'] = [
       { wch: 5 }, // ORD
       { wch: 30 }, // Competidores
       { wch: 10 }, // Tempo
     ];
 
-    // Criar workbook
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Duplas');
 
-    // Gerar arquivo
     const excelBuffer = XLSX.write(workbook, {
       bookType: 'xlsx',
       type: 'array',
@@ -131,7 +127,7 @@ export default function Duos({ competitors, numRounds, rounds, setRounds }) {
             <tr key={item.id}>
               <td>{item.id}</td>
               <td>
-                {item.duo[0]} 🤝 {item.duo[1]}
+                {item.duo[0]?.name} 🤝 {item.duo[1]?.name}
               </td>
             </tr>
           ))}
