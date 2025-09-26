@@ -13,10 +13,11 @@ export default function RoundsOverview({ rounds = [], results = [] }) {
   }));
 
   // status: registered? (checa se existe algum resultado com id)
-  const isRegistered = (id) => results.some((r) => r.id === id);
+  const isRegistered = (id) => results.some((result) => result.id === id);
 
   // próximo id pendente (menor que não está registrado)
-  const nextPending = duosWithIds.find((d) => !isRegistered(d.id))?.id || null;
+  const nextPending =
+    duosWithIds.find((duo) => !isRegistered(duo.id))?.id || null;
 
   return (
     <div

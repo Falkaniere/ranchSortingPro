@@ -7,26 +7,27 @@ export default function QualifiersResults({ results }) {
   const ranking = [];
 
   // Agrupar por dupla
-  results.forEach((r) => {
-    const key = r.duo.join('-');
-    let item = ranking.find((x) => x.key === key);
+  results.forEach((result) => {
+    const key = result.duo.join('-');
+    let item = ranking.find((ranked) => ranked.key === key);
     if (!item) {
       item = {
         key,
-        duo: r.duo,
+        duo: result.duo,
         totalCattle: 0,
         bestTime: Infinity,
       };
       ranking.push(item);
     }
-    item.totalCattle += r.cattle;
-    if (r.time < item.bestTime) item.bestTime = r.time;
+    item.totalCattle += result.cattle;
+    if (result.time < item.bestTime) item.bestTime = result.time;
   });
 
   // Ordenar: maior quantidade de bois → menor tempo
-  ranking.sort((a, b) => {
-    if (b.totalCattle !== a.totalCattle) return b.totalCattle - a.totalCattle;
-    return a.bestTime - b.bestTime;
+  ranking.sort((first, second) => {
+    if (second.totalCattle !== first.totalCattle)
+      return second.totalCattle - first.totalCattle;
+    return first.bestTime - second.bestTime;
   });
 
   return (
@@ -34,9 +35,10 @@ export default function QualifiersResults({ results }) {
       <h2>Ranking das Qualificatórias</h2>
       <div className="card">
         <ol>
-          {ranking.map((r) => (
-            <li key={r.key}>
-              {r.duo[0]} & {r.duo[1]} → {r.totalCattle} bois | ⏱ {r.bestTime}s
+          {ranking.map((ranked) => (
+            <li key={ranked.key}>
+              {ranked.duo[0]} & {ranked.duo[1]} → {ranked.totalCattle} bois | ⏱{' '}
+              {ranked.bestTime}s
             </li>
           ))}
         </ol>

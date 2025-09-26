@@ -98,12 +98,12 @@ export default function Final({ results, finalResults, setFinalResults }) {
               <tr>
                 <th>#</th>
                 <th>Dupla</th>
-                <th>Avg Q Bois</th>
-                <th>Avg Q Tempo</th>
+                <th>Med Bois</th>
+                <th>Med Tempo</th>
                 <th>Final Bois</th>
                 <th>Final Tempo</th>
-                <th>Total Avg Bois</th>
-                <th>Total Avg Tempo</th>
+                <th>Total Med Bois</th>
+                <th>Total Med Tempo</th>
               </tr>
             </thead>
             <tbody>

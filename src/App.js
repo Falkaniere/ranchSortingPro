@@ -5,11 +5,12 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './screens/Home';
 import Registration from './screens/Registration';
 import Duos from './screens/Duos';
-import EventRegister from './screens/EventRegister';
+// import EventRegister from './screens/EventRegister';
 import QualifiersResults from './screens/QualifiersResults';
 import Final from './screens/Final';
 import FinalResults from './screens/FinalResults';
 import RoundsOverview from './screens/RoundsOverview';
+import Qualifiers from '@screens/Qualifiers';
 
 export default function App() {
   const [competitors, setCompetitors] = useState([]);
@@ -61,8 +62,8 @@ export default function App() {
         <Route
           path="/record"
           element={
-            <EventRegister
-              rounds={rounds}
+            <Qualifiers
+              duos={rounds.flat()} // 🔹 passa todas as duplas
               results={results}
               setResults={setResults}
             />
