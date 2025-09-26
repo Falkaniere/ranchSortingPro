@@ -4,7 +4,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import * as XLSX from 'xlsx';
 import { saveAs } from 'file-saver';
-import { getDuoKey } from '../Qualifiers';
+import { getDuoKey } from '../../utils/getDuoKey';
 
 export default function FinalResults() {
   const navigate = useNavigate();
@@ -130,7 +130,7 @@ export default function FinalResults() {
     saveAs(blob, 'resultado_final.xlsx');
   };
 
-  // 🔹 Exportar PDF por competidor (já existia)
+  // 🔹 Exportar PDF por competidor
   const generatePDFByCompetitor = (competitorName) => {
     const doc = new jsPDF();
     doc.setFontSize(14);
@@ -204,7 +204,7 @@ export default function FinalResults() {
           </thead>
           <tbody>
             {ranking.map((r, i) => (
-              <tr key={i}>
+              <tr key={getDuoKey(r.duo)}>
                 <td>{i + 1}</td>
                 <td>
                   {r.duo[0].name} & {r.duo[1].name}
