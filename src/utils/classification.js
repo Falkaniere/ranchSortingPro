@@ -1,43 +1,51 @@
 // utils/classification.js
 
-/**
- * Define a categoria da dupla (1D ou 2D) com base nas combinações de categorias dos competidores.
- */
+// 🔹 Determina a categoria da dupla
 export function getDuoCategory(duo) {
   const [c1, c2] = duo.map((c) => c.category);
+  const set = new Set([c1, c2]);
 
-  const is = (cat) => [c1, c2].includes(cat);
+  // 🔹 Regras 1D (duplas fortes)
+  const oneDCombos = [
+    ['Aberta', 'Aberta'],
+    ['Amador 19', 'Amador 19'],
+    ['Aberta', 'Amador 19'],
+    ['Aberta', 'Amador Light'],
+    ['Amador 19', 'Amador Light'],
+  ].map((arr) => new Set(arr));
 
-  // 🔹 Combinações válidas de 1D
   if (
-    (is('Aberta') && is('Amador 19')) ||
-    (is('Aberta') && is('Amador Light')) ||
-    (is('Amador 19') && is('Amador Light'))
+    oneDCombos.some(
+      (combo) =>
+        combo.size === set.size && [...combo].every((cat) => set.has(cat))
+    )
   ) {
     return '1D';
   }
 
-  // 🔹 Combinações válidas de 2D
+  // 🔹 Regras 2D (mais fracas ou principiantes)
+  const twoDCombos = [
+    ['Aberta', 'Principiante'],
+    ['Amador 19', 'Principiante'],
+    ['Amador Light', 'Amador Light'],
+    ['Amador Light', 'Principiante'],
+    ['Principiante', 'Principiante'],
+  ].map((arr) => new Set(arr));
+
   if (
-    (is('Aberta') && is('Principiante')) ||
-    (is('Amador 19') && is('Principiante')) ||
-    (is('Amador Light') && is('Principiante')) ||
-    (c1 === 'Amador Light' && c2 === 'Amador Light') ||
-    (c1 === 'Principiante' && c2 === 'Principiante')
+    twoDCombos.some(
+      (combo) =>
+        combo.size === set.size && [...combo].every((cat) => set.has(cat))
+    )
   ) {
     return '2D';
   }
 
-  // 🔹 Se não bate em nenhuma regra → inválido
+  // Se não encaixar em nenhuma regra → inválido
   return 'INVALID';
 }
 
-/**
- * Classifica o ranking final em 1D e 2D respeitando regras:
- * - 1D tem prioridade de preenchimento (até 10 vagas).
- * - Duplas 2D podem subir para 1D caso sobre vaga.
- * - Caso contrário, ficam no 2D (até 10 vagas).
- */
+// 🔹 Classificação final respeitando regras
 export function classifyFinal(ranking) {
   const final1D = [];
   const final2D = [];
@@ -46,16 +54,21 @@ export function classifyFinal(ranking) {
     const cat = getDuoCategory(r.duo);
 
     if (cat === '1D') {
+      // 1D só entra no 1D
       if (final1D.length < 10) {
         final1D.push({ ...r, category: '1D' });
       }
     } else if (cat === '2D') {
+      // 2D pode entrar no 1D
       if (final1D.length < 10) {
         final1D.push({ ...r, category: '2D->1D' });
-      } else if (final2D.length < 10) {
+      }
+      // senão vai pro 2D
+      else if (final2D.length < 10) {
         final2D.push({ ...r, category: '2D' });
       }
     }
+    // duplas INVALID ficam de fora
   }
 
   return { oneD: final1D, twoD: final2D };
