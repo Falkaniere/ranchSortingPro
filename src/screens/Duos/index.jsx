@@ -21,7 +21,6 @@ export default function Duos({
     const n = list.length;
     if (n < 2) return [];
 
-    // 🔹 Criar todas as combinações possíveis de duplas (sem repetição)
     let allCombos = [];
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
@@ -29,10 +28,8 @@ export default function Duos({
       }
     }
 
-    // 🔹 Embaralhar
     allCombos = allCombos.sort(() => Math.random() - 0.5);
 
-    // 🔹 Contador de passadas de cada competidor
     const count = {};
     list.forEach((c) => {
       count[c.name] = 0;
@@ -42,9 +39,6 @@ export default function Duos({
     const usedCombos = new Set();
 
     while (true) {
-      // 🔹 Escolher a próxima dupla que:
-      // - ainda não foi usada
-      // - nenhum competidor ultrapassou o limite
       const duo = allCombos.find(
         ([a, b]) =>
           !usedCombos.has(a.name + '🤝' + b.name) &&
