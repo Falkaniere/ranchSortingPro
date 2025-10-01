@@ -1,5 +1,5 @@
 // src/screens/RoundsOverview.jsx
-import PartialResultsPanel from '@screens/PartialResultsPanel';
+// import PartialResultsPanel from '@screens/PartialResultsPanel';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -64,7 +64,7 @@ export default function RoundsOverview({ rounds = [], results = [] }) {
       </div>
 
       <div>
-        <PartialResultsPanel rounds={rounds} results={results} />
+        {/* <PartialResultsPanel rounds={rounds} results={results} /> */}
       </div>
     </div>
   );
