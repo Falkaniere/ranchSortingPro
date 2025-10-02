@@ -19,6 +19,17 @@ export default function App() {
   const [numRounds, setNumRounds] = useState(1);
   const [rounds, setRounds] = useState<Duo[]>([]);
 
+  // 🔑 Criar metadados legíveis das duplas
+  const duosMeta = rounds.map((duo) => {
+    const riderOne = competitors.find((c) => c.id === duo.riderOneId);
+    const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
+    return {
+      id: duo.id,
+      label: `${riderOne?.name ?? '??'} 🤝 ${riderTwo?.name ?? '??'}`,
+      group: duo.group,
+    };
+  });
+
   return (
     <ResultsProvider>
       <Router>
@@ -57,14 +68,20 @@ export default function App() {
               />
             }
           />
-          <Route path="/record" element={<Qualifiers duos={rounds} />} />
+          <Route path="/record" element={<Qualifiers duos={duosMeta} />} />
           <Route
             path="/overview"
-            element={<RoundsOverview rounds={rounds} />}
+            element={<RoundsOverview rounds={rounds} duosMeta={duosMeta} />}
           />
-          <Route path="/qualifiers-results" element={<QualifiersResults />} />
-          <Route path="/final" element={<Final duos={rounds} />} />
-          <Route path="/final-results" element={<FinalResults />} />
+          <Route
+            path="/qualifiers-results"
+            element={<QualifiersResults duos={duosMeta} />}
+          />
+          <Route path="/final" element={<Final duos={duosMeta} />} />
+          <Route
+            path="/final-results"
+            element={<FinalResults duos={duosMeta} />}
+          />
         </Routes>
       </Router>
     </ResultsProvider>
