@@ -96,54 +96,22 @@ export default function Qualifiers({ duos }: QualifiersProps) {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // depois de calcular standings...
+  const allDuosHaveResult = duos.every((d) =>
+    standings.some((s) => s.duoId === d.id)
+  );
+
   return (
     <div className="qualifiers-container">
       <h1>Qualifiers</h1>
-
-      {/* Duo selector */}
-      <select
-        value={selectedDuoId ?? ''}
-        onChange={(e) => setSelectedDuoId(e.target.value)}
-      >
-        <option value="">-- Select Duo --</option>
-        {duos.map((duo) => (
-          <option key={duo.id} value={duo.id}>
-            {duo.label} ({duo.group})
-          </option>
-        ))}
-      </select>
-
-      {/* Form */}
-      <div className="form">
-        <input
-          type="number"
-          placeholder="Cattle count"
-          value={form.cattleCount}
-          onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Time (s)"
-          value={form.timeSeconds}
-          onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
-        />
-        <button onClick={() => saveResult(false)}>Save</button>
-        <button onClick={() => saveResult(true)}>SAT</button>
-      </div>
+      {/* ... cadastro de passadas ... */}
 
       <ResultsTable title="Standings 1D" rows={standings1D} />
       <ResultsTable title="Standings 2D" rows={standings2D} />
 
-      {showScrollTop && (
-        <button
-          className="scroll-top"
-          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-        >
-          ↑ Top
-        </button>
+      {allDuosHaveResult && (
+        <button onClick={() => navigate('/final')}>Go to Finals</button>
       )}
-
-      <div ref={bottomRef}></div>
     </div>
   );
 }

@@ -1,54 +1,39 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Competitor } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
-import { generateUniqueDuos } from 'core/logic/pairing';
 
 interface DuosProps {
   competitors: Competitor[];
-  numRounds: number;
   rounds: Duo[];
-  setRounds: React.Dispatch<React.SetStateAction<Duo[]>>;
-  setCompetitors: React.Dispatch<React.SetStateAction<Competitor[]>>;
 }
 
-export default function Duos({
-  competitors,
-  numRounds,
-  rounds,
-  setRounds,
-}: DuosProps) {
-  function handleGenerate() {
-    try {
-      const { duos, warnings } = generateUniqueDuos(competitors);
-      if (warnings.length > 0) {
-        console.warn('Pairing warnings:', warnings);
-      }
-      setRounds(duos);
-    } catch (error: any) {
-      alert(error.message);
-    }
-  }
+export default function Duos({ competitors, rounds }: DuosProps) {
+  const navigate = useNavigate();
 
   return (
     <div className="duos-container">
-      <h1>Duos</h1>
-      <button onClick={handleGenerate}>Generate Duos</button>
+      <h1>Generated Duos</h1>
+
+      {rounds.length === 0 && <p>No duos generated yet.</p>}
 
       {rounds.length > 0 && (
-        <>
-          <h2>Generated Duos</h2>
-          <ul>
-            {rounds.map((duo) => {
-              const riderOne = competitors.find((c) => c.id === duo.riderOneId);
-              const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
-              return (
-                <li key={duo.id}>
-                  {riderOne?.name} 🤝 {riderTwo?.name} — Group {duo.group}
-                </li>
-              );
-            })}
-          </ul>
-        </>
+        <ul>
+          {rounds.map((duo) => {
+            const riderOne = competitors.find((c) => c.id === duo.riderOneId);
+            const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
+            return (
+              <li key={duo.id}>
+                {riderOne?.name ?? '??'} 🤝 {riderTwo?.name ?? '??'} — Group{' '}
+                {duo.group}
+              </li>
+            );
+          })}
+        </ul>
+      )}
+
+      {rounds.length > 0 && (
+        <button onClick={() => navigate('/record')}>Go to Qualifiers</button>
       )}
     </div>
   );

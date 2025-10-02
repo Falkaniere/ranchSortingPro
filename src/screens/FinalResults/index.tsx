@@ -1,13 +1,14 @@
 import React from 'react';
 import { useResults } from 'context/ResultContext';
-import ResultsTable, { ResultsRow } from 'components/ResultsTable';
 import { DuoGroup } from 'core/models/Duo';
+import ResultsTable, { ResultsRow } from 'components/ResultsTable';
+import './index.css';
 
 interface FinalResultsProps {
-  duos?: { id: string; label: string; group: DuoGroup }[];
+  duos: { id: string; label: string; group: DuoGroup }[];
 }
 
-export default function FinalResults({ duos = [] }: FinalResultsProps) {
+export default function FinalResults({ duos }: FinalResultsProps) {
   const { getFinalAggregates } = useResults();
 
   const groupMap = new Map(duos.map((d) => [d.id, d.group]));
@@ -25,5 +26,10 @@ export default function FinalResults({ duos = [] }: FinalResultsProps) {
     };
   });
 
-  return <ResultsTable title="Final Results" rows={rows} showTotals />;
+  return (
+    <div className="final-results-container">
+      <h1>🏁 Final Results</h1>
+      <ResultsTable title="Overall Standings" rows={rows} showTotals />
+    </div>
+  );
 }

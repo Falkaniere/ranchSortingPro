@@ -5,10 +5,8 @@ import Home from 'screens/Home';
 import Registration from 'screens/Registration';
 import Duos from 'screens/Duos';
 import Qualifiers from 'screens/Qualifiers';
-import QualifiersResults from 'screens/QualifiersResults';
 import Final from 'screens/Final';
 import FinalResults from 'screens/FinalResults';
-import RoundsOverview from 'screens/RoundsOverview';
 import { ResultsProvider } from 'context/ResultContext';
 
 import { Competitor } from 'core/models/Competidor';
@@ -19,7 +17,7 @@ export default function App() {
   const [numRounds, setNumRounds] = useState(1);
   const [rounds, setRounds] = useState<Duo[]>([]);
 
-  // 🔑 Criar metadados legíveis das duplas
+  // 🔑 Metadados de duplas (para labels legíveis)
   const duosMeta = rounds.map((duo) => {
     const riderOne = competitors.find((c) => c.id === duo.riderOneId);
     const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
@@ -58,25 +56,9 @@ export default function App() {
           />
           <Route
             path="/duos"
-            element={
-              <Duos
-                competitors={competitors}
-                numRounds={numRounds}
-                rounds={rounds}
-                setRounds={setRounds}
-                setCompetitors={setCompetitors}
-              />
-            }
+            element={<Duos competitors={competitors} rounds={rounds} />}
           />
           <Route path="/record" element={<Qualifiers duos={duosMeta} />} />
-          <Route
-            path="/overview"
-            element={<RoundsOverview rounds={rounds} duosMeta={duosMeta} />}
-          />
-          <Route
-            path="/qualifiers-results"
-            element={<QualifiersResults duos={duosMeta} />}
-          />
           <Route path="/final" element={<Final duos={duosMeta} />} />
           <Route
             path="/final-results"
