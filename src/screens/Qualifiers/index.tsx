@@ -1,12 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DuoGroup } from 'core/models/Duo';
-import { standingsFromScores } from 'core/logic/scoring';
-import './index.css';
-import { PassResult } from 'core/models/PassResult';
-import { ResultsRow } from 'components/ResultsTable';
-import ResultsTable from 'components/ResultsTable';
 import { useResults } from 'context/ResultContext';
+import { PassResult } from 'core/models/PassResult';
+import { DuoGroup } from 'core/models/Duo';
+import { compareByScore } from 'core/logic/scoring';
+import './index.css';
 
 interface QualifiersProps {
   duos: { id: string; label: string; group: DuoGroup }[];
@@ -14,24 +12,45 @@ interface QualifiersProps {
 
 export default function Qualifiers({ duos }: QualifiersProps) {
   const navigate = useNavigate();
-  const { addResult, getQualifierStandings } = useResults();
+  const { addResult, passResults } = useResults();
 
-  const [selectedDuoId, setSelectedDuoId] = useState<string | null>(null);
   const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
-  const bottomRef = useRef<HTMLDivElement | null>(null);
 
-  function saveResult(isSAT = false) {
-    if (!selectedDuoId) {
-      alert('Please select a duo first.');
-      return;
-    }
+  // Duplas já registradas
+  const registeredDuos = passResults
+    .filter((r) => r.stage === 'Qualifier')
+    .map((r) => r.duoId);
+
+  // Pendentes
+  const pendingDuos = duos.filter((d) => !registeredDuos.includes(d.id));
+
+  // Parciais
+  const partials = passResults
+    .filter((r) => r.stage === 'Qualifier')
+    .map((r) => {
+      const duo = duos.find((d) => d.id === r.duoId);
+      return {
+        duoId: r.duoId,
+        duoLabel: duo?.label ?? r.duoId,
+        group: duo?.group ?? '1D',
+        cattleCount: r.cattleCount,
+        timeSeconds: r.timeSeconds,
+      };
+    })
+    .sort(compareByScore);
+
+  // Próxima dupla a registrar = primeira da lista pendente
+  const currentDuo = pendingDuos[0] ?? null;
+
+  function saveQualifierResult(isSAT = false) {
+    if (!currentDuo) return;
 
     const cattle = isSAT ? 0 : Number(form.cattleCount);
     const time = isSAT ? 120 : Number(form.timeSeconds);
 
     if (!isSAT) {
       if (isNaN(cattle) || cattle < 0 || cattle > 10) {
-        alert('Invalid cattle count. Must be between 0 and 10.');
+        alert('Invalid cattle count (0-10).');
         return;
       }
       if (isNaN(time) || time <= 0) {
@@ -41,7 +60,7 @@ export default function Qualifiers({ duos }: QualifiersProps) {
     }
 
     const newResult: PassResult = {
-      duoId: selectedDuoId,
+      duoId: currentDuo.id,
       stage: 'Qualifier',
       cattleCount: cattle,
       timeSeconds: time,
@@ -53,63 +72,85 @@ export default function Qualifiers({ duos }: QualifiersProps) {
     setForm({ cattleCount: '', timeSeconds: '' });
   }
 
-  const standings = (() => {
-    const groupMap = new Map(duos.map((d) => [d.id, d.group]));
-    const scores = getQualifierStandings(groupMap);
-    return standingsFromScores(scores);
-  })();
-
-  const standings1D: ResultsRow[] = standings
-    .filter((s) => s.group === '1D')
-    .map((s) => {
-      const duo = duos.find((d) => d.id === s.duoId);
-      return {
-        duoId: s.duoId,
-        duoLabel: duo?.label ?? s.duoId,
-        group: s.group,
-        cattleCount: s.cattleCount,
-        timeSeconds: s.timeSeconds,
-        position: s.position,
-      };
-    });
-
-  const standings2D: ResultsRow[] = standings
-    .filter((s) => s.group === '2D')
-    .map((s) => {
-      const duo = duos.find((d) => d.id === s.duoId);
-      return {
-        duoId: s.duoId,
-        duoLabel: duo?.label ?? s.duoId,
-        group: s.group,
-        cattleCount: s.cattleCount,
-        timeSeconds: s.timeSeconds,
-        position: s.position,
-      };
-    });
-
-  const [showScrollTop, setShowScrollTop] = useState(false);
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowScrollTop(window.scrollY > 200);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  // depois de calcular standings...
-  const allDuosHaveResult = duos.every((d) =>
-    standings.some((s) => s.duoId === d.id)
-  );
+  const allRegistered = pendingDuos.length === 0;
 
   return (
     <div className="qualifiers-container">
       <h1>Qualifiers</h1>
-      {/* ... cadastro de passadas ... */}
 
-      <ResultsTable title="Standings 1D" rows={standings1D} />
-      <ResultsTable title="Standings 2D" rows={standings2D} />
+      {/* Form automático para a próxima dupla */}
+      {currentDuo && (
+        <div className="form">
+          <div className="current-duo">
+            <strong>Current Duo:</strong> {currentDuo.label} ({currentDuo.group}
+            )
+          </div>
 
-      {allDuosHaveResult && (
+          <input
+            type="number"
+            placeholder="Cattle count"
+            value={form.cattleCount}
+            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Time (s)"
+            value={form.timeSeconds}
+            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
+          />
+
+          <button onClick={() => saveQualifierResult(false)}>Save</button>
+          <button onClick={() => saveQualifierResult(true)}>SAT</button>
+        </div>
+      )}
+
+      {/* Lista de pendentes */}
+      {pendingDuos.length > 0 && (
+        <div className="pending-list">
+          <h2>Pending Duos</h2>
+          <ul>
+            {pendingDuos.map((duo) => (
+              <li key={duo.id}>
+                {duo.label} — Group {duo.group}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {/* Parciais */}
+      <div className="partials">
+        <h2>Partials</h2>
+        {partials.length === 0 ? (
+          <p>No results yet.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Duo</th>
+                <th>Group</th>
+                <th>Cattle</th>
+                <th>Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {partials.map((p, idx) => (
+                <tr key={p.duoId}>
+                  <td>{idx + 1}</td>
+                  <td>{p.duoLabel}</td>
+                  <td>{p.group}</td>
+                  <td>{p.cattleCount}</td>
+                  <td>{p.timeSeconds}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Avançar quando todas cadastradas */}
+      {allRegistered && (
         <button onClick={() => navigate('/final')}>Go to Finals</button>
       )}
     </div>

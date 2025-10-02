@@ -1,6 +1,6 @@
 import { DuoScore, PassResult, normalizeSAT } from '../models/PassResult';
 import { DuoGroup } from '../models/Duo';
-import { compareByScore, standingsFromScores } from './scoring';
+import { standingsFromScores } from './scoring';
 
 export interface FinalsSelection {
   finalists1D: any[];
@@ -14,18 +14,23 @@ export function selectFinalists(
   maxPerFinal = 10
 ): FinalsSelection {
   const overall = standingsFromScores(qualifierBestScores);
-  const only2D = overall.filter((e) => e.group === '2D');
+
+  // Top 10 (independente da categoria)
+  const finalists1D = overall.slice(0, maxPerFinal);
+
+  // IDs já classificados em 1D
+  const ids1D = new Set(finalists1D.map((f) => f.duoId));
+
+  // Agora só pega 2D que não está no 1D
+  const only2D = overall.filter((e) => e.group === '2D' && !ids1D.has(e.duoId));
+
+  const finalists2D = only2D.slice(0, maxPerFinal);
+
   return {
-    finalists1D: overall.slice(0, maxPerFinal),
-    finalists2D: only2D.slice(0, maxPerFinal),
-    finalsOrder1D: overall
-      .slice(0, maxPerFinal)
-      .map((e) => e.duoId)
-      .reverse(),
-    finalsOrder2D: only2D
-      .slice(0, maxPerFinal)
-      .map((e) => e.duoId)
-      .reverse(),
+    finalists1D,
+    finalists2D,
+    finalsOrder1D: finalists1D.map((e) => e.duoId).reverse(),
+    finalsOrder2D: finalists2D.map((e) => e.duoId).reverse(),
   };
 }
 

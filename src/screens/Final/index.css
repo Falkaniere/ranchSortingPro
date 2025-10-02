@@ -1,43 +1,51 @@
-.duo-cards {
+.finals-container {
+  padding: 2rem;
+}
+
+.tabs {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.duo-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fafafa;
-  padding: 12px 16px;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.duo-info {
-  display: flex;
-  flex-direction: column;
-}
-
-.duo-info strong {
-  font-size: 16px;
-  color: #333;
-}
-
-.duo-info span {
-  font-size: 14px;
-  color: #666;
-}
-
-.duo-card button {
-  padding: 6px 12px;
-  background: #007bff;
-  color: white;
+.tabs button {
+  padding: 0.5rem 1rem;
   border: none;
-  border-radius: 6px;
+  background: #ddd;
   cursor: pointer;
+  border-radius: 6px;
 }
 
-.duo-card button:hover {
-  background: #0056b3;
+.tabs button.active {
+  background: #0077cc;
+  color: white;
+}
+
+.form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.current-duo {
+  margin-right: 1rem;
+  font-weight: bold;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0.5rem;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+th {
+  background: #f4f4f4;
 }

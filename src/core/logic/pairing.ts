@@ -32,21 +32,30 @@ export function generateUniqueDuos(
   }
 
   while (state.some((c) => c.remaining > 0)) {
-    const a = state.find((c) => c.remaining > 0)!;
+    // Em vez de sempre pegar o primeiro, sorteamos o "a"
+    const availableA = state.filter((c) => c.remaining > 0);
+    const a = availableA[Math.floor(rand() * availableA.length)];
+
+    // Para "b", pegamos candidatos válidos
     const candidates = state.filter(
       (c) =>
         c.id !== a.id &&
         c.remaining > 0 &&
         !paired.has(duoKeyFromRiders(a.id, c.id))
     );
+
     if (candidates.length === 0)
       throw new Error('Pairing failed, adjust passes.');
+
+    // Também sorteado
     const b = candidates[Math.floor(rand() * candidates.length)];
 
+    // Criar dupla
     const group = computeDuoGroup(a.category, b.category);
     const id = duoKeyFromRiders(a.id, b.id);
     duos.push({ id, riderOneId: a.id, riderTwoId: b.id, group });
     paired.add(id);
+
     a.remaining -= 1;
     b.remaining -= 1;
   }

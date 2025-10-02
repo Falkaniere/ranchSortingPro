@@ -1,9 +1,9 @@
-// src/screens/Registration/index.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor, RiderCategory } from 'core/models/Competidor';
-import { generateUniqueDuos } from 'core/logic/pairing';
 import { Duo } from 'core/models/Duo';
+import { generateUniqueDuos } from 'core/logic/pairing';
+import './index.css';
 
 interface RegistrationProps {
   competitors: Competitor[];
@@ -13,6 +13,13 @@ interface RegistrationProps {
   setRounds: React.Dispatch<React.SetStateAction<Duo[]>>;
 }
 
+const categories: RiderCategory[] = [
+  'Open',
+  'Amateur19',
+  'AmateurLight',
+  'Beginner',
+];
+
 export default function Registration({
   competitors,
   setCompetitors,
@@ -21,30 +28,75 @@ export default function Registration({
   setRounds,
 }: RegistrationProps) {
   const navigate = useNavigate();
-  const [form, setForm] = useState({
-    name: '',
-    category: 'Open' as RiderCategory,
-  });
+
+  // Add form
+  const [name, setName] = useState('');
+  const [category, setCategory] = useState<RiderCategory>('Open');
+
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState<RiderCategory>('Open');
 
   function addCompetitor() {
-    if (!form.name.trim()) return alert('Name required');
-
+    if (!name.trim()) {
+      alert('Name is required.');
+      return;
+    }
     const newCompetitor: Competitor = {
       id: crypto.randomUUID(),
-      name: form.name.trim(),
-      category: form.category,
-      passes: numRounds, // 👈 todos herdam numRounds
+      name: name.trim(),
+      category,
+      passes: numRounds, // todos herdam o mesmo número de passadas
     };
+    setCompetitors((prev) => [...prev, newCompetitor]);
+    setName('');
+    setCategory('Open');
+  }
 
-    setCompetitors([...competitors, newCompetitor]);
-    setForm({ name: '', category: 'Open' });
+  function startEdit(c: Competitor) {
+    setEditingId(c.id);
+    setEditName(c.name);
+    setEditCategory(c.category);
+  }
+
+  function saveEdit() {
+    if (!editingId) return;
+    if (!editName.trim()) {
+      alert('Name is required.');
+      return;
+    }
+    setCompetitors((prev) =>
+      prev.map((c) =>
+        c.id === editingId
+          ? { ...c, name: editName.trim(), category: editCategory }
+          : c
+      )
+    );
+    setEditingId(null);
+  }
+
+  function removeCompetitor(id: string) {
+    const competitor = competitors.find((c) => c.id === id);
+    if (!competitor) return;
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to remove ${competitor.name}?`
+    );
+    if (!confirmDelete) return;
+
+    setCompetitors((prev) => prev.filter((c) => c.id !== id));
   }
 
   function handleSortDuos() {
+    if (competitors.length < 2) {
+      alert('You need at least 2 competitors to sort duos.');
+      return;
+    }
     try {
-      const { duos } = generateUniqueDuos(
-        competitors.map((c) => ({ ...c, passes: numRounds }))
-      );
+      // garante que todos têm passes = numRounds
+      const normalized = competitors.map((c) => ({ ...c, passes: numRounds }));
+      const { duos } = generateUniqueDuos(normalized);
       setRounds(duos);
       navigate('/duos');
     } catch (err: any) {
@@ -54,11 +106,12 @@ export default function Registration({
 
   return (
     <div className="registration-container">
-      <h1>Registration</h1>
+      <h1>Register Competitors</h1>
 
-      <div>
+      {/* Número de passadas (único para todos) */}
+      <div className="rounds-form">
         <label>
-          Number of Passes:
+          Number of passes (for all):
           <input
             type="number"
             min={1}
@@ -68,38 +121,93 @@ export default function Registration({
         </label>
       </div>
 
+      {/* Form de cadastro */}
       <div className="form">
         <input
           type="text"
-          placeholder="Competitor Name"
-          value={form.name}
-          onChange={(e) => setForm({ ...form, name: e.target.value })}
+          placeholder="Competitor name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
         />
+
         <select
-          value={form.category}
-          onChange={(e) =>
-            setForm({ ...form, category: e.target.value as RiderCategory })
-          }
+          value={category}
+          onChange={(e) => setCategory(e.target.value as RiderCategory)}
         >
-          <option value="Open">Open</option>
-          <option value="Amateur19">Amateur 19</option>
-          <option value="AmateurLight">Amateur Light</option>
-          <option value="Beginner">Beginner</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
         </select>
-        <button onClick={addCompetitor}>Add Competitor</button>
+
+        <button onClick={addCompetitor}>Add</button>
       </div>
 
+      {/* Lista com edição/remoção */}
       <h2>Competitors</h2>
       <ul>
         {competitors.map((c) => (
           <li key={c.id}>
-            {c.name} — {c.category}
+            {editingId === c.id ? (
+              <div className="edit-row">
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+                <select
+                  className="category-select"
+                  value={editCategory}
+                  onChange={(e) =>
+                    setEditCategory(e.target.value as RiderCategory)
+                  }
+                >
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <div className="row-actions">
+                  <button className="save-btn" onClick={saveEdit}>
+                    Save
+                  </button>
+                  <button
+                    className="cancel-btn"
+                    onClick={() => setEditingId(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="competitor-row">
+                <span>
+                  {c.name} — {c.category}
+                </span>
+                <div className="row-actions">
+                  <button className="edit-btn" onClick={() => startEdit(c)}>
+                    Edit
+                  </button>
+                  <button
+                    className="remove-btn"
+                    onClick={() => removeCompetitor(c.id)}
+                  >
+                    Remove
+                  </button>
+                </div>
+              </div>
+            )}
           </li>
         ))}
       </ul>
 
+      {/* Avançar para o sorteio */}
       {competitors.length > 1 && (
-        <button onClick={handleSortDuos}>Sort Duos</button>
+        <button style={{ marginTop: '1rem' }} onClick={handleSortDuos}>
+          Sort Duos
+        </button>
       )}
     </div>
   );
