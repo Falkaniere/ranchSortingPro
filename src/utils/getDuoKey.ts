@@ -1,7 +1,9 @@
-// src/utils/getDuoKey.js
-export const getDuoKey = (duo) => duo.map((p) => p.name).join('🤝');
+// src/utils/getDuoKey.ts
+import { Competitor } from 'core/models/Competidor';
+
+export const getDuoKey = (duo: Competitor[]): string =>
+  duo.map((p: Competitor) => p.name).join('🤝');
 
 export function duoKeyFromRiders(riderAId: string, riderBId: string): string {
-  // Make the key order independent
   return [riderAId, riderBId].sort().join('🤝');
 }
