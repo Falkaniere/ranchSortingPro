@@ -9,9 +9,9 @@ import QualifiersResults from 'screens/QualifiersResults';
 import Final from 'screens/Final';
 import FinalResults from 'screens/FinalResults';
 import RoundsOverview from 'screens/RoundsOverview';
-import { ResultsProvider } from 'context/ResultsContext';
+import { ResultsProvider } from 'context/ResultContext';
 
-import { Competitor } from 'core/models/Competitor';
+import { Competitor } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
 
 export default function App() {
