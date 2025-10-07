@@ -1,55 +1,118 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { PassResult, normalizeSAT } from '../core/models/PassResult';
-import { Duo, DuoGroup } from '../core/models/Duo';
-import { buildBestQualifierScorePerDuo } from '../core/logic/scoring';
-import { selectFinalists, aggregateFinals } from '../core/logic/finals';
+// src/context/ResultContext.tsx
+import React, { createContext, useContext, useState } from 'react';
+import { PassResult, DuoScore } from 'core/models/PassResult';
+import { Duo, DuoGroup } from 'core/models/Duo';
+import {
+  buildBestQualifierScorePerDuo,
+  standingsFromScores,
+} from 'core/logic/scoring';
+import {
+  selectFinalists,
+  aggregateFinals,
+  FinalsSelection,
+  FinalAggregationEntry,
+} from 'core/logic/finals';
 
-// Types for context state
-interface ResultsContextValue {
-  passResults: PassResult[];
-  addResult: (result: PassResult) => void;
-  getQualifierStandings: (
-    duoGroupById: Map<string, DuoGroup>
-  ) => ReturnType<typeof buildBestQualifierScorePerDuo>;
-  getFinalists: (
-    duoGroupById: Map<string, DuoGroup>
-  ) => ReturnType<typeof selectFinalists>;
-  getFinalAggregates: (
-    duoGroupById: Map<string, DuoGroup>
-  ) => ReturnType<typeof aggregateFinals>;
+export interface ResultsContextValue {
+  // Qualificatórias
+  results: PassResult[];
+  addQualifierResult: (
+    duoId: string,
+    cattle: number,
+    time: number,
+    isSAT?: boolean
+  ) => void;
+
+  // Finais
+  finalResults: PassResult[];
+  addFinalResult: (
+    duoId: string,
+    cattle: number,
+    time: number,
+    isSAT?: boolean
+  ) => void;
+
+  // Metadados de duplas (para mapear duoId -> group)
+  duosMeta: Duo[];
+  setDuosMeta: (duos: Duo[]) => void;
+
+  // Scores/seleções
+  getBestQualifierScores: () => Map<string, DuoScore>;
+  getFinalists: (maxPerFinal?: number) => FinalsSelection;
+  getFinalAggregates: () => FinalAggregationEntry[];
 }
 
 const ResultsContext = createContext<ResultsContextValue | undefined>(
   undefined
 );
 
-export function ResultsProvider({ children }: { children: ReactNode }) {
-  const [passResults, setPassResults] = useState<PassResult[]>([]);
+export function ResultsProvider({ children }: { children: React.ReactNode }) {
+  const [results, setResults] = useState<PassResult[]>([]);
+  const [finalResults, setFinalResults] = useState<PassResult[]>([]);
+  const [duosMeta, setDuosMeta] = useState<Duo[]>([]);
 
-  function addResult(result: PassResult) {
-    setPassResults((prev) => [...prev, normalizeSAT(result)]);
+  function addQualifierResult(
+    duoId: string,
+    cattle: number,
+    time: number,
+    isSAT = false
+  ) {
+    const newResult: PassResult = {
+      duoId,
+      stage: 'Qualifier',
+      cattleCount: isSAT ? 0 : cattle,
+      timeSeconds: isSAT ? 120 : time,
+      isSAT,
+      createdAtISO: new Date().toISOString(),
+    };
+    setResults((prev) => [...prev, newResult]);
   }
 
-  function getQualifierStandings(duoGroupById: Map<string, DuoGroup>) {
-    return buildBestQualifierScorePerDuo(passResults, duoGroupById);
+  function addFinalResult(
+    duoId: string,
+    cattle: number,
+    time: number,
+    isSAT = false
+  ) {
+    const newResult: PassResult = {
+      duoId,
+      stage: 'Final',
+      cattleCount: isSAT ? 0 : cattle,
+      timeSeconds: isSAT ? 120 : time,
+      isSAT,
+      createdAtISO: new Date().toISOString(),
+    };
+    setFinalResults((prev) => [...prev, newResult]);
   }
 
-  function getFinalists(duoGroupById: Map<string, DuoGroup>) {
-    const bestScores = buildBestQualifierScorePerDuo(passResults, duoGroupById);
-    return selectFinalists(bestScores);
+  function getBestQualifierScores(): Map<string, DuoScore> {
+    // duoId -> group (1D/2D)
+    const duoGroupById: Map<string, DuoGroup> = new Map(
+      duosMeta.map((d) => [d.id, d.group])
+    );
+    return buildBestQualifierScorePerDuo(results, duoGroupById);
   }
 
-  function getFinalAggregates(duoGroupById: Map<string, DuoGroup>) {
-    const bestScores = buildBestQualifierScorePerDuo(passResults, duoGroupById);
-    return aggregateFinals(bestScores, passResults);
+  function getFinalists(maxPerFinal = 10): FinalsSelection {
+    const bestScores = getBestQualifierScores();
+    return selectFinalists(bestScores, maxPerFinal);
+  }
+
+  function getFinalAggregates(): FinalAggregationEntry[] {
+    const bestScores = getBestQualifierScores();
+    return aggregateFinals(bestScores, finalResults);
   }
 
   return (
     <ResultsContext.Provider
       value={{
-        passResults,
-        addResult,
-        getQualifierStandings,
+        results,
+        addQualifierResult,
+        finalResults,
+        addFinalResult,
+        duosMeta,
+        setDuosMeta,
+        getBestQualifierScores,
         getFinalists,
         getFinalAggregates,
       }}
@@ -61,6 +124,6 @@ export function ResultsProvider({ children }: { children: ReactNode }) {
 
 export function useResults() {
   const ctx = useContext(ResultsContext);
-  if (!ctx) throw new Error('useResults must be used inside ResultsProvider');
+  if (!ctx) throw new Error('useResults must be used within ResultsProvider');
   return ctx;
 }

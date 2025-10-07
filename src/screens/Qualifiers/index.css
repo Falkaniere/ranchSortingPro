@@ -1,3 +1,9 @@
+.qualifiers-container {
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
 .qualif-grid {
   display: grid;
   grid-template-columns: 1fr 2fr;

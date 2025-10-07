@@ -1,35 +1,62 @@
 import React from 'react';
 import { useResults } from 'context/ResultContext';
-import { DuoGroup } from 'core/models/Duo';
-import ResultsTable, { ResultsRow } from 'components/ResultsTable';
-import './index.css';
+import { Duo } from 'core/models/Duo';
 
 interface FinalResultsProps {
-  duos: { id: string; label: string; group: DuoGroup }[];
+  duos: Duo[];
+}
+
+interface ResultsRow {
+  position: number;
+  duoId: string;
+  duoLabel: string;
+  group: string;
+  totalCattle: number;
+  totalTimeSeconds: number;
 }
 
 export default function FinalResults({ duos }: FinalResultsProps) {
   const { getFinalAggregates } = useResults();
 
-  const groupMap = new Map(duos.map((d) => [d.id, d.group]));
-  const aggregates = getFinalAggregates(groupMap);
+  const aggregates = getFinalAggregates();
 
   const rows: ResultsRow[] = aggregates.map((a, idx) => {
     const duo = duos.find((d) => d.id === a.duoId);
     return {
+      position: idx + 1,
       duoId: a.duoId,
       duoLabel: duo?.label ?? a.duoId,
       group: a.group,
       totalCattle: a.totalCattle,
       totalTimeSeconds: a.totalTimeSeconds,
-      position: idx + 1,
     };
   });
 
   return (
-    <div className="final-results-container">
-      <h1>🏁 Final Results</h1>
-      <ResultsTable title="Overall Standings" rows={rows} showTotals />
+    <div style={{ padding: 24 }}>
+      <h1>Resultados Finais</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Dupla</th>
+            <th>Grupo</th>
+            <th>Bois (Total)</th>
+            <th>Tempo (Total)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.duoId}>
+              <td>{r.position}</td>
+              <td>{r.duoLabel}</td>
+              <td>{r.group}</td>
+              <td>{r.totalCattle}</td>
+              <td>{r.totalTimeSeconds}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }

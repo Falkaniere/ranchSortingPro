@@ -1,3 +1,4 @@
+// src/App.tsx
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -5,28 +6,18 @@ import Home from 'screens/Home';
 import Registration from 'screens/Registration';
 import Duos from 'screens/Duos';
 import Qualifiers from 'screens/Qualifiers';
-import Final from 'screens/Final';
+import Finals from 'screens/Final';
 import FinalResults from 'screens/FinalResults';
-import { ResultsProvider } from 'context/ResultContext';
+import RoundsOverview from 'screens/RoundsOverview';
 
-import { Competitor } from 'core/models/Competidor';
+import { ResultsProvider } from 'context/ResultContext';
 import { Duo } from 'core/models/Duo';
+import { Competitor } from './core';
 
 export default function App() {
   const [competitors, setCompetitors] = useState<Competitor[]>([]);
-  const [numRounds, setNumRounds] = useState(1);
+  const [numRounds, setNumRounds] = useState<number>(1);
   const [rounds, setRounds] = useState<Duo[]>([]);
-
-  // 🔑 Metadados de duplas (para labels legíveis)
-  const duosMeta = rounds.map((duo) => {
-    const riderOne = competitors.find((c) => c.id === duo.riderOneId);
-    const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
-    return {
-      id: duo.id,
-      label: `${riderOne?.name ?? '??'} 🤝 ${riderTwo?.name ?? '??'}`,
-      group: duo.group,
-    };
-  });
 
   return (
     <ResultsProvider>
@@ -56,13 +47,24 @@ export default function App() {
           />
           <Route
             path="/duos"
-            element={<Duos competitors={competitors} rounds={rounds} />}
+            element={
+              <Duos
+                competitors={competitors}
+                rounds={rounds}
+                setRounds={setRounds}
+                setCompetitors={setCompetitors}
+              />
+            }
           />
-          <Route path="/record" element={<Qualifiers duos={duosMeta} />} />
-          <Route path="/final" element={<Final duos={duosMeta} />} />
+          <Route path="/record" element={<Qualifiers />} />
+          <Route path="/final" element={<Finals />} />
           <Route
             path="/final-results"
-            element={<FinalResults duos={duosMeta} />}
+            element={<FinalResults duos={rounds} />}
+          />
+          <Route
+            path="/overview"
+            element={<RoundsOverview rounds={rounds} />}
           />
         </Routes>
       </Router>

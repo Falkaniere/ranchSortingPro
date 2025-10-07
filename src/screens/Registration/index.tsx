@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor, RiderCategory } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
 import { generateUniqueDuos } from 'core/logic/pairing';
 import './index.css';
+import { useResults } from 'context/ResultContext';
 
 interface RegistrationProps {
   competitors: Competitor[];
@@ -13,11 +14,11 @@ interface RegistrationProps {
   setRounds: React.Dispatch<React.SetStateAction<Duo[]>>;
 }
 
-const categories: RiderCategory[] = [
-  'Open',
-  'Amateur19',
-  'AmateurLight',
-  'Beginner',
+const categories: { label: string; value: RiderCategory }[] = [
+  { label: 'Aberta', value: 'Open' },
+  { label: 'Amador 19', value: 'Amateur19' },
+  { label: 'Amador Light', value: 'AmateurLight' },
+  { label: 'Principiante', value: 'Beginner' },
 ];
 
 export default function Registration({
@@ -29,29 +30,32 @@ export default function Registration({
 }: RegistrationProps) {
   const navigate = useNavigate();
 
-  // Add form
   const [name, setName] = useState('');
   const [category, setCategory] = useState<RiderCategory>('Open');
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
-  // Edit state
+  // dentro do componente
+  const { setDuosMeta } = useResults();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
   const [editCategory, setEditCategory] = useState<RiderCategory>('Open');
 
   function addCompetitor() {
     if (!name.trim()) {
-      alert('Name is required.');
+      alert('O nome é obrigatório.');
       return;
     }
     const newCompetitor: Competitor = {
       id: crypto.randomUUID(),
       name: name.trim(),
       category,
-      passes: numRounds, // todos herdam o mesmo número de passadas
+      passes: numRounds,
     };
     setCompetitors((prev) => [...prev, newCompetitor]);
+
     setName('');
     setCategory('Open');
+    nameInputRef.current?.focus();
   }
 
   function startEdit(c: Competitor) {
@@ -63,7 +67,7 @@ export default function Registration({
   function saveEdit() {
     if (!editingId) return;
     if (!editName.trim()) {
-      alert('Name is required.');
+      alert('O nome é obrigatório.');
       return;
     }
     setCompetitors((prev) =>
@@ -81,7 +85,7 @@ export default function Registration({
     if (!competitor) return;
 
     const confirmDelete = window.confirm(
-      `Are you sure you want to remove ${competitor.name}?`
+      `Tem certeza que deseja remover ${competitor.name}?`
     );
     if (!confirmDelete) return;
 
@@ -90,14 +94,17 @@ export default function Registration({
 
   function handleSortDuos() {
     if (competitors.length < 2) {
-      alert('You need at least 2 competitors to sort duos.');
+      alert('É necessário pelo menos 2 competidores para sortear as duplas.');
       return;
     }
     try {
-      // garante que todos têm passes = numRounds
       const normalized = competitors.map((c) => ({ ...c, passes: numRounds }));
-      const { duos } = generateUniqueDuos(normalized);
+      const { duos } = generateUniqueDuos(normalized, {
+        passesPerCompetitor: numRounds,
+        method: 'auto',
+      });
       setRounds(duos);
+      setDuosMeta(duos); // 👈 alimenta o contexto com os grupos 1D/2D
       navigate('/duos');
     } catch (err: any) {
       alert(err.message);
@@ -106,17 +113,21 @@ export default function Registration({
 
   return (
     <div className="registration-container">
-      <h1>Register Competitors</h1>
+      <h1>Cadastro de Competidores</h1>
 
-      {/* Número de passadas (único para todos) */}
+      {/* Número de passadas */}
       <div className="rounds-form">
         <label>
-          Number of passes (for all):
+          Número de passadas:
           <input
+            className="rounds-input"
             type="number"
             min={1}
             value={numRounds}
-            onChange={(e) => setNumRounds(Number(e.target.value))}
+            onChange={(e) => {
+              console.log('TA MUDANDO O VALOR AQUI', e.target.value);
+              setNumRounds(Number(e.target.value));
+            }}
           />
         </label>
       </div>
@@ -124,30 +135,36 @@ export default function Registration({
       {/* Form de cadastro */}
       <div className="form">
         <input
+          ref={nameInputRef}
           type="text"
-          placeholder="Competitor name"
+          placeholder="Nome do competidor"
           value={name}
           onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && addCompetitor()}
         />
 
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value as RiderCategory)}
-        >
+        <div className="category-toggle">
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
-            </option>
+            <button
+              key={cat.value}
+              type="button"
+              className={`cat-btn ${category === cat.value ? 'active' : ''}`}
+              onClick={() => setCategory(cat.value)}
+            >
+              {cat.label}
+            </button>
           ))}
-        </select>
+        </div>
 
-        <button onClick={addCompetitor}>Add</button>
+        <button className="add-btn" onClick={addCompetitor}>
+          Adicionar
+        </button>
       </div>
 
-      {/* Lista com edição/remoção */}
-      <h2>Competitors</h2>
+      {/* Lista */}
+      <h2>Competidores ({competitors.length})</h2>
       <ul>
-        {competitors.map((c) => (
+        {competitors.map((c, index) => (
           <li key={c.id}>
             {editingId === c.id ? (
               <div className="edit-row">
@@ -164,37 +181,41 @@ export default function Registration({
                   }
                 >
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
+                    <option key={cat.value} value={cat.value}>
+                      {cat.label}
                     </option>
                   ))}
                 </select>
                 <div className="row-actions">
                   <button className="save-btn" onClick={saveEdit}>
-                    Save
+                    Salvar
                   </button>
                   <button
                     className="cancel-btn"
                     onClick={() => setEditingId(null)}
                   >
-                    Cancel
+                    Cancelar
                   </button>
                 </div>
               </div>
             ) : (
               <div className="competitor-row">
-                <span>
-                  {c.name} — {c.category}
+                <span className="competitor-info">
+                  <span className="competitor-index">{index + 1}.</span>
+                  <span className="competitor-name">
+                    {c.name} —{' '}
+                    {categories.find((cat) => cat.value === c.category)?.label}
+                  </span>
                 </span>
                 <div className="row-actions">
                   <button className="edit-btn" onClick={() => startEdit(c)}>
-                    Edit
+                    Editar
                   </button>
                   <button
                     className="remove-btn"
                     onClick={() => removeCompetitor(c.id)}
                   >
-                    Remove
+                    Remover
                   </button>
                 </div>
               </div>
@@ -203,10 +224,9 @@ export default function Registration({
         ))}
       </ul>
 
-      {/* Avançar para o sorteio */}
       {competitors.length > 1 && (
         <button style={{ marginTop: '1rem' }} onClick={handleSortDuos}>
-          Sort Duos
+          Sortear Duplas
         </button>
       )}
     </div>

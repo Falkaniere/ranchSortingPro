@@ -1,36 +1,136 @@
 .registration-container {
-  padding: 2rem;
+  padding: 32px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: hsl(0, 0%, 100%);
 }
 
-.form {
+.rounds-form {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
 
-.rounds-form {
-  margin: 1rem 0;
+.rounds-input {
+  margin-left: 12px;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-.competitor-row {
+.form {
   display: flex;
-  justify-content: space-between;
-  margin: 0.25rem 0;
-  padding: 0.5rem;
-  background: #f8f8f8;
-  border-radius: 4px;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
+/* Campo de nome maior */
+.form input[type='text'] {
+  flex: 1;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Toggle buttons de categoria */
+.category-toggle {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.cat-btn {
+  padding: 0.4rem 0.7rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background: #f9f9f9;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.cat-btn.active {
+  background: #0077cc;
+  color: white;
+  border-color: #005fa3;
+}
+
+.cat-btn:hover {
+  opacity: 0.9;
+}
+
+/* Botão Add */
+.add-btn {
+  background: #bbf7d0;
+  color: #166534;
+  border: none;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Lista */
+.competitor-row,
 .edit-row {
   display: flex;
-  gap: 0.5rem;
+  flex: 1;
+  justify-content: space-between;
+  align-items: center;
   margin: 0.25rem 0;
-  padding: 0.5rem;
-  background: #fffbe6;
-  border-radius: 4px;
+  padding: 0.75rem;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.competitor-row span {
+  flex: 1;
+  font-weight: 500;
+}
+
+.row-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-left: 1rem;
+}
+
+.edit-row input,
+.edit-row select {
+  margin-right: 0.5rem;
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+/* Botões */
+.edit-btn {
+  background: #e0e7ff;
+  color: #1e3a8a;
+}
+
+.remove-btn {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.save-btn {
+  background: #bbf7d0;
+  color: #166534;
+}
+
+.cancel-btn {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.competitor-info {
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.competitor-index {
+  width: 24px;
+  text-align: right;
+  font-weight: bold;
+  color: #555;
+}
+
+.competitor-name {
+  flex: 1;
 }

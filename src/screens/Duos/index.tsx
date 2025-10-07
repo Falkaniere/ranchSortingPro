@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
+import './index.css';
 
 interface DuosProps {
   competitors: Competitor[];
@@ -13,9 +14,9 @@ export default function Duos({ competitors, rounds }: DuosProps) {
 
   return (
     <div className="duos-container">
-      <h1>Generated Duos</h1>
+      <h1>Duplas sorteadas</h1>
 
-      {rounds.length === 0 && <p>No duos generated yet.</p>}
+      {rounds.length === 0 && <p>Nenhuma dupla sorteada ainda.</p>}
 
       {rounds.length > 0 && (
         <ul>
@@ -23,8 +24,8 @@ export default function Duos({ competitors, rounds }: DuosProps) {
             const riderOne = competitors.find((c) => c.id === duo.riderOneId);
             const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
             return (
-              <li key={duo.id}>
-                {riderOne?.name ?? '??'} 🤝 {riderTwo?.name ?? '??'} — Group{' '}
+              <li key={duo.id} className="duo-item">
+                {riderOne?.name ?? '??'} 🤝 {riderTwo?.name ?? '??'} —{' '}
                 {duo.group}
               </li>
             );
@@ -33,7 +34,9 @@ export default function Duos({ competitors, rounds }: DuosProps) {
       )}
 
       {rounds.length > 0 && (
-        <button onClick={() => navigate('/record')}>Go to Qualifiers</button>
+        <button onClick={() => navigate('/record')}>
+          Ir para as Eliminatórias
+        </button>
       )}
     </div>
   );
