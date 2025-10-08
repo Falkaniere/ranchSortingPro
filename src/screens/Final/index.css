@@ -1,43 +1,77 @@
-.duo-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.duo-card {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: #fafafa;
-  padding: 12px 16px;
+.finals-container {
+  padding: 2rem;
+  background: #fff;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.duo-info {
+.tabs {
   display: flex;
-  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1rem;
 }
 
-.duo-info strong {
-  font-size: 16px;
-  color: #333;
+.tabs button {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  cursor: pointer;
+  background: #f3f3f3;
+  transition: 0.2s;
 }
 
-.duo-info span {
-  font-size: 14px;
-  color: #666;
-}
-
-.duo-card button {
-  padding: 6px 12px;
-  background: #007bff;
+.tabs button.active {
+  background: #0077cc;
   color: white;
+  border-color: #005fa3;
+}
+
+.pending-list {
+  margin-bottom: 2rem;
+}
+
+.pending-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.25rem 0;
+  padding: 0.5rem;
+  background: #f9f9f9;
+  border-radius: 6px;
+}
+
+.pending-row input {
+  width: 80px;
+  padding: 0.4rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.pending-row button {
+  background: #bbf7d0;
+  color: #166534;
   border: none;
+  padding: 0.4rem 0.8rem;
   border-radius: 6px;
   cursor: pointer;
 }
 
-.duo-card button:hover {
-  background: #0056b3;
+.pending-row button:hover {
+  opacity: 0.9;
+}
+
+.partials-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+}
+
+.partials-table th,
+.partials-table td {
+  border: 1px solid #ccc;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.partials-table th {
+  background: #f3f4f6;
 }

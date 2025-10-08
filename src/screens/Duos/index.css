@@ -1,0 +1,11 @@
+.duos-container {
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: hsl(0, 0%, 100%);
+}
+
+.duo-item {
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+}
