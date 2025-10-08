@@ -1,15 +1,21 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Competitor } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
-import './index.css';
+import { useNavigate } from 'react-router-dom';
+import { Competitor } from 'core/index';
 
-interface DuosProps {
+export interface DuosProps {
   competitors: Competitor[];
   rounds: Duo[];
+  setRounds: React.Dispatch<React.SetStateAction<Duo[]>>;
+  setCompetitors: React.Dispatch<React.SetStateAction<Competitor[]>>;
 }
 
-export default function Duos({ competitors, rounds }: DuosProps) {
+export default function Duos({
+  competitors,
+  rounds,
+  setRounds, // 👈 garanta que está sendo recebido
+  setCompetitors,
+}: DuosProps) {
   const navigate = useNavigate();
 
   return (

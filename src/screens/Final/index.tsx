@@ -1,136 +1,107 @@
 import React, { useState } from 'react';
 import { useResults } from 'context/ResultContext';
-import { aggregateFinals } from 'core/logic/finals';
 import { PassResult } from 'core/models/PassResult';
+import { Duo, DuoGroup } from 'core/models/Duo';
+import { FinalsSelection } from 'core/logic/finals';
 import './index.css';
 
-export default function Final() {
-  const { getFinalists, finalResults, addFinalResult, getBestQualifierScores } =
-    useResults();
+type PendingEntry = {
+  duoId: string;
+  label: string;
+  group: DuoGroup;
+  cattleCount: number;
+  timeSeconds: number;
+};
 
-  const finalists = getFinalists();
+export default function Finals() {
+  const {
+    getFinalists,
+    getBestQualifierScores,
+    addFinalResult,
+    finalResults,
+    duosMeta,
+  } = useResults();
+
+  const finalists: FinalsSelection = getFinalists();
   const bestScores = getBestQualifierScores();
-
+  const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
   const [activeTab, setActiveTab] = useState<'1D' | '2D'>('1D');
 
-  function handleRegister(duoId: string, cattle: number, time: number) {
-    if (isNaN(cattle) || isNaN(time)) {
-      alert('Por favor, insira valores válidos para bois e tempo.');
-      return;
+  function toPendingEntries(
+    entries: Array<{ duoId: string; cattleCount: number; timeSeconds: number }>
+  ): PendingEntry[] {
+    return entries.map((e) => {
+      const duo = duosMeta.find((d: Duo) => d.id === e.duoId);
+      return {
+        duoId: e.duoId,
+        label: duo?.label ?? e.duoId,
+        group: duo?.group ?? '1D',
+        cattleCount: e.cattleCount,
+        timeSeconds: e.timeSeconds,
+      };
+    });
+  }
+
+  function getPendingList(category: '1D' | '2D'): PendingEntry[] {
+    const listBase =
+      category === '1D'
+        ? toPendingEntries(finalists.finalists1D)
+        : toPendingEntries(finalists.finalists2D);
+
+    return listBase.filter(
+      (entry) => !finalResults.find((r: PassResult) => r.duoId === entry.duoId)
+    );
+  }
+
+  // Parciais: já registrados na final
+  const partials = finalResults.map((r: PassResult) => {
+    const duo = duosMeta.find((d: Duo) => d.id === r.duoId);
+    const quali = bestScores.get(r.duoId)!;
+    const avgCattle = (quali.cattleCount + r.cattleCount) / 2;
+    const avgTime = (quali.timeSeconds + r.timeSeconds) / 2;
+    return {
+      duoId: r.duoId,
+      label: duo?.label ?? r.duoId,
+      group: duo?.group ?? '1D',
+      qualiCattle: quali.cattleCount,
+      qualiTime: quali.timeSeconds,
+      finalCattle: r.cattleCount,
+      finalTime: r.timeSeconds,
+      avgCattle,
+      avgTime,
+    };
+  });
+
+  const currentList = getPendingList(activeTab);
+  const currentDuo = currentList[0] ?? null;
+  const allRegistered = currentList.length === 0;
+
+  function saveFinalResult(isSAT = false) {
+    if (!currentDuo) return;
+
+    const cattle = isSAT ? 0 : Number(form.cattleCount);
+    const time = isSAT ? 120 : Number(form.timeSeconds);
+
+    if (!isSAT) {
+      if (isNaN(cattle) || cattle < 0 || cattle > 10) {
+        alert('Número de bois inválido (0–10).');
+        return;
+      }
+      if (isNaN(time) || time <= 0) {
+        alert('Tempo inválido.');
+        return;
+      }
     }
-    addFinalResult(duoId, cattle, time);
-  }
 
-  function renderPending(group: '1D' | '2D') {
-    const list = group === '1D' ? finalists.finalists1D : finalists.finalists2D;
-
-    return (
-      <div className="pending-list">
-        {list.map((entry) => {
-          const quali = bestScores.get(entry.duoId)!;
-          const alreadyRegistered = finalResults.find(
-            (r: PassResult) => r.duoId === entry.duoId
-          );
-
-          if (alreadyRegistered) return null;
-
-          return (
-            <div key={entry.duoId} className="pending-row">
-              <span>
-                <strong>{entry.duoId}</strong> — Qualif.:{' '}
-                <strong>{quali.cattleCount}</strong> bois,{' '}
-                <strong>{quali.timeSeconds}s</strong>
-              </span>
-              <input
-                type="number"
-                placeholder="Bois"
-                id={`cattle-${entry.duoId}`}
-                min={0}
-              />
-              <input
-                type="number"
-                placeholder="Tempo (s)"
-                id={`time-${entry.duoId}`}
-                min={0}
-              />
-              <button
-                onClick={() => {
-                  const cattle = Number(
-                    (
-                      document.querySelector(
-                        `#cattle-${entry.duoId}`
-                      ) as HTMLInputElement
-                    )?.value
-                  );
-                  const time = Number(
-                    (
-                      document.querySelector(
-                        `#time-${entry.duoId}`
-                      ) as HTMLInputElement
-                    )?.value
-                  );
-                  handleRegister(entry.duoId, cattle, time);
-                }}
-              >
-                Salvar
-              </button>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
-  function renderPartials(group: '1D' | '2D') {
-    const aggregation = aggregateFinals(bestScores, finalResults).filter(
-      (a) => a.group === group
-    );
-
-    return (
-      <table className="partials-table">
-        <thead>
-          <tr>
-            <th>Dupla</th>
-            <th>Qualif. (bois)</th>
-            <th>Qualif. (tempo)</th>
-            <th>Final (bois)</th>
-            <th>Final (tempo)</th>
-            <th>Média (bois)</th>
-            <th>Média (tempo)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {aggregation.map((entry) => {
-            const quali = bestScores.get(entry.duoId)!;
-            const final = finalResults.find(
-              (r: PassResult) => r.duoId === entry.duoId
-            );
-            if (!final) return null;
-
-            const avgCattle = (quali.cattleCount + final.cattleCount) / 2;
-            const avgTime = (quali.timeSeconds + final.timeSeconds) / 2;
-
-            return (
-              <tr key={entry.duoId}>
-                <td>{entry.duoId}</td>
-                <td>{quali.cattleCount}</td>
-                <td>{quali.timeSeconds}</td>
-                <td>{final.cattleCount}</td>
-                <td>{final.timeSeconds}</td>
-                <td>{avgCattle.toFixed(2)}</td>
-                <td>{avgTime.toFixed(2)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    );
+    addFinalResult(currentDuo.duoId, cattle, time, isSAT);
+    setForm({ cattleCount: '', timeSeconds: '' });
   }
 
   return (
     <div className="finals-container">
       <h1>Finais</h1>
 
+      {/* Abas */}
       <div className="tabs">
         <button
           className={activeTab === '1D' ? 'active' : ''}
@@ -146,23 +117,97 @@ export default function Final() {
         </button>
       </div>
 
-      <div className="tab-content">
-        {activeTab === '1D' ? (
-          <>
-            <h2>Pendentes</h2>
-            {renderPending('1D')}
-            <h2>Parciais</h2>
-            {renderPartials('1D')}
-          </>
+      {/* Formulário de registro */}
+      {currentDuo && (
+        <div className="form">
+          <div className="current-duo">
+            <strong>Dupla atual:</strong> {currentDuo.label} ({currentDuo.group}
+            )
+          </div>
+          <input
+            type="number"
+            placeholder="Bois"
+            value={form.cattleCount}
+            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Tempo (s)"
+            value={form.timeSeconds}
+            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
+          />
+          <button onClick={() => saveFinalResult(false)}>Salvar</button>
+          <button onClick={() => saveFinalResult(true)}>SAT</button>
+        </div>
+      )}
+
+      {/* Pendentes */}
+      <div className="pending-list">
+        <h2>Duplas pendentes ({activeTab})</h2>
+        {currentList.length === 0 ? (
+          <p>Todas as duplas desta categoria já foram registradas.</p>
         ) : (
-          <>
-            <h2>Pendentes</h2>
-            {renderPending('2D')}
-            <h2>Parciais</h2>
-            {renderPartials('2D')}
-          </>
+          <ul className="pending-list-items">
+            {currentList.map((entry) => (
+              <li key={entry.duoId}>
+                {entry.label} — {entry.group}
+              </li>
+            ))}
+          </ul>
         )}
       </div>
+
+      {/* Parciais */}
+      <div className="partials">
+        <h2>Resultados parciais</h2>
+        {partials.length === 0 ? (
+          <p>Sem resultados ainda.</p>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Dupla</th>
+                <th>Categoria</th>
+                <th>Bois (Qualificatória)</th>
+                <th>Tempo (Qualificatória)</th>
+                <th>Bois (Final)</th>
+                <th>Tempo (Final)</th>
+                <th>Média de Bois</th>
+                <th>Média de Tempo</th>
+              </tr>
+            </thead>
+            <tbody>
+              {partials
+                .sort(
+                  (a, b) => b.avgCattle - a.avgCattle || a.avgTime - b.avgTime
+                )
+                .map((entry, idx) => (
+                  <tr key={entry.duoId}>
+                    <td>{idx + 1}</td>
+                    <td>{entry.label}</td>
+                    <td>{entry.group}</td>
+                    <td>{entry.qualiCattle}</td>
+                    <td>{entry.qualiTime}</td>
+                    <td>{entry.finalCattle}</td>
+                    <td>{entry.finalTime}</td>
+                    <td>{entry.avgCattle.toFixed(1)}</td>
+                    <td>{entry.avgTime.toFixed(2)}</td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {allRegistered && (
+        <button
+          style={{ marginTop: '1rem' }}
+          onClick={() => alert('Finais concluídas!')}
+        >
+          Encerrar Finais
+        </button>
+      )}
     </div>
   );
 }

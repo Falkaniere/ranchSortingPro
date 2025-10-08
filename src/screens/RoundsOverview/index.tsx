@@ -5,17 +5,17 @@ import { PassResult } from 'core/models/PassResult';
 
 interface RoundsOverviewProps {
   rounds: Duo[];
-  duosMeta?: { id: string; label: string; group: DuoGroup }[];
+  duosMeta?: Duo[];
 }
 
 export default function RoundsOverview({
   rounds,
   duosMeta = [],
 }: RoundsOverviewProps) {
-  const { passResults } = useResults();
+  const { results } = useResults(); // 👈 em vez de passResults
 
   function resultsForDuo(duoId: string): PassResult[] {
-    return passResults.filter((r) => r.duoId === duoId);
+    return results.filter((r: PassResult) => r.duoId === duoId);
   }
 
   return (

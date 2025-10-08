@@ -67,8 +67,8 @@ export default function Qualifiers() {
       {currentDuo && (
         <div className="form">
           <div className="current-duo">
-            <strong>Dupla atual:</strong> {currentDuo.label} ({currentDuo.group}
-            )
+            <strong>Dupla atual:</strong> {currentDuo.label ?? currentDuo.id} (
+            {currentDuo.group})
           </div>
           <input
             type="number"
@@ -92,7 +92,7 @@ export default function Qualifiers() {
         <ul className="pending-list-items">
           {pendingDuos.map((duo) => (
             <li key={duo.id}>
-              {duo.label} — {duo.group}
+              {duo.label ?? duo.id} — {duo.group}
             </li>
           ))}
         </ul>

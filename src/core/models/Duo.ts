@@ -7,6 +7,7 @@ export interface Duo {
   riderOneId: string;
   riderTwoId: string;
   group: DuoGroup;
+  label?: string;
 }
 
 export function duoKeyFromRiders(riderAId: string, riderBId: string): string {

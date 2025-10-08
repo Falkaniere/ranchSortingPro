@@ -97,14 +97,24 @@ export default function Registration({
       alert('É necessário pelo menos 2 competidores para sortear as duplas.');
       return;
     }
+
     try {
       const normalized = competitors.map((c) => ({ ...c, passes: numRounds }));
       const { duos } = generateUniqueDuos(normalized, {
         passesPerCompetitor: numRounds,
         method: 'auto',
       });
-      setRounds(duos);
-      setDuosMeta(duos); // 👈 alimenta o contexto com os grupos 1D/2D
+
+      // 🧠 Aqui adicionamos o label legível com o nome dos dois competidores
+      const duosWithLabels = duos.map((duo) => {
+        const riderOne = competitors.find((c) => c.id === duo.riderOneId);
+        const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
+        const label = `${riderOne?.name ?? '?'} 🤝 ${riderTwo?.name ?? '?'}`;
+        return { ...duo, label };
+      });
+
+      setRounds(duosWithLabels);
+      setDuosMeta(duosWithLabels); // salva no contexto com nomes
       navigate('/duos');
     } catch (err: any) {
       alert(err.message);
