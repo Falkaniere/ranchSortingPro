@@ -13,19 +13,17 @@ export default function Qualifiers() {
   const { addQualifierResult, results, duosMeta } = useResults();
   const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
 
-  // Duplas já registradas
   const registeredDuos = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
-    .map((r: PassResult) => r.duoId);
+    .map((r) => r.duoId);
 
-  // Pendentes (do contexto)
-  const duos = duosMeta;
+  const duos = duosMeta.map((d, index) => ({ ...d, number: index + 1 }));
   const pendingDuos = duos.filter((d) => !registeredDuos.includes(d.id));
   const currentDuo = pendingDuos[0] ?? null;
 
   const partials: PartialRow[] = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
-    .map((r: PassResult) => {
+    .map((r) => {
       const duo = duos.find((d) => d.id === r.duoId);
       return {
         duoId: r.duoId,
@@ -45,7 +43,7 @@ export default function Qualifiers() {
 
     if (!isSAT) {
       if (isNaN(cattle) || cattle < 0 || cattle > 10) {
-        alert('Bois inválido (0-10).');
+        alert('Bois inválido (0–10).');
         return;
       }
       if (isNaN(time) || time <= 0) {
@@ -61,54 +59,21 @@ export default function Qualifiers() {
   const allRegistered = pendingDuos.length === 0;
 
   return (
-    <div className="qualifiers-container">
-      <h1>Qualificatórias</h1>
+    <div className="qualifiersContainer">
+      <h1 className="title">Qualificatórias</h1>
 
-      {currentDuo && (
-        <div className="form">
-          <div className="current-duo">
-            <strong>Dupla atual:</strong> {currentDuo.label ?? currentDuo.id} (
-            {currentDuo.group})
-          </div>
-          <input
-            type="number"
-            placeholder="Bois"
-            value={form.cattleCount}
-            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Tempo (s)"
-            value={form.timeSeconds}
-            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
-          />
-          <button onClick={() => saveQualifierResult(false)}>Salvar</button>
-          <button onClick={() => saveQualifierResult(true)}>SAT</button>
-        </div>
-      )}
-
-      <div className="pending-list">
-        <h2>Próximas duplas</h2>
-        <ul className="pending-list-items">
-          {pendingDuos.map((duo) => (
-            <li key={duo.id}>
-              {duo.label ?? duo.id} — {duo.group}
-            </li>
-          ))}
-        </ul>
-      </div>
-
+      {/* Parciais */}
       <div className="partials">
         <h2>Parciais</h2>
         {partials.length === 0 ? (
           <p>Sem resultados ainda.</p>
         ) : (
-          <table>
+          <table className="table">
             <thead>
               <tr>
                 <th>#</th>
                 <th>Dupla</th>
-                <th>Grupo</th>
+                <th>Categoria</th>
                 <th>Bois</th>
                 <th>Tempo</th>
               </tr>
@@ -128,8 +93,50 @@ export default function Qualifiers() {
         )}
       </div>
 
+      {/* Formulário da dupla atual */}
+      {currentDuo && (
+        <div className="form">
+          <div className="currentDuo">
+            <strong>Dupla atual:</strong>{' '}
+            <span>
+              {currentDuo.number}. {currentDuo.label} ({currentDuo.group})
+            </span>
+          </div>
+          <input
+            type="number"
+            placeholder="Bois"
+            value={form.cattleCount}
+            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Tempo (s)"
+            value={form.timeSeconds}
+            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
+          />
+          <button onClick={() => saveQualifierResult(false)}>Salvar</button>
+          <button onClick={() => saveQualifierResult(true)}>SAT</button>
+        </div>
+      )}
+
+      {/* Pendentes */}
+      <div className="pending">
+        <h2>Duplas Pendentes</h2>
+        <ul>
+          {pendingDuos.map((duo) => (
+            <li key={duo.id}>
+              <span className="number">{duo.number}</span>
+              <span className="label">{duo.label}</span>
+              <span className="group">{duo.group}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
       {allRegistered && (
-        <button onClick={() => navigate('/final')}>Ir para Finais</button>
+        <button className="nextBtn" onClick={() => navigate('/final')}>
+          Ir para Finais
+        </button>
       )}
     </div>
   );

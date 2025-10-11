@@ -135,7 +135,6 @@ export default function Registration({
             min={1}
             value={numRounds}
             onChange={(e) => {
-              console.log('TA MUDANDO O VALOR AQUI', e.target.value);
               setNumRounds(Number(e.target.value));
             }}
           />
