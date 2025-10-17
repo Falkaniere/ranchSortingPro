@@ -3,6 +3,10 @@
   border: 1px solid #ccc;
   border-radius: 8px;
   background: hsl(0, 0%, 100%);
+
+  flex: 1;
+  align-items: center;
+  justify-content: center;
 }
 
 .duo-item {

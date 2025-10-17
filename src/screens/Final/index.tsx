@@ -4,6 +4,8 @@ import { PassResult } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { FinalsSelection } from 'core/logic/finals';
 import './index.css';
+import { exportToExcel } from 'utils/exportExcel';
+import { useNavigate } from 'react-router-dom';
 
 type PendingEntry = {
   duoId: string;
@@ -21,6 +23,7 @@ export default function Finals() {
     finalResults,
     duosMeta,
   } = useResults();
+  const navigate = useNavigate();
 
   const finalists: FinalsSelection = useMemo(
     () => getFinalists(),
@@ -160,7 +163,28 @@ export default function Finals() {
   return (
     <div className="finals-container">
       <h1>Finais</h1>
-
+      <button
+        style={{ marginBottom: '16px' }}
+        onClick={() => {
+          const filtered = partials.filter((p) => p?.group === activeTab);
+          exportToExcel(
+            filtered.map((p, idx) => ({
+              Posição: idx + 1,
+              Dupla: p?.label,
+              Categoria: p?.visualGroup,
+              'Bois Qualif.': p?.qualiCattle,
+              'Tempo Qualif.': p?.qualiTime,
+              'Bois Final': p?.finalCattle,
+              'Tempo Final': p?.finalTime,
+              'Média Bois': Math.round(p?.avgCattle ?? 0),
+              'Média Tempo': p?.avgTime.toFixed(2),
+            })),
+            `Resultados_Finais_${activeTab}`
+          );
+        }}
+      >
+        Exportar Finais ({activeTab})
+      </button>
       {/* Abas */}
       <div className="tabs">
         <button
@@ -288,11 +312,8 @@ export default function Finals() {
       </div>
 
       {allRegistered && (
-        <button
-          style={{ marginTop: '1rem' }}
-          onClick={() => alert(`Finais da ${activeTab} concluídas!`)}
-        >
-          Encerrar Finais ({activeTab})
+        <button style={{ marginTop: '1rem' }} onClick={() => navigate('/ ')}>
+          Encerrar Finais
         </button>
       )}
     </div>

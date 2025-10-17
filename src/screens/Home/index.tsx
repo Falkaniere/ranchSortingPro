@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor } from 'core/models/Competidor';
 import { Duo } from 'core/models/Duo';
+import './index.css';
 
 interface HomeProps {
   competitors: Competitor[];
@@ -24,10 +25,23 @@ export default function Home({
   }
 
   return (
-    <div className="home-container">
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <h1>🏆 Ranch Sorting Pro</h1>
-      <button onClick={() => navigate('/registration')}>
+      <button
+        style={{ marginBottom: '16px' }}
+        onClick={() => navigate('/registration')}
+      >
         Registrar Competidores
+      </button>
+      <button onClick={() => navigate('/duos')}>
+        Já tenho duplas cadastradas
       </button>
       {competitors.length > 0 && (
         <button className="reset" onClick={handleReset}>
