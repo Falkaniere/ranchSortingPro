@@ -28,6 +28,13 @@ interface ResultsContextValue {
     isSAT?: boolean
   ) => void;
 
+  /** Atualiza resultado existente da qualificatória */
+  updateQualifierResult: (
+    duoId: string,
+    cattleCount: number,
+    timeSeconds: number
+  ) => void;
+
   /** Adiciona resultado da final */
   addFinalResult: (
     duoId: string,
@@ -76,6 +83,26 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     setResults((prev) => [...prev, newResult]);
   }
 
+  /** Atualiza resultado existente da qualificatória */
+  function updateQualifierResult(
+    duoId: string,
+    cattleCount: number,
+    timeSeconds: number
+  ) {
+    setResults((prev) =>
+      prev.map((r) =>
+        r.duoId === duoId && r.stage === 'Qualifier'
+          ? {
+              ...r,
+              cattleCount,
+              timeSeconds,
+              updatedAtISO: new Date().toISOString(),
+            }
+          : r
+      )
+    );
+  }
+
   function addFinalResult(
     duoId: string,
     cattleCount: number,
@@ -98,7 +125,6 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   //  BEST QUALIFIER SCORES
   // -----------------------------
   function getBestQualifierScores(): Map<string, DuoScore> {
-    // duoId -> group
     const duoGroupById: Map<string, DuoGroup> = new Map(
       duosMeta.map((d) => [d.id, d.group])
     );
@@ -127,6 +153,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     duosMeta,
     setDuosMeta,
     addQualifierResult,
+    updateQualifierResult, // ✅ nova função
     addFinalResult,
     getBestQualifierScores,
     getFinalists,

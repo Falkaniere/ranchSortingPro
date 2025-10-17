@@ -158,46 +158,48 @@ export default function Finals() {
       </div>
 
       {/* Parciais */}
-      <div className="partials">
-        <h2>Resultados parciais</h2>
-        {partials.length === 0 ? (
-          <p>Sem resultados ainda.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Dupla</th>
-                <th>Categoria</th>
-                <th>Bois (Qualificatória)</th>
-                <th>Tempo (Qualificatória)</th>
-                <th>Bois (Final)</th>
-                <th>Tempo (Final)</th>
-                <th>Média de Bois</th>
-                <th>Média de Tempo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {partials
-                .sort(
-                  (a, b) => b.avgCattle - a.avgCattle || a.avgTime - b.avgTime
-                )
-                .map((entry, idx) => (
-                  <tr key={entry.duoId}>
-                    <td>{idx + 1}</td>
-                    <td>{entry.label}</td>
-                    <td>{entry.group}</td>
-                    <td>{entry.qualiCattle}</td>
-                    <td>{entry.qualiTime}</td>
-                    <td>{entry.finalCattle}</td>
-                    <td>{entry.finalTime}</td>
-                    <td>{entry.avgCattle.toFixed(1)}</td>
-                    <td>{entry.avgTime.toFixed(2)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        )}
+      <div className="qualifiersContainer">
+        <div className="partials">
+          <h2>Resultados parciais</h2>
+          {partials.length === 0 ? (
+            <p>Sem resultados ainda.</p>
+          ) : (
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Dupla</th>
+                  <th>Categoria</th>
+                  <th>Bois (Qualificatória)</th>
+                  <th>Tempo (Qualificatória)</th>
+                  <th>Bois (Final)</th>
+                  <th>Tempo (Final)</th>
+                  <th>Média de Bois</th>
+                  <th>Média de Tempo</th>
+                </tr>
+              </thead>
+              <tbody>
+                {partials
+                  .sort(
+                    (a, b) => b.avgCattle - a.avgCattle || a.avgTime - b.avgTime
+                  )
+                  .map((entry, idx) => (
+                    <tr key={entry.duoId}>
+                      <td>{idx + 1}</td>
+                      <td>{entry.label}</td>
+                      <td>{entry.group}</td>
+                      <td>{entry.qualiCattle}</td>
+                      <td>{entry.qualiTime}</td>
+                      <td>{entry.finalCattle}</td>
+                      <td>{entry.finalTime}</td>
+                      <td>{entry.avgCattle.toFixed(1)}</td>
+                      <td>{entry.avgTime.toFixed(2)}</td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
 
       {allRegistered && (

@@ -10,22 +10,26 @@ type PartialRow = DuoScore & { duoLabel: string };
 
 export default function Qualifiers() {
   const navigate = useNavigate();
-  const { addQualifierResult, results, duosMeta } = useResults();
+  const { addQualifierResult, updateQualifierResult, results, duosMeta } =
+    useResults();
   const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    cattleCount: '',
+    timeSeconds: '',
+  });
 
-  // Duplas já registradas
   const registeredDuos = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
-    .map((r: PassResult) => r.duoId);
+    .map((r) => r.duoId);
 
-  // Pendentes (do contexto)
-  const duos = duosMeta;
+  const duos = duosMeta.map((d, index) => ({ ...d, number: index + 1 }));
   const pendingDuos = duos.filter((d) => !registeredDuos.includes(d.id));
   const currentDuo = pendingDuos[0] ?? null;
 
   const partials: PartialRow[] = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
-    .map((r: PassResult) => {
+    .map((r) => {
       const duo = duos.find((d) => d.id === r.duoId);
       return {
         duoId: r.duoId,
@@ -45,7 +49,7 @@ export default function Qualifiers() {
 
     if (!isSAT) {
       if (isNaN(cattle) || cattle < 0 || cattle > 10) {
-        alert('Bois inválido (0-10).');
+        alert('Bois inválido (0–10).');
         return;
       }
       if (isNaN(time) || time <= 0) {
@@ -58,17 +62,159 @@ export default function Qualifiers() {
     setForm({ cattleCount: '', timeSeconds: '' });
   }
 
+  // --- EDIÇÃO INLINE ---
+  function startEdit(row: PartialRow) {
+    setEditingId(row.duoId);
+    setEditForm({
+      cattleCount: row.cattleCount.toString(),
+      timeSeconds: row.timeSeconds.toString(),
+    });
+  }
+
+  function saveEdit(duoId: string) {
+    const cattle = Number(editForm.cattleCount);
+    const time = Number(editForm.timeSeconds);
+
+    if (isNaN(cattle) || cattle < 0 || cattle > 10) {
+      alert('Bois inválido (0–10).');
+      return;
+    }
+    if (isNaN(time) || time <= 0) {
+      alert('Tempo inválido.');
+      return;
+    }
+
+    updateQualifierResult(duoId, cattle, time);
+    setEditingId(null);
+  }
+
   const allRegistered = pendingDuos.length === 0;
 
   return (
-    <div className="qualifiers-container">
-      <h1>Qualificatórias</h1>
+    <div className="qualifiersContainer">
+      <h1 className="title">Qualificatórias</h1>
 
+      {/* Parciais */}
+      <div className="partials">
+        <h2>Parciais</h2>
+        {partials.length === 0 ? (
+          <p>Sem resultados ainda.</p>
+        ) : (
+          <table className="table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Dupla</th>
+                <th>Categoria</th>
+                <th>Bois</th>
+                <th>Tempo</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {partials.map((p, idx) => (
+                <tr key={p.duoId}>
+                  <td>{idx + 1}</td>
+                  <td>{p.duoLabel}</td>
+                  <td>{p.group}</td>
+
+                  {editingId === p.duoId ? (
+                    <>
+                      <td>
+                        <input
+                          type="number"
+                          value={editForm.cattleCount}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              cattleCount: e.target.value,
+                            })
+                          }
+                          style={{ width: '70px', padding: '4px' }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={editForm.timeSeconds}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              timeSeconds: e.target.value,
+                            })
+                          }
+                          style={{ width: '70px', padding: '4px' }}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="save-btn"
+                          onClick={() => saveEdit(p.duoId)}
+                          style={{
+                            background: '#22a31b',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            marginRight: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          className="cancel-btn"
+                          onClick={() => setEditingId(null)}
+                          style={{
+                            background: '#aaa',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{p.cattleCount}</td>
+                      <td>{p.timeSeconds}</td>
+                      <td>
+                        <button
+                          className="edit-btn"
+                          onClick={() => startEdit(p)}
+                          style={{
+                            background: '#0ea5e9',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      {/* Formulário da dupla atual */}
       {currentDuo && (
         <div className="form">
-          <div className="current-duo">
-            <strong>Dupla atual:</strong> {currentDuo.label ?? currentDuo.id} (
-            {currentDuo.group})
+          <div className="currentDuo">
+            <strong>Dupla atual:</strong>{' '}
+            <span>
+              {currentDuo.number}. {currentDuo.label} ({currentDuo.group})
+            </span>
           </div>
           <input
             type="number"
@@ -87,49 +233,24 @@ export default function Qualifiers() {
         </div>
       )}
 
-      <div className="pending-list">
-        <h2>Próximas duplas</h2>
-        <ul className="pending-list-items">
+      {/* Pendentes */}
+      <div className="pending">
+        <h2>Duplas Pendentes</h2>
+        <ul>
           {pendingDuos.map((duo) => (
             <li key={duo.id}>
-              {duo.label ?? duo.id} — {duo.group}
+              <span className="number">{duo.number}</span>
+              <span className="label">{duo.label}</span>
+              <span className="group">{duo.group}</span>
             </li>
           ))}
         </ul>
       </div>
 
-      <div className="partials">
-        <h2>Parciais</h2>
-        {partials.length === 0 ? (
-          <p>Sem resultados ainda.</p>
-        ) : (
-          <table>
-            <thead>
-              <tr>
-                <th>#</th>
-                <th>Dupla</th>
-                <th>Grupo</th>
-                <th>Bois</th>
-                <th>Tempo</th>
-              </tr>
-            </thead>
-            <tbody>
-              {partials.map((p, idx) => (
-                <tr key={p.duoId}>
-                  <td>{idx + 1}</td>
-                  <td>{p.duoLabel}</td>
-                  <td>{p.group}</td>
-                  <td>{p.cattleCount}</td>
-                  <td>{p.timeSeconds}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
-
       {allRegistered && (
-        <button onClick={() => navigate('/final')}>Ir para Finais</button>
+        <button className="nextBtn" onClick={() => navigate('/final')}>
+          Ir para Finais
+        </button>
       )}
     </div>
   );
