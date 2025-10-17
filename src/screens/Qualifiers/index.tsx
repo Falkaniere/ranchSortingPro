@@ -10,8 +10,14 @@ type PartialRow = DuoScore & { duoLabel: string };
 
 export default function Qualifiers() {
   const navigate = useNavigate();
-  const { addQualifierResult, results, duosMeta } = useResults();
+  const { addQualifierResult, updateQualifierResult, results, duosMeta } =
+    useResults();
   const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({
+    cattleCount: '',
+    timeSeconds: '',
+  });
 
   const registeredDuos = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
@@ -56,6 +62,32 @@ export default function Qualifiers() {
     setForm({ cattleCount: '', timeSeconds: '' });
   }
 
+  // --- EDIÇÃO INLINE ---
+  function startEdit(row: PartialRow) {
+    setEditingId(row.duoId);
+    setEditForm({
+      cattleCount: row.cattleCount.toString(),
+      timeSeconds: row.timeSeconds.toString(),
+    });
+  }
+
+  function saveEdit(duoId: string) {
+    const cattle = Number(editForm.cattleCount);
+    const time = Number(editForm.timeSeconds);
+
+    if (isNaN(cattle) || cattle < 0 || cattle > 10) {
+      alert('Bois inválido (0–10).');
+      return;
+    }
+    if (isNaN(time) || time <= 0) {
+      alert('Tempo inválido.');
+      return;
+    }
+
+    updateQualifierResult(duoId, cattle, time);
+    setEditingId(null);
+  }
+
   const allRegistered = pendingDuos.length === 0;
 
   return (
@@ -76,6 +108,7 @@ export default function Qualifiers() {
                 <th>Categoria</th>
                 <th>Bois</th>
                 <th>Tempo</th>
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -84,8 +117,89 @@ export default function Qualifiers() {
                   <td>{idx + 1}</td>
                   <td>{p.duoLabel}</td>
                   <td>{p.group}</td>
-                  <td>{p.cattleCount}</td>
-                  <td>{p.timeSeconds}</td>
+
+                  {editingId === p.duoId ? (
+                    <>
+                      <td>
+                        <input
+                          type="number"
+                          value={editForm.cattleCount}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              cattleCount: e.target.value,
+                            })
+                          }
+                          style={{ width: '70px', padding: '4px' }}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          type="number"
+                          value={editForm.timeSeconds}
+                          onChange={(e) =>
+                            setEditForm({
+                              ...editForm,
+                              timeSeconds: e.target.value,
+                            })
+                          }
+                          style={{ width: '70px', padding: '4px' }}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="save-btn"
+                          onClick={() => saveEdit(p.duoId)}
+                          style={{
+                            background: '#22a31b',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            marginRight: '4px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Salvar
+                        </button>
+                        <button
+                          className="cancel-btn"
+                          onClick={() => setEditingId(null)}
+                          style={{
+                            background: '#aaa',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Cancelar
+                        </button>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td>{p.cattleCount}</td>
+                      <td>{p.timeSeconds}</td>
+                      <td>
+                        <button
+                          className="edit-btn"
+                          onClick={() => startEdit(p)}
+                          style={{
+                            background: '#0ea5e9',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            padding: '4px 8px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          Editar
+                        </button>
+                      </td>
+                    </>
+                  )}
                 </tr>
               ))}
             </tbody>
