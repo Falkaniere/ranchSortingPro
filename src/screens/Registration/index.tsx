@@ -122,7 +122,17 @@ export default function Registration({
   }
 
   return (
-    <div className="registration-container">
+    <div
+      style={{
+        padding: '32px',
+        border: '1px solid #ccc',
+        borderRadius: '8px',
+        background: 'hsl(0, 0%, 100%)',
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <h1>Cadastro de Competidores</h1>
 
       {/* Número de passadas */}

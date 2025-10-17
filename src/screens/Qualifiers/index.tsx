@@ -5,6 +5,7 @@ import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import './index.css';
+import { exportToExcel } from 'utils/exportExcel';
 
 type PartialRow = DuoScore & { duoLabel: string };
 
@@ -93,6 +94,23 @@ export default function Qualifiers() {
   return (
     <div className="qualifiersContainer">
       <h1 className="title">Qualificatórias</h1>
+
+      <button
+        onClick={() =>
+          exportToExcel(
+            partials.map((p, idx) => ({
+              Passada: idx + 1,
+              Dupla: p.duoLabel,
+              Categoria: p.group,
+              Bois: p.cattleCount,
+              Tempo: p.timeSeconds,
+            })),
+            'Resultados_Qualificatorias'
+          )
+        }
+      >
+        Exportar Qualificatórias
+      </button>
 
       {/* Formulário da dupla atual */}
       {currentDuo && (
