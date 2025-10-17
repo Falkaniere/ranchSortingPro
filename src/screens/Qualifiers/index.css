@@ -39,10 +39,6 @@
   cursor: pointer;
 }
 
-.form button:last-child {
-  background: #ef4444;
-}
-
 .partials {
   margin-bottom: 2rem;
 }

@@ -72,7 +72,8 @@ export default function Finals() {
     };
   });
 
-  const currentList = getPendingList(activeTab);
+  const allCompetitors = getPendingList(activeTab);
+  const currentList = allCompetitors.reverse();
   const currentDuo = currentList[0] ?? null;
   const allRegistered = currentList.length === 0;
 
@@ -148,11 +149,26 @@ export default function Finals() {
           <p>Todas as duplas desta categoria já foram registradas.</p>
         ) : (
           <ul className="pending-list-items">
-            {currentList.map((entry) => (
-              <li key={entry.duoId}>
-                {entry.label} — {entry.group}
-              </li>
-            ))}
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Dupla</th>
+                  <th>Bois (Qualificatória)</th>
+                  <th>Tempo (Qualificatória)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {currentList.map((entry, idx) => (
+                  <tr key={entry.duoId}>
+                    <td>{idx + 1}</td>
+                    <td>{entry.label}</td>
+                    <td>{entry.cattleCount}</td>
+                    <td>{entry.timeSeconds}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </ul>
         )}
       </div>
