@@ -94,6 +94,52 @@ export default function Qualifiers() {
     <div className="qualifiersContainer">
       <h1 className="title">Qualificatórias</h1>
 
+      {/* Formulário da dupla atual */}
+      {currentDuo && (
+        <div className="form">
+          <div className="currentDuo">
+            <strong>Dupla atual:</strong>{' '}
+            <span>
+              {currentDuo.number}. {currentDuo.label} ({currentDuo.group})
+            </span>
+          </div>
+          <input
+            type="number"
+            placeholder="Bois"
+            value={form.cattleCount}
+            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
+          />
+          <input
+            type="number"
+            placeholder="Tempo (s)"
+            value={form.timeSeconds}
+            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
+          />
+          <button onClick={() => saveQualifierResult(false)}>Salvar</button>
+          <button onClick={() => saveQualifierResult(true)}>SAT</button>
+        </div>
+      )}
+
+      {/* Pendentes */}
+      <div className="pending">
+        <h2>Duplas Pendentes</h2>
+        <ul>
+          {pendingDuos.map((duo) => (
+            <li key={duo.id}>
+              <span className="number">{duo.number}</span>
+              <span className="label">{duo.label}</span>
+              <span className="group">{duo.group}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {allRegistered && (
+        <button className="nextBtn" onClick={() => navigate('/final')}>
+          Ir para Finais
+        </button>
+      )}
+
       {/* Parciais */}
       <div className="partials">
         <h2>Parciais</h2>
@@ -206,52 +252,6 @@ export default function Qualifiers() {
           </table>
         )}
       </div>
-
-      {/* Formulário da dupla atual */}
-      {currentDuo && (
-        <div className="form">
-          <div className="currentDuo">
-            <strong>Dupla atual:</strong>{' '}
-            <span>
-              {currentDuo.number}. {currentDuo.label} ({currentDuo.group})
-            </span>
-          </div>
-          <input
-            type="number"
-            placeholder="Bois"
-            value={form.cattleCount}
-            onChange={(e) => setForm({ ...form, cattleCount: e.target.value })}
-          />
-          <input
-            type="number"
-            placeholder="Tempo (s)"
-            value={form.timeSeconds}
-            onChange={(e) => setForm({ ...form, timeSeconds: e.target.value })}
-          />
-          <button onClick={() => saveQualifierResult(false)}>Salvar</button>
-          <button onClick={() => saveQualifierResult(true)}>SAT</button>
-        </div>
-      )}
-
-      {/* Pendentes */}
-      <div className="pending">
-        <h2>Duplas Pendentes</h2>
-        <ul>
-          {pendingDuos.map((duo) => (
-            <li key={duo.id}>
-              <span className="number">{duo.number}</span>
-              <span className="label">{duo.label}</span>
-              <span className="group">{duo.group}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      {allRegistered && (
-        <button className="nextBtn" onClick={() => navigate('/final')}>
-          Ir para Finais
-        </button>
-      )}
     </div>
   );
 }
