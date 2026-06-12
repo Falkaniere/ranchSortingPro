@@ -270,7 +270,7 @@ export function CompetitorImportModal({ isOpen, onClose, onImport, numRounds }: 
                 </tr>
               </thead>
               <tbody className="divide-y divide-dust-100">
-                {preview.map((r, i) => (
+                {preview.slice(0, 200).map((r, i) => (
                   <tr key={i} className={r.categoryRecognized || !categoryCol ? 'hover:bg-dust-50' : 'bg-hay-50/50'}>
                     <td className="px-4 py-2 text-rope-400 text-xs">{i + 1}</td>
                     <td className="px-4 py-2 font-medium text-rope-800">{r.name}</td>
