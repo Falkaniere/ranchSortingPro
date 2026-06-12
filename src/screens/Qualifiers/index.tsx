@@ -8,6 +8,7 @@ import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import { exportToExcel } from 'utils/exportExcel';
+import { exportResultsToPng } from 'utils/exportPng';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
@@ -126,6 +127,52 @@ export default function Qualifiers() {
     return sat ? 'SAT' : `${s.toFixed(2)}s`;
   }
 
+  const QUAL_COLUMNS = [
+    { header: '#', width: 36, align: 'center' as const },
+    { header: 'DUPLA', width: 200, align: 'left' as const },
+    { header: 'GRP', width: 44, align: 'center' as const },
+    { header: 'B.CANT', width: 56, align: 'center' as const },
+    { header: 'BOIS', width: 44, align: 'center' as const },
+    { header: 'TEMPO', width: 68, align: 'center' as const },
+  ];
+
+  function buildQualifierRows(rows: PartialRow[], startPos = 1) {
+    return rows.map((p, idx) => ({
+      cells: [
+        String(startPos + idx),
+        p.duoLabel,
+        p.group,
+        p.calledCattle != null ? String(p.calledCattle) : '—',
+        String(p.cattleCount),
+        formatTime(p.timeSeconds, p.isSAT),
+      ],
+      highlight: idx === 0,
+      isSAT: p.isSAT,
+    }));
+  }
+
+  function handleExportPng() {
+    const rows1D = buildQualifierRows(partials1D);
+    const rows2D = buildQualifierRows(partials2D);
+    const combinedRows = [
+      { cells: [`Ranking 1D — Profissional (${partials1D.length})`], isGroupHeader: true },
+      ...rows1D,
+      ...(show2D
+        ? [
+            { cells: [`Ranking 2D — Amador (${partials2D.length})`], isGroupHeader: true },
+            ...rows2D,
+          ]
+        : []),
+    ];
+    exportResultsToPng({
+      title: 'Classificatória — Parciais',
+      subtitle: `${partials.length} passadas registradas`,
+      columns: QUAL_COLUMNS,
+      rows: combinedRows,
+      fileName: 'Resultados_Qualificatorias',
+    });
+  }
+
   function RankingTable({ rows, title }: { rows: PartialRow[]; title: string }) {
     return (
       <div>
@@ -194,7 +241,7 @@ export default function Qualifiers() {
         title="Qualificatória"
         subtitle={`${registeredDuoIds.size} de ${duos.length} duplas registradas`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isPro && <UpgradeBadge />}
             <Button
               variant="outline"
@@ -218,7 +265,15 @@ export default function Qualifiers() {
               }
               disabled={partials.length === 0}
             >
-              Exportar Excel
+              Planilha
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={isPro ? handleExportPng : () => setUpgradeOpen(true)}
+              disabled={partials.length === 0}
+            >
+              PNG
             </Button>
             <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           </div>

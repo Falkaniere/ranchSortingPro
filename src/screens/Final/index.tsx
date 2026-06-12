@@ -6,6 +6,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { exportToExcel } from 'utils/exportExcel';
+import { exportResultsToPng } from 'utils/exportPng';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
@@ -137,6 +138,48 @@ export default function Finals() {
 
   const partialsFiltered = partials.filter((p) => p?.group === activeTab);
 
+  const FINAL_COLUMNS = [
+    { header: '#', width: 36, align: 'center' as const },
+    { header: 'DUPLA', width: 170, align: 'left' as const },
+    { header: 'GRP', width: 44, align: 'center' as const },
+    { header: 'B.C', width: 44, align: 'center' as const },
+    { header: 'Q.BOIS', width: 52, align: 'center' as const },
+    { header: 'Q.TEMPO', width: 64, align: 'center' as const },
+    { header: 'F.BOIS', width: 52, align: 'center' as const },
+    { header: 'F.TEMPO', width: 64, align: 'center' as const },
+    { header: 'MÉD.B', width: 52, align: 'center' as const },
+    { header: 'MÉD.T', width: 64, align: 'center' as const },
+  ];
+
+  function handleExportFinalPng() {
+    const sorted = [...partialsFiltered].sort(
+      (a, b) => (b?.avgCattle ?? 0) - (a?.avgCattle ?? 0) || (a?.avgTime ?? 0) - (b?.avgTime ?? 0)
+    );
+    const rows = sorted.map((p, idx) => ({
+      cells: [
+        idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : String(idx + 1),
+        p?.label ?? '',
+        p?.group ?? '',
+        p?.calledCattle != null ? String(p.calledCattle) : '—',
+        String(p?.qualiCattle ?? ''),
+        formatTime(p?.qualiTime ?? 0),
+        String(p?.finalCattle ?? ''),
+        formatTime(p?.finalTime ?? 0),
+        (p?.avgCattle ?? 0).toFixed(1),
+        formatTime(p?.avgTime ?? 0),
+      ],
+      highlight: idx < 3,
+      isSAT: (p?.finalTime ?? 0) >= 120,
+    }));
+    exportResultsToPng({
+      title: `Final ${activeTab} — Parciais`,
+      subtitle: `${partialsFiltered.length} duplas · ${activeTab === '1D' ? 'Profissional' : 'Amador'}`,
+      columns: FINAL_COLUMNS,
+      rows,
+      fileName: `Resultados_Final_${activeTab}`,
+    });
+  }
+
   return (
     <div>
       <PageHeader
@@ -171,7 +214,15 @@ export default function Finals() {
               }
               disabled={partialsFiltered.length === 0}
             >
-              Exportar {activeTab}
+              Planilha {activeTab}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={isPro ? handleExportFinalPng : () => setUpgradeOpen(true)}
+              disabled={partialsFiltered.length === 0}
+            >
+              PNG {activeTab}
             </Button>
             <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           </div>
