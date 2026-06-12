@@ -22,7 +22,7 @@ export default function CompetitorHistory() {
     () => allDuos.filter((d) => d.riderOneId === competitorId || d.riderTwoId === competitorId),
     [allDuos, competitorId]
   );
-  const myDuoIds = new Set(myDuos.map((d) => d.id));
+  const myDuoIds = useMemo(() => new Set(myDuos.map((d) => d.id)), [myDuos]);
 
   const qualResults = useMemo(
     () => results.filter((r) => r.stage === 'Qualifier' && myDuoIds.has(r.duoId)),
