@@ -12,7 +12,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Competitor } from '../../core/models/Competidor';
+import { Competitor, normalizeCategory } from '../../core/models/Competidor';
 import { Duo } from '../../core/models/Duo';
 import { PassResult } from '../../core/models/PassResult';
 
@@ -72,7 +72,10 @@ function toCompetition(id: string, data: any): Competition {
         : data.updatedAt ?? new Date().toISOString(),
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
-    competitors: data.competitors ?? [],
+    competitors: (data.competitors ?? []).map((c: any) => ({
+      ...c,
+      category: normalizeCategory(c.category ?? 'Open'),
+    })),
     duos: data.duos ?? [],
     qualifierResults: data.qualifierResults ?? [],
     finalResults: data.finalResults ?? [],

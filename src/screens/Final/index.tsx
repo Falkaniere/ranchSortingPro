@@ -207,9 +207,9 @@ export default function Finals() {
         })}
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-5">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         {/* Entry form */}
-        <div className="lg:col-span-2 flex flex-col gap-4">
+        <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
           {currentDuo ? (
             <Card title={`Registrar resultado — ${activeTab}`}>
               <div className="mb-4 p-3 rounded-lg bg-hay-50 border border-hay-200">
@@ -225,7 +225,7 @@ export default function Finals() {
 
               <div className="flex flex-col gap-4">
                 <QuickSelect
-                  label="Boi Cantado (0–9)"
+                  label="Boi Cantado"
                   value={currentForm.calledCattle}
                   onChange={(v) => setFormField('calledCattle', v)}
                   min={0}
@@ -234,7 +234,7 @@ export default function Finals() {
                 />
 
                 <QuickSelect
-                  label="Quantidade de Bois (0–10)"
+                  label="Quantidade de Bois"
                   value={currentForm.cattle}
                   onChange={(v) => setFormField('cattle', v)}
                   min={0}
@@ -295,7 +295,7 @@ export default function Finals() {
         </div>
 
         {/* Results table */}
-        <Card className="lg:col-span-3" title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
+        <Card className="md:col-span-1 lg:col-span-3" title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
           {partialsFiltered.length === 0 ? (
             <EmptyState icon="🏆" title="Sem resultados ainda" />
           ) : (

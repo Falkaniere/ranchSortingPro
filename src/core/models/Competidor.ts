@@ -1,4 +1,10 @@
-export type RiderCategory = 'Open' | 'Amateur19' | 'AmateurLight' | 'Beginner'; // Principiante
+export type RiderCategory = 'Open' | 'AmateurLight';
+
+// Migrates legacy category values to the simplified 2-category model.
+export function normalizeCategory(cat: string): RiderCategory {
+  if (cat === 'AmateurLight' || cat === 'Beginner') return 'AmateurLight';
+  return 'Open'; // Open, Amateur19, or any unknown value → Open
+}
 
 export interface Competitor {
   id: string;

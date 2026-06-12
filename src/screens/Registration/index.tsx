@@ -196,9 +196,9 @@ export default function Registration() {
         }
       />
 
-      <div className="grid gap-5 lg:grid-cols-5">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         {/* Form */}
-        <Card className="lg:col-span-2" title="Adicionar competidor">
+        <Card className="md:col-span-1 lg:col-span-2" title="Adicionar competidor">
           <div className="flex flex-col gap-4">
             <div>
               <label className="text-sm font-medium text-rope-700 block mb-1">
@@ -285,7 +285,7 @@ export default function Registration() {
 
         {/* List */}
         <Card
-          className="lg:col-span-3"
+          className="md:col-span-1 lg:col-span-3"
           title={`Competidores (${competitors.length})`}
           noPadding
         >

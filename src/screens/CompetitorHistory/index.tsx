@@ -58,6 +58,15 @@ export default function CompetitorHistory() {
     return { sats, avgCattle, avgTime };
   }, [qualResults]);
 
+  // Estatísticas das finais
+  const finStats = useMemo(() => {
+    if (finResults.length === 0) return null;
+    const sats = finResults.filter((r) => r.isSAT).length;
+    const avgCattle = finResults.reduce((s, r) => s + r.cattleCount, 0) / finResults.length;
+    const avgTime = finResults.reduce((s, r) => s + r.timeSeconds, 0) / finResults.length;
+    return { sats, avgCattle, avgTime };
+  }, [finResults]);
+
   function formatTime(s: number, sat?: boolean) {
     return sat ? 'SAT' : `${s.toFixed(2)}s`;
   }
@@ -128,32 +137,41 @@ export default function CompetitorHistory() {
           {finResults.length === 0 ? (
             <EmptyState icon="🏆" title="Sem passadas na final" />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-dust-50 border-b border-dust-200">
-                  <tr>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500">Passada</th>
-                    <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500">Parceiro</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Grp</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Bois</th>
-                    <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Tempo</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-dust-100">
-                  {finResults.map((r) => (
-                    <tr key={r.id} className={r.isSAT ? 'bg-brand-50' : 'hover:bg-dust-50'}>
-                      <td className="px-4 py-2.5 text-rope-500 text-xs font-mono">#{getPassNumber(r.duoId)}</td>
-                      <td className="px-4 py-2.5 font-medium text-rope-800 text-sm">{getPartnerName(r.duoId)}</td>
-                      <td className="px-4 py-2.5 text-center"><GroupBadge group={getDuo(r.duoId)?.group ?? '1D'} /></td>
-                      <td className="px-4 py-2.5 text-center text-rope-500 text-sm">{r.calledCattle ?? '—'}</td>
-                      <td className="px-4 py-2.5 text-center font-semibold text-rope-700">{r.cattleCount}</td>
-                      <td className="px-4 py-2.5 text-center text-rope-600 text-sm">{formatTime(r.timeSeconds, r.isSAT)}</td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-dust-50 border-b border-dust-200">
+                    <tr>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500">Passada</th>
+                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500">Parceiro</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Grp</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Bois</th>
+                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500">Tempo</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-dust-100">
+                    {finResults.map((r) => (
+                      <tr key={r.id} className={r.isSAT ? 'bg-brand-50' : 'hover:bg-dust-50'}>
+                        <td className="px-4 py-2.5 text-rope-500 text-xs font-mono">#{getPassNumber(r.duoId)}</td>
+                        <td className="px-4 py-2.5 font-medium text-rope-800 text-sm">{getPartnerName(r.duoId)}</td>
+                        <td className="px-4 py-2.5 text-center"><GroupBadge group={getDuo(r.duoId)?.group ?? '1D'} /></td>
+                        <td className="px-4 py-2.5 text-center text-rope-500 text-sm">{r.calledCattle ?? '—'}</td>
+                        <td className="px-4 py-2.5 text-center font-semibold text-rope-700">{r.cattleCount}</td>
+                        <td className="px-4 py-2.5 text-center text-rope-600 text-sm">{formatTime(r.timeSeconds, r.isSAT)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {finStats && (
+                <div className="px-4 py-3 bg-dust-50 border-t border-dust-200 flex flex-wrap gap-4 text-xs text-rope-600">
+                  <span>Média bois: <strong className="text-rope-800">{finStats.avgCattle.toFixed(2)}</strong></span>
+                  <span>Tempo médio: <strong className="text-rope-800">{formatTime(finStats.avgTime)}</strong></span>
+                  <span>SATs: <strong className="text-brand-600">{finStats.sats}</strong></span>
+                </div>
+              )}
+            </>
           )}
         </Card>
       </div>
