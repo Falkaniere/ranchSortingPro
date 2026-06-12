@@ -8,7 +8,7 @@ export interface PairingOutput {
 
 export interface PairingOptions {
   rngSeed?: number;
-  passesPerCompetitor?: number; // 👈 usa SEMPRE o valor global passado pela tela
+  passesPerCompetitor?: number;
   method?: 'auto' | 'roundRobin' | 'havelHakimi';
 }
 
@@ -28,7 +28,6 @@ function shuffleInPlace<T>(arr: T[], seedState: { seed: number }) {
 /**
  * Round-robin (método do círculo) — funciona para N par.
  * Gera N-1 rodadas; cada rodada tem N/2 duplas, cobrindo todas as combinações sem repetição.
- * Se "passes" < N-1, devolvemos apenas as primeiras "passes" rodadas.
  */
 function roundRobinPairs(
   competitors: Competitor[],
@@ -39,33 +38,26 @@ function roundRobinPairs(
   if (n % 2 !== 0)
     throw new Error('Round-robin requer número PAR de competidores.');
 
-  // embaralha ordem inicial para variar o sorteio
   const order = [...competitors];
   shuffleInPlace(order, seedState);
 
   const rounds: Array<Array<[Competitor, Competitor]>> = [];
-  // método do círculo: fixa o primeiro e rotaciona o resto
   const fixed = order[0];
-  let ring = order.slice(1); // tamanho n-1
+  let ring = order.slice(1);
 
   const totalPossibleRounds = n - 1;
   const useRounds = Math.min(passes, totalPossibleRounds);
 
   for (let r = 0; r < useRounds; r++) {
     const pairs: Array<[Competitor, Competitor]> = [];
-    // par 0: fixed com último do ring
     pairs.push([fixed, ring[ring.length - 1]]);
-    // pares restantes: i vs (len-2-i)
     for (let i = 0; i < n / 2 - 1; i++) {
       pairs.push([ring[i], ring[ring.length - 2 - i]]);
     }
     rounds.push(pairs);
-
-    // rotação: move o último para o começo
     ring = [ring[ring.length - 1], ...ring.slice(0, ring.length - 1)];
   }
 
-  // flatten e map para Duo (filtra pares inválidos por ASQM)
   const duos: Duo[] = [];
   for (const pairs of rounds) {
     for (const [a, b] of pairs) {
@@ -83,7 +75,7 @@ function roundRobinPairs(
 }
 
 /**
- * Havel–Hakimi para sequência regular (todos com o mesmo grau = passes).
+ * Havel–Hakimi para sequência regular ou heterogênea (graus diferentes por competidor).
  * Funciona para N ímpar (quando N*passes é par) ou como fallback geral.
  * Recomeça com outra seed se encalhar (até maxTries).
  */
@@ -91,31 +83,27 @@ function havelHakimiRegular(
   competitors: Competitor[],
   passes: number,
   seedState: { seed: number },
-  maxTries = 50
+  maxTries = 50,
+  extraCompetitorId?: string
 ): Duo[] {
-  const n = competitors.length;
-  const neededEdges = (n * passes) / 2;
-
   for (let attempt = 0; attempt < maxTries; attempt++) {
-    // estado
     const nodes = competitors.map((c) => ({
       id: c.id,
       category: c.category,
-      remaining: passes,
+      // Competidor com passada extra recebe 1 a mais
+      remaining: c.id === extraCompetitorId ? passes + 1 : passes,
       neighbors: new Set<string>(),
     }));
 
-    // quebra empates com shuffle leve
     shuffleInPlace(nodes, seedState);
 
     const byId = new Map(nodes.map((x) => [x.id, x]));
     const edges: Array<[string, string]> = [];
 
     let ok = true;
-    // enquanto houver algum com remaining > 0
     while (true) {
       nodes.sort((a, b) => b.remaining - a.remaining);
-      if (nodes[0].remaining === 0) break; // terminou
+      if (nodes[0].remaining === 0) break;
 
       const v = nodes[0];
       const r = v.remaining;
@@ -130,11 +118,10 @@ function havelHakimiRegular(
         );
 
       if (candidates.length < r) {
-        ok = false; // encalhou
+        ok = false;
         break;
       }
 
-      // conecta v aos r primeiros (maiores remaining), com leve randomização
       shuffleInPlace(candidates, seedState);
       candidates.sort((a, b) => b.remaining - a.remaining);
       const chosen = candidates.slice(0, r);
@@ -149,12 +136,8 @@ function havelHakimiRegular(
       }
     }
 
-    if (!ok) {
-      // tenta de novo com outra seed
-      continue;
-    }
+    if (!ok) continue;
 
-    // converte arestas em Duos
     const duos: Duo[] = edges.map(([aId, bId]) => {
       const a = byId.get(aId)!;
       const b = byId.get(bId)!;
@@ -166,8 +149,11 @@ function havelHakimiRegular(
       };
     });
 
-    if (duos.length === neededEdges) {
-      // embaralha a ordem final para não ficar previsível
+    const totalEdges = extraCompetitorId
+      ? ((competitors.length - 1) * passes + (passes + 1)) / 2
+      : (competitors.length * passes) / 2;
+
+    if (duos.length === totalEdges) {
       shuffleInPlace(duos, seedState);
       return duos;
     }
@@ -187,14 +173,11 @@ export function generateUniqueDuos(
   const n = competitorsInput.length;
   if (n < 2) throw new Error('É necessário pelo menos 2 competidores.');
 
-  // 👇 usa o passes global se passado; se não, tenta inferir
   let passes = options.passesPerCompetitor;
   if (passes == null) {
     const distinct = new Set(competitorsInput.map((c) => c.passes));
     if (distinct.size !== 1) {
-      throw new Error(
-        'Número de passadas deve ser único para todos os competidores.'
-      );
+      throw new Error('Número de passadas deve ser único para todos os competidores.');
     }
     passes = competitorsInput[0].passes;
   }
@@ -209,44 +192,57 @@ export function generateUniqueDuos(
     );
   }
 
-  // condição necessária: N * passes precisa ser par
-  if ((n * passes) % 2 !== 0) {
-    throw new Error(`N x passadas deve ser par. N=${n}, passadas=${passes}.`);
-  }
-
   const competitors: Competitor[] = competitorsInput.map((c) => ({
     ...c,
-    passes: passes!, // garante que seja number
+    passes: passes!,
   }));
+
+  const warnings: string[] = [];
+  let extraCompetitorId: string | undefined;
+
+  // Quando N*passes é ímpar (N ímpar e passes ímpar), sortear um competidor para receber passada extra
+  if ((n * passes) % 2 !== 0) {
+    const idx = Math.floor(seededRandom(seedState) * n);
+    extraCompetitorId = competitors[idx].id;
+    warnings.push(
+      `${competitors[idx].name} recebeu uma passada extra por número ímpar de competidores.`
+    );
+  }
 
   let duos: Duo[] = [];
   if (
     (options.method === 'roundRobin' || options.method === 'auto') &&
-    n % 2 === 0
+    n % 2 === 0 &&
+    !extraCompetitorId
   ) {
     duos = roundRobinPairs(competitors, passes, seedState);
   } else if (options.method === 'roundRobin' && n % 2 !== 0) {
     throw new Error('Round-robin requer número PAR de competidores.');
   } else {
-    duos = havelHakimiRegular(competitors, passes, seedState);
+    duos = havelHakimiRegular(competitors, passes, seedState, 50, extraCompetitorId);
   }
 
-  // Detect competitors who received fewer rounds than requested due to category
-  // incompatibilities silently dropping pairs (round-robin skips invalid combos).
+  // Atribui passNumber sequencial a cada dupla
+  duos = duos.map((d, i) => ({ ...d, passNumber: i + 1 }));
+
+  // Detecta competidores que ficaram com menos passadas por incompatibilidade de categoria
   const roundCount = new Map<string, number>();
   for (const duo of duos) {
     roundCount.set(duo.riderOneId, (roundCount.get(duo.riderOneId) ?? 0) + 1);
     roundCount.set(duo.riderTwoId, (roundCount.get(duo.riderTwoId) ?? 0) + 1);
   }
   const underserved = competitors.filter(
-    (c) => (roundCount.get(c.id) ?? 0) < passes!
+    (c) => {
+      const expected = c.id === extraCompetitorId ? passes! + 1 : passes!;
+      return (roundCount.get(c.id) ?? 0) < expected;
+    }
   );
-  const warnings: string[] = underserved.length > 0
-    ? [
-        `${underserved.length} competidor(es) ficaram com menos passadas por falta de adversários compatíveis: ` +
-        underserved.map((c) => c.name).join(', '),
-      ]
-    : [];
+  if (underserved.length > 0) {
+    warnings.push(
+      `${underserved.length} competidor(es) ficaram com menos passadas por falta de adversários compatíveis: ` +
+      underserved.map((c) => c.name).join(', ')
+    );
+  }
 
   return { duos, warnings };
 }
