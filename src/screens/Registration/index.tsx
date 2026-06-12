@@ -159,7 +159,8 @@ export default function Registration() {
         subtitle={`${competitors.length} competidor${competitors.length !== 1 ? 'es' : ''} cadastrado${competitors.length !== 1 ? 's' : ''}`}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
+            {!isPro && <UpgradeBadge />}
+            <Button variant="outline" size="sm" onClick={isPro ? () => setImportOpen(true) : () => setUpgradeOpen(true)}>
               Importar Excel
             </Button>
             {canSort && (
