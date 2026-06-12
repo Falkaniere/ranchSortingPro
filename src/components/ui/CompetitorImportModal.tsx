@@ -11,13 +11,6 @@ import {
 } from '../../utils/detectExcelColumns';
 import { Competitor, RiderCategory } from '../../core/models/Competidor';
 
-const CATEGORIES: { label: string; value: RiderCategory }[] = [
-  { label: 'Aberta (Open)', value: 'Open' },
-  { label: 'Amador', value: 'Amateur19' },
-  { label: 'Amador Light', value: 'AmateurLight' },
-  { label: 'Principiante', value: 'Beginner' },
-];
-
 interface Props {
   isOpen: boolean;
   onClose: () => void;
