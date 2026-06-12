@@ -51,16 +51,20 @@ export default function Finals() {
   }
 
   function getPendingList(category: '1D' | '2D'): PendingEntry[] {
-    const base = category === '1D'
-      ? toPendingEntries(finalists.finalists1D)
-      : toPendingEntries(finalists.finalists2D);
-    return base.filter((entry) => !finalResults.some((r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final'));
+    // Worst qualifier first → best qualifier last (runs last in finals)
+    const sorted = category === '1D'
+      ? [...finalists.finalists1D].reverse()
+      : [...finalists.finalists2D].reverse();
+    return toPendingEntries(sorted).filter(
+      (entry) => !finalResults.some((r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final')
+    );
   }
 
   const pending1D = getPendingList('1D');
   const pending2D = getPendingList('2D');
   const pendingActive = activeTab === '1D' ? pending1D : pending2D;
-  const currentDuo = pendingActive[pendingActive.length - 1] ?? null;
+  // First in list = worst qualifier = runs next
+  const currentDuo = pendingActive[0] ?? null;
   const currentForm = forms[activeTab];
 
   const partials = useMemo(() => {
@@ -83,7 +87,7 @@ export default function Finals() {
         };
       })
       .filter(Boolean);
-  }, [finalResults, bestScores, duosMeta, finalists]);
+  }, [finalResults, bestScores, duosMeta]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validateForm() {
     const e: typeof formErrors = {};
