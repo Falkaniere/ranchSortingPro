@@ -1,5 +1,5 @@
 import { Competitor } from '../models/Competidor';
-import { Duo, computeDuoGroup } from '../models/Duo';
+import { Duo, computeDuoGroup, canPair } from '../models/Duo';
 
 export interface PairingOutput {
   duos: Duo[];
@@ -65,10 +65,11 @@ function roundRobinPairs(
     ring = [ring[ring.length - 1], ...ring.slice(0, ring.length - 1)];
   }
 
-  // flatten e map para Duo
+  // flatten e map para Duo (filtra pares inválidos por ASQM)
   const duos: Duo[] = [];
   for (const pairs of rounds) {
     for (const [a, b] of pairs) {
+      if (!canPair(a.category, b.category)) continue;
       const id = [a.id, b.id].sort().join('🤝');
       duos.push({
         id,
@@ -121,7 +122,12 @@ function havelHakimiRegular(
 
       const candidates = nodes
         .slice(1)
-        .filter((u) => u.remaining > 0 && !v.neighbors.has(u.id));
+        .filter(
+          (u) =>
+            u.remaining > 0 &&
+            !v.neighbors.has(u.id) &&
+            canPair(v.category, u.category)
+        );
 
       if (candidates.length < r) {
         ok = false; // encalhou
@@ -195,7 +201,12 @@ export function generateUniqueDuos(
 
   if (passes < 0) throw new Error('Passadas não pode ser negativo.');
   if (passes > n - 1) {
-    throw new Error(`Passadas (${passes}) não pode exceder N-1 (${n - 1}).`);
+    throw new Error(
+      `Número de passadas (${passes}) maior do que o permitido.\n` +
+      `Com ${n} competidores, cada um pode correr no máximo ${n - 1} passada${n - 1 !== 1 ? 's' : ''} ` +
+      `(uma contra cada adversário diferente).\n` +
+      `Reduza as passadas para ${n - 1} ou menos, ou adicione mais competidores.`
+    );
   }
 
   // condição necessária: N * passes precisa ser par
@@ -220,5 +231,22 @@ export function generateUniqueDuos(
     duos = havelHakimiRegular(competitors, passes, seedState);
   }
 
-  return { duos, warnings: [] };
+  // Detect competitors who received fewer rounds than requested due to category
+  // incompatibilities silently dropping pairs (round-robin skips invalid combos).
+  const roundCount = new Map<string, number>();
+  for (const duo of duos) {
+    roundCount.set(duo.riderOneId, (roundCount.get(duo.riderOneId) ?? 0) + 1);
+    roundCount.set(duo.riderTwoId, (roundCount.get(duo.riderTwoId) ?? 0) + 1);
+  }
+  const underserved = competitors.filter(
+    (c) => (roundCount.get(c.id) ?? 0) < passes!
+  );
+  const warnings: string[] = underserved.length > 0
+    ? [
+        `${underserved.length} competidor(es) ficaram com menos passadas por falta de adversários compatíveis: ` +
+        underserved.map((c) => c.name).join(', '),
+      ]
+    : [];
+
+  return { duos, warnings };
 }

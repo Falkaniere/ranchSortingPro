@@ -20,6 +20,13 @@ interface ResultsContextValue {
   duosMeta: Duo[];
   setDuosMeta: React.Dispatch<React.SetStateAction<Duo[]>>;
 
+  /** Inicializa os resultados a partir dos dados salvos de uma competição */
+  initializeFromCompetition: (
+    qualifierResults: PassResult[],
+    finals: PassResult[],
+    duos: Duo[]
+  ) => void;
+
   /** Adiciona resultado da qualificatória */
   addQualifierResult: (
     duoId: string,
@@ -61,6 +68,19 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   const [results, setResults] = useState<PassResult[]>([]);
   const [finalResults, setFinalResults] = useState<PassResult[]>([]);
   const [duosMeta, setDuosMeta] = useState<Duo[]>([]);
+
+  // -----------------------------
+  //  INITIALIZE FROM COMPETITION
+  // -----------------------------
+  function initializeFromCompetition(
+    qualifierResults: PassResult[],
+    finals: PassResult[],
+    duos: Duo[]
+  ) {
+    setResults(qualifierResults);
+    setFinalResults(finals);
+    setDuosMeta(duos);
+  }
 
   // -----------------------------
   //  ADD RESULTS
@@ -152,8 +172,9 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     finalResults,
     duosMeta,
     setDuosMeta,
+    initializeFromCompetition,
     addQualifierResult,
-    updateQualifierResult, // ✅ nova função
+    updateQualifierResult,
     addFinalResult,
     getBestQualifierScores,
     getFinalists,

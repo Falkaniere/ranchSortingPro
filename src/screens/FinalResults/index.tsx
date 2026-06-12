@@ -1,67 +1,139 @@
 import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { Duo } from 'core/models/Duo';
+import { useCompetition } from '../../context/CompetitionContext';
 import { FinalAggregationEntry } from 'core/logic/finals';
+import { exportToExcel } from 'utils/exportExcel';
+import { Button } from '../../components/ui/Button';
+import { Card } from '../../components/ui/Card';
+import { GroupBadge } from '../../components/ui/Badge';
+import { EmptyState } from '../../components/ui/EmptyState';
+import { PageHeader } from '../../components/ui/PageHeader';
 
-interface FinalResultsProps {
-  duos: Duo[];
-}
+export default function FinalResults() {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { getFinalAggregates, duosMeta } = useResults();
+  const { duos: compDuos } = useCompetition();
 
-interface ResultsRow {
-  position: number;
-  duoId: string;
-  duoLabel: string;
-  group: string;
-  totalCattle: number;
-  totalTimeSeconds: number;
-}
-
-export default function FinalResults({ duos }: FinalResultsProps) {
-  const { getFinalAggregates } = useResults();
   const aggregates = getFinalAggregates();
+  const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
 
-  const rows: ResultsRow[] = aggregates.map(
-    (a: FinalAggregationEntry, idx: number) => {
-      const duo = duos.find((d) => d.id === a.duoId);
-      return {
-        position: idx + 1,
-        duoId: a.duoId,
-        duoLabel: duo?.label ?? a.duoId,
-        group: a.group,
-        totalCattle: a.totalCattle,
-        totalTimeSeconds: a.totalTimeSeconds,
-      };
-    }
-  );
+  const rows = aggregates.map((a: FinalAggregationEntry, idx: number) => {
+    const duo = metaDuos.find((d) => d.id === a.duoId);
+    return {
+      position: idx + 1,
+      duoId: a.duoId,
+      duoLabel: duo?.label ?? a.duoId,
+      group: a.group,
+      totalCattle: a.totalCattle,
+      totalTime: a.totalTimeSeconds,
+    };
+  });
+
+  const rows1D = rows.filter((r) => r.group === '1D');
+  const rows2D = rows.filter((r) => r.group === '2D');
+
+  function medal(pos: number) {
+    if (pos === 1) return '🥇';
+    if (pos === 2) return '🥈';
+    if (pos === 3) return '🥉';
+    return pos.toString();
+  }
+
+  function exportResults() {
+    exportToExcel(
+      rows.map((r) => ({
+        '#': r.position,
+        Dupla: r.duoLabel,
+        Grupo: r.group,
+        'Total Bois': r.totalCattle,
+        'Total Tempo (s)': r.totalTime.toFixed(2),
+      })),
+      'Resultados_Finais'
+    );
+  }
+
+  function ResultTable({ items, label }: { items: typeof rows; label: string }) {
+    return (
+      <Card title={label} noPadding>
+        {items.length === 0 ? (
+          <EmptyState title="Sem resultados" />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-dust-50 border-b border-dust-200">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide w-12">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">Dupla</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Grupo</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Total Bois</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Total Tempo</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-dust-100">
+                {items.map((r, idx) => (
+                  <tr
+                    key={r.duoId}
+                    className={[
+                      'transition-colors',
+                      idx === 0 ? 'bg-hay-50' : idx === 1 ? 'bg-dust-50' : 'hover:bg-dust-50',
+                    ].join(' ')}
+                  >
+                    <td className="px-4 py-3 text-lg text-center w-12">{medal(idx + 1)}</td>
+                    <td className="px-4 py-3 font-semibold text-rope-800">{r.duoLabel}</td>
+                    <td className="px-4 py-3 text-center"><GroupBadge group={r.group} size="md" /></td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="font-bold text-saddle-700 text-base">{r.totalCattle}</span>
+                      <span className="text-rope-400 text-xs ml-1">bois</span>
+                    </td>
+                    <td className="px-4 py-3 text-center text-rope-600 font-medium">
+                      {r.totalTime.toFixed(2)}s
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </Card>
+    );
+  }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h1>Resultados Finais</h1>
+    <div>
+      <PageHeader
+        title="Resultados Finais"
+        subtitle={`${rows.length} dupla${rows.length !== 1 ? 's' : ''} classificada${rows.length !== 1 ? 's' : ''}`}
+        actions={
+          <Button variant="outline" size="sm" onClick={exportResults} disabled={rows.length === 0}>
+            Exportar Excel
+          </Button>
+        }
+      />
+
       {rows.length === 0 ? (
-        <p>Sem resultados para exibir.</p>
+        <EmptyState
+          icon="🏆"
+          title="Sem resultados ainda"
+          description="Registre os resultados da final para ver a classificação."
+          action={
+            <Button variant="outline" onClick={() => navigate(`/competition/${id}/final`)}>
+              ← Ir para a Final
+            </Button>
+          }
+        />
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Dupla</th>
-              <th>Categoria</th>
-              <th>Bois (Total)</th>
-              <th>Tempo (Total)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => (
-              <tr key={r.duoId}>
-                <td>{r.position}</td>
-                <td>{r.duoLabel}</td>
-                <td>{r.group}</td>
-                <td>{r.totalCattle}</td>
-                <td>{r.totalTimeSeconds}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <div className="flex flex-col gap-5">
+          {rows1D.length > 0 && <ResultTable items={rows1D} label={`Classificação 1D — Aberta (${rows1D.length} duplas)`} />}
+          {rows2D.length > 0 && <ResultTable items={rows2D} label={`Classificação 2D (${rows2D.length} duplas)`} />}
+
+          <div className="flex justify-center pt-2">
+            <Button variant="secondary" onClick={() => navigate('/')}>
+              Voltar ao Início
+            </Button>
+          </div>
+        </div>
       )}
     </div>
   );
