@@ -1,129 +1,35 @@
-@import "tailwindcss";
-
-@theme {
-  /* Saddle Brown - couro de sela */
-  --color-saddle-50: #fdf6f0;
-  --color-saddle-100: #f8e8d8;
-  --color-saddle-200: #f0ceb0;
-  --color-saddle-300: #e5aa80;
-  --color-saddle-400: #d4814e;
-  --color-saddle-500: #a0522d;
-  --color-saddle-600: #8b4513;
-  --color-saddle-700: #6b3410;
-  --color-saddle-800: #5c2e00;
-  --color-saddle-900: #3d1d00;
-
-  /* Hay Gold - palha dourada */
-  --color-hay-50: #fefbf0;
-  --color-hay-100: #fdf3d0;
-  --color-hay-200: #fae49e;
-  --color-hay-300: #f5cf62;
-  --color-hay-400: #f0b730;
-  --color-hay-500: #d4a843;
-  --color-hay-600: #b8860b;
-  --color-hay-700: #8a6308;
-  --color-hay-800: #5c4205;
-  --color-hay-900: #3a2903;
-
-  /* Pasture Green - verde pasto */
-  --color-pasture-50: #f0f8ee;
-  --color-pasture-100: #daf0d5;
-  --color-pasture-200: #b5e0ab;
-  --color-pasture-300: #84c876;
-  --color-pasture-400: #5aaa4a;
-  --color-pasture-500: #4a7c3f;
-  --color-pasture-600: #3a6130;
-  --color-pasture-700: #2f5c25;
-  --color-pasture-800: #224519;
-  --color-pasture-900: #152b10;
-
-  /* Dust Beige - pó e terra */
-  --color-dust-50: #fdfaf5;
-  --color-dust-100: #faf5ec;
-  --color-dust-200: #f5ecd7;
-  --color-dust-300: #edd9b5;
-  --color-dust-400: #e2c48d;
-  --color-dust-500: #d4a843;
-  --color-dust-600: #c8952a;
-  --color-dust-700: #a07020;
-  --color-dust-800: #7a5218;
-  --color-dust-900: #4e330f;
-
-  /* Rope Dark - cordas e couro escuro */
-  --color-rope-50: #f5f0eb;
-  --color-rope-100: #e8d9cc;
-  --color-rope-200: #d0b599;
-  --color-rope-300: #b08060;
-  --color-rope-400: #7a5038;
-  --color-rope-500: #4a2e1a;
-  --color-rope-600: #3a2010;
-  --color-rope-700: #2c1a0e;
-  --color-rope-800: #1e0f06;
-  --color-rope-900: #0f0700;
-
-  /* Brand Red - vermelho rodeio */
-  --color-brand-500: #c0392b;
-  --color-brand-600: #a93226;
-  --color-brand-700: #922b21;
-
-  /* Typography */
-  --font-serif: "Playfair Display", Georgia, serif;
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-display: "Playfair Display", Georgia, serif;
-
-  /* Custom spacing */
-  --spacing-18: 4.5rem;
-  --spacing-22: 5.5rem;
-}
-
-/* Google Fonts */
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Base styles */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html {
-  scroll-behavior: smooth;
-}
+@layer base {
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  font-family: var(--font-sans);
-  background-color: var(--color-dust-100);
-  color: var(--color-rope-700);
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-/* Scrollbar customization */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
+  body {
+    @apply font-sans bg-dust-100 text-rope-700;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+  }
 
-::-webkit-scrollbar-track {
-  background: var(--color-dust-200);
-}
+  ::-webkit-scrollbar        { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track  { @apply bg-dust-200; }
+  ::-webkit-scrollbar-thumb  { @apply bg-saddle-500 rounded; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-saddle-600; }
 
-::-webkit-scrollbar-thumb {
-  background: var(--color-saddle-500);
-  border-radius: 3px;
-}
+  *:focus-visible {
+    @apply outline-none ring-2 ring-hay-500 ring-offset-1;
+  }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-saddle-600);
-}
-
-/* Focus ring */
-*:focus-visible {
-  outline: 2px solid var(--color-hay-500);
-  outline-offset: 2px;
-}
-
-/* Selection */
-::selection {
-  background: var(--color-hay-200);
-  color: var(--color-rope-800);
+  ::selection {
+    @apply bg-hay-200 text-rope-800;
+  }
 }
