@@ -8,6 +8,7 @@ import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import { exportToExcel } from 'utils/exportExcel';
+import { exportResultsToPng } from 'utils/exportPng';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
@@ -15,6 +16,7 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
+import { Modal } from '../../components/ui/Modal';
 
 type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean; calledCattle?: number };
 
@@ -37,6 +39,9 @@ export default function Qualifiers() {
   const [editCalledCattle, setEditCalledCattle] = useState<number | null>(null);
   const [editTime, setEditTime] = useState('');
 
+  const [selectDuoOpen, setSelectDuoOpen] = useState(false);
+  const [overrideDuoId, setOverrideDuoId] = useState<string | null>(null);
+
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
   const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
 
@@ -45,7 +50,9 @@ export default function Qualifiers() {
   );
 
   const pendingDuos = duos.filter((d) => !registeredDuoIds.has(d.id));
-  const currentDuo = pendingDuos[0] ?? null;
+  const currentDuo = overrideDuoId
+    ? (pendingDuos.find((d) => d.id === overrideDuoId) ?? pendingDuos[0] ?? null)
+    : (pendingDuos[0] ?? null);
 
   const partials: PartialRow[] = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
@@ -94,6 +101,7 @@ export default function Qualifiers() {
     setCalledCattle(null);
     setTimeSeconds('');
     setTimeError('');
+    setOverrideDuoId(null);
     toast(isSAT ? `SAT registrado para ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
@@ -117,6 +125,52 @@ export default function Qualifiers() {
 
   function formatTime(s: number, sat?: boolean) {
     return sat ? 'SAT' : `${s.toFixed(2)}s`;
+  }
+
+  const QUAL_COLUMNS = [
+    { header: '#', width: 36, align: 'center' as const },
+    { header: 'DUPLA', width: 200, align: 'left' as const },
+    { header: 'GRP', width: 44, align: 'center' as const },
+    { header: 'B.CANT', width: 56, align: 'center' as const },
+    { header: 'BOIS', width: 44, align: 'center' as const },
+    { header: 'TEMPO', width: 68, align: 'center' as const },
+  ];
+
+  function buildQualifierRows(rows: PartialRow[], startPos = 1) {
+    return rows.map((p, idx) => ({
+      cells: [
+        String(startPos + idx),
+        p.duoLabel,
+        p.group,
+        p.calledCattle != null ? String(p.calledCattle) : '—',
+        String(p.cattleCount),
+        formatTime(p.timeSeconds, p.isSAT),
+      ],
+      highlight: idx === 0,
+      isSAT: p.isSAT,
+    }));
+  }
+
+  function handleExportPng() {
+    const rows1D = buildQualifierRows(partials1D);
+    const rows2D = buildQualifierRows(partials2D);
+    const combinedRows = [
+      { cells: [`Ranking 1D — Profissional (${partials1D.length})`], isGroupHeader: true },
+      ...rows1D,
+      ...(show2D
+        ? [
+            { cells: [`Ranking 2D — Amador (${partials2D.length})`], isGroupHeader: true },
+            ...rows2D,
+          ]
+        : []),
+    ];
+    exportResultsToPng({
+      title: 'Classificatória — Parciais',
+      subtitle: `${partials.length} passadas registradas`,
+      columns: QUAL_COLUMNS,
+      rows: combinedRows,
+      fileName: 'Resultados_Qualificatorias',
+    });
   }
 
   function RankingTable({ rows, title }: { rows: PartialRow[]; title: string }) {
@@ -187,7 +241,7 @@ export default function Qualifiers() {
         title="Qualificatória"
         subtitle={`${registeredDuoIds.size} de ${duos.length} duplas registradas`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isPro && <UpgradeBadge />}
             <Button
               variant="outline"
@@ -211,7 +265,15 @@ export default function Qualifiers() {
               }
               disabled={partials.length === 0}
             >
-              Exportar Excel
+              Planilha
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={isPro ? handleExportPng : () => setUpgradeOpen(true)}
+              disabled={partials.length === 0}
+            >
+              PNG
             </Button>
             <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           </div>
@@ -230,20 +292,31 @@ export default function Qualifiers() {
           }
         />
       ) : (
-        <div className="grid gap-5 lg:grid-cols-5">
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {/* Entry form */}
-          <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
             {currentDuo ? (
               <Card title="Registrar resultado">
                 <div className="mb-4 p-3 rounded-lg bg-hay-50 border border-hay-200">
                   <p className="text-xs text-hay-700 font-medium mb-0.5">Passada {currentDuo.number}</p>
                   <p className="text-rope-800 font-semibold text-sm">{currentDuo.label}</p>
-                  <GroupBadge group={currentDuo.group} size="sm" />
+                  <div className="flex items-center justify-between gap-2 mt-1">
+                    <GroupBadge group={currentDuo.group} size="sm" />
+                    {pendingDuos.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectDuoOpen(true)}
+                        className="text-xs text-rope-400 hover:text-saddle-600 underline underline-offset-2 transition-colors"
+                      >
+                        Escolher outra dupla
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-col gap-4">
                   <QuickSelect
-                    label="Boi Cantado (0–9)"
+                    label="Boi Cantado"
                     value={calledCattle}
                     onChange={setCalledCattle}
                     min={0}
@@ -252,7 +325,7 @@ export default function Qualifiers() {
                   />
 
                   <QuickSelect
-                    label="Quantidade de Bois (0–10)"
+                    label="Quantidade de Bois"
                     value={cattle}
                     onChange={setCattle}
                     min={0}
@@ -323,8 +396,45 @@ export default function Qualifiers() {
             )}
           </div>
 
+          {/* Modal: seleção manual de dupla */}
+          <Modal
+            isOpen={selectDuoOpen}
+            onClose={() => setSelectDuoOpen(false)}
+            title="Escolher dupla"
+            size="sm"
+          >
+            <div className="flex flex-col gap-2">
+              <p className="text-xs text-rope-400 mb-2">Selecione uma dupla pendente para registrar agora.</p>
+              <ul className="divide-y divide-dust-200 border border-dust-200 rounded-lg max-h-72 overflow-y-auto">
+                {pendingDuos.map((duo) => (
+                  <li key={duo.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOverrideDuoId(duo.id);
+                        setCattle(null);
+                        setCalledCattle(null);
+                        setTimeSeconds('');
+                        setTimeError('');
+                        setSelectDuoOpen(false);
+                      }}
+                      className={[
+                        'w-full flex items-center gap-3 px-4 py-2.5 hover:bg-dust-50 text-left transition-colors',
+                        overrideDuoId === duo.id ? 'bg-hay-50' : '',
+                      ].join(' ')}
+                    >
+                      <span className="text-rope-400 text-xs font-mono w-6 shrink-0">{duo.number}.</span>
+                      <span className="flex-1 text-sm text-rope-800 truncate">{duo.label}</span>
+                      <GroupBadge group={duo.group} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </Modal>
+
           {/* Results table */}
-          <Card className="lg:col-span-3" title={`Parciais (${partials.length})`} noPadding>
+          <Card className="md:col-span-1 lg:col-span-3" title={`Parciais (${partials.length})`} noPadding>
             {partials.length === 0 ? (
               <EmptyState icon="📋" title="Sem resultados ainda" />
             ) : (

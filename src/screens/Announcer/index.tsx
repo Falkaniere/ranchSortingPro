@@ -94,34 +94,34 @@ export default function Announcer() {
       </div>
 
       {/* Próxima e seguinte */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
         {/* Próxima dupla — destaque principal */}
-        <div className="rounded-2xl bg-saddle-800 text-white p-6 border border-saddle-700 shadow-lg">
+        <div className="rounded-2xl bg-saddle-800 text-white p-4 sm:p-6 border border-saddle-700 shadow-lg">
           <p className="text-saddle-300 text-xs uppercase tracking-widest mb-2">Próxima Passada</p>
           {currentDuo ? (
             <>
-              <p className="text-5xl font-bold font-serif text-hay-300 mb-2">
+              <p className="text-4xl sm:text-5xl font-bold font-serif text-hay-300 mb-2">
                 #{currentDuo.passNumber ?? '—'}
               </p>
-              <p className="text-2xl font-semibold leading-tight mb-3">{currentDuo.label}</p>
+              <p className="text-lg sm:text-2xl font-semibold leading-tight mb-3 break-words">{currentDuo.label}</p>
               <GroupBadge group={currentDuo.group} size="md" />
             </>
           ) : (
-            <p className="text-2xl text-saddle-300 font-semibold mt-2">
+            <p className="text-xl sm:text-2xl text-saddle-300 font-semibold mt-2">
               {total === 0 ? 'Sem duplas' : '✅ Etapa concluída!'}
             </p>
           )}
         </div>
 
         {/* Dupla seguinte — pré-anúncio */}
-        <div className="rounded-2xl bg-white p-6 border border-dust-300 shadow-sm">
+        <div className="rounded-2xl bg-white p-4 sm:p-6 border border-dust-300 shadow-sm">
           <p className="text-rope-400 text-xs uppercase tracking-widest mb-2">Em Seguida</p>
           {nextDuo ? (
             <>
-              <p className="text-3xl font-bold font-serif text-saddle-600 mb-2">
+              <p className="text-2xl sm:text-3xl font-bold font-serif text-saddle-600 mb-2">
                 #{nextDuo.passNumber ?? '—'}
               </p>
-              <p className="text-xl font-semibold text-rope-800 leading-tight mb-3">{nextDuo.label}</p>
+              <p className="text-base sm:text-xl font-semibold text-rope-800 leading-tight mb-3 break-words">{nextDuo.label}</p>
               <GroupBadge group={nextDuo.group} size="md" />
             </>
           ) : (
@@ -132,27 +132,27 @@ export default function Announcer() {
 
       {/* Última passada */}
       {lastResult && lastDuo && (
-        <div className="rounded-xl bg-white border border-dust-300 p-5">
+        <div className="rounded-xl bg-white border border-dust-300 p-4 sm:p-5">
           <p className="text-rope-400 text-xs uppercase tracking-widest mb-3">Última Passada</p>
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-start gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-rope-800 text-lg truncate">{lastDuo.label}</p>
+              <p className="font-semibold text-rope-800 text-base sm:text-lg break-words leading-snug">{lastDuo.label}</p>
               <GroupBadge group={lastDuo.group} />
             </div>
-            <div className="flex gap-6 text-center">
+            <div className="flex gap-4 sm:gap-6 text-center shrink-0">
               {lastResult.calledCattle !== undefined && (
                 <div>
-                  <p className="text-xs text-rope-400">Boi Cantado</p>
-                  <p className="text-2xl font-bold text-saddle-700">{lastResult.calledCattle}</p>
+                  <p className="text-xs text-rope-400">B. Cantado</p>
+                  <p className="text-xl sm:text-2xl font-bold text-saddle-700">{lastResult.calledCattle}</p>
                 </div>
               )}
               <div>
                 <p className="text-xs text-rope-400">Bois</p>
-                <p className="text-2xl font-bold text-rope-800">{lastResult.cattleCount}</p>
+                <p className="text-xl sm:text-2xl font-bold text-rope-800">{lastResult.cattleCount}</p>
               </div>
               <div>
                 <p className="text-xs text-rope-400">Tempo</p>
-                <p className="text-2xl font-bold text-rope-800">{formatTime(lastResult.timeSeconds, lastResult.isSAT)}</p>
+                <p className="text-xl sm:text-2xl font-bold text-rope-800">{formatTime(lastResult.timeSeconds, lastResult.isSAT)}</p>
               </div>
             </div>
           </div>
@@ -160,8 +160,8 @@ export default function Announcer() {
       )}
 
       {/* Estatísticas */}
-      <div className="grid grid-cols-3 gap-3">
-        <StatCard label="Total de Duplas" value={total} />
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <StatCard label="Total" value={total} />
         <StatCard label="Concluídas" value={done} highlight />
         <StatCard label="Restantes" value={remaining} />
       </div>

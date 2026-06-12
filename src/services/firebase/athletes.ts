@@ -8,7 +8,7 @@ import {
   Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { RiderCategory } from '../../core/models/Competidor';
+import { RiderCategory, normalizeCategory } from '../../core/models/Competidor';
 import { Competitor } from '../../core/models/Competidor';
 
 export interface AthleteProfile {
@@ -22,7 +22,7 @@ function toAthleteProfile(id: string, data: any): AthleteProfile {
   return {
     id,
     name: data.name,
-    category: data.category ?? 'Open',
+    category: normalizeCategory(data.category ?? 'Open'),
     createdAt:
       data.createdAt instanceof Timestamp
         ? data.createdAt.toDate().toISOString()
