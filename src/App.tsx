@@ -19,6 +19,8 @@ import Qualifiers from './screens/Qualifiers';
 import Finals from './screens/Final';
 import FinalResults from './screens/FinalResults';
 import RoundsOverview from './screens/RoundsOverview';
+import CompetitorHistory from './screens/CompetitorHistory';
+import Announcer from './screens/Announcer';
 
 export default function App() {
   return (
@@ -43,6 +45,8 @@ export default function App() {
                     <Route path="final" element={<Finals />} />
                     <Route path="final-results" element={<FinalResults />} />
                     <Route path="overview" element={<RoundsOverview />} />
+                    <Route path="competitor/:competitorId/history" element={<CompetitorHistory />} />
+                    <Route path="announcer" element={<Announcer />} />
                     <Route index element={<Navigate to="registration" replace />} />
                   </Route>
                 </Route>

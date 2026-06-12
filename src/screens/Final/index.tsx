@@ -12,6 +12,7 @@ import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
+import { QuickSelect } from '../../components/ui/QuickSelect';
 
 type PendingEntry = {
   duoId: string;
@@ -20,6 +21,9 @@ type PendingEntry = {
   cattleCount: number;
   timeSeconds: number;
 };
+
+type FormState = { cattle: number | null; calledCattle: number | null; time: string };
+const emptyForm = (): FormState => ({ cattle: null, calledCattle: null, time: '' });
 
 export default function Finals() {
   const { id } = useParams<{ id: string }>();
@@ -34,12 +38,10 @@ export default function Finals() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const bestScores = useMemo(() => getBestQualifierScores(), [finalResults]);
 
-  const [forms, setForms] = useState({
-    '1D': { cattleCount: '', timeSeconds: '' },
-    '2D': { cattleCount: '', timeSeconds: '' },
-  });
-  const [activeTab, setActiveTab] = useState<'1D' | '2D'>('1D');
-  const [formErrors, setFormErrors] = useState<{ cattle?: string; time?: string }>({});
+  // Default: 2D vai primeiro
+  const [activeTab, setActiveTab] = useState<'1D' | '2D'>('2D');
+  const [forms, setForms] = useState<Record<'1D' | '2D', FormState>>({ '1D': emptyForm(), '2D': emptyForm() });
+  const [timeError, setTimeError] = useState('');
 
   function toPendingEntries(entries: Array<{ duoId: string; cattleCount: number; timeSeconds: number }>): PendingEntry[] {
     return entries.map((e) => {
@@ -55,7 +57,6 @@ export default function Finals() {
   }
 
   function getPendingList(category: '1D' | '2D'): PendingEntry[] {
-    // Worst qualifier first → best qualifier last (runs last in finals)
     const sorted = category === '1D'
       ? [...finalists.finalists1D].reverse()
       : [...finalists.finalists2D].reverse();
@@ -67,9 +68,9 @@ export default function Finals() {
   const pending1D = getPendingList('1D');
   const pending2D = getPendingList('2D');
   const pendingActive = activeTab === '1D' ? pending1D : pending2D;
-  // First in list = worst qualifier = runs next
   const currentDuo = pendingActive[0] ?? null;
   const currentForm = forms[activeTab];
+  const is2DComplete = pending2D.length === 0 && finalists.finalists2D.length > 0;
 
   const partials = useMemo(() => {
     return finalResults
@@ -86,6 +87,7 @@ export default function Finals() {
           qualiTime: quali.timeSeconds,
           finalCattle: r.cattleCount,
           finalTime: r.timeSeconds,
+          calledCattle: r.calledCattle,
           avgCattle: (quali.cattleCount + r.cattleCount) / 2,
           avgTime: (quali.timeSeconds + r.timeSeconds) / 2,
         };
@@ -94,30 +96,39 @@ export default function Finals() {
   }, [finalResults, bestScores, duosMeta]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function validateForm() {
-    const e: typeof formErrors = {};
-    const cattle = Number(currentForm.cattleCount);
-    const time = Number(currentForm.timeSeconds);
-    if (currentForm.cattleCount === '' || isNaN(cattle) || cattle < 0 || cattle > 10) e.cattle = 'Bois: 0 a 10';
-    if (currentForm.timeSeconds === '' || isNaN(time) || time <= 0) e.time = 'Tempo inválido';
-    setFormErrors(e);
-    return Object.keys(e).length === 0;
+    if (currentForm.cattle === null) {
+      toast('Selecione a quantidade de bois.', 'error');
+      return false;
+    }
+    const t = Number(currentForm.time);
+    if (!currentForm.time || isNaN(t) || t <= 0) {
+      setTimeError('Tempo inválido');
+      return false;
+    }
+    setTimeError('');
+    return true;
   }
 
   function saveFinalResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
-    const cattle = isSAT ? 0 : Number(currentForm.cattleCount);
-    const time = isSAT ? 120 : Number(currentForm.timeSeconds);
-    addFinalResult(currentDuo.duoId, cattle, time, isSAT);
-    setForms({ ...forms, [activeTab]: { cattleCount: '', timeSeconds: '' } });
-    setFormErrors({});
-    toast(isSAT ? `SAT registrado!` : `Resultado salvo!`, 'success');
+    const c = isSAT ? 0 : currentForm.cattle!;
+    const t = isSAT ? 120 : Number(currentForm.time);
+    addFinalResult(currentDuo.duoId, c, t, isSAT, currentForm.calledCattle ?? undefined);
+    setForms({ ...forms, [activeTab]: emptyForm() });
+    setTimeError('');
+    toast(isSAT ? 'SAT registrado!' : 'Resultado salvo!', 'success');
   }
 
   function handleTabChange(tab: '1D' | '2D') {
     setActiveTab(tab);
-    setForms({ ...forms, [tab]: { cattleCount: '', timeSeconds: '' } });
-    setFormErrors({});
+    setForms({ ...forms, [tab]: emptyForm() });
+    setTimeError('');
+  }
+
+  function setFormField(field: keyof FormState, value: any) {
+    setForms({ ...forms, [activeTab]: { ...currentForm, [field]: value } });
+    if (field === 'time') setTimeError('');
   }
 
   function formatTime(s: number) {
@@ -132,7 +143,7 @@ export default function Finals() {
         title="Final"
         subtitle={`${finalists.finalists1D.length} finalistas 1D · ${finalists.finalists2D.length} finalistas 2D`}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             {!isPro && <UpgradeBadge />}
             <Button
               variant="outline"
@@ -145,6 +156,7 @@ export default function Finals() {
                           '#': idx + 1,
                           Dupla: p?.label,
                           Grupo: p?.group,
+                          'Boi Cantado': p?.calledCattle ?? '',
                           'Bois Qualif.': p?.qualiCattle,
                           'Tempo Qualif.': p?.qualiTime?.toFixed(2),
                           'Bois Final': p?.finalCattle,
@@ -166,25 +178,33 @@ export default function Finals() {
         }
       />
 
-      {/* Tabs */}
+      {/* Tabs — 2D primeiro, 1D bloqueada até 2D encerrar */}
       <div className="flex gap-0 mb-5 bg-white rounded-xl border border-dust-300 p-1 w-fit">
-        {(['1D', '2D'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => handleTabChange(tab)}
-            className={[
-              'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
-              activeTab === tab
-                ? 'bg-saddle-600 text-white shadow-sm'
-                : 'text-rope-500 hover:text-rope-800',
-            ].join(' ')}
-          >
-            Categoria {tab}
-            <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
-              {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
-            </span>
-          </button>
-        ))}
+        {(['2D', '1D'] as const).map((tab) => {
+          const isBlocked = tab === '1D' && !is2DComplete && finalists.finalists2D.length > 0;
+          return (
+            <button
+              key={tab}
+              onClick={() => !isBlocked && handleTabChange(tab)}
+              disabled={isBlocked}
+              title={isBlocked ? 'Aguarde o encerramento da categoria 2D' : undefined}
+              className={[
+                'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
+                activeTab === tab
+                  ? 'bg-saddle-600 text-white shadow-sm'
+                  : isBlocked
+                  ? 'text-rope-300 cursor-not-allowed'
+                  : 'text-rope-500 hover:text-rope-800',
+              ].join(' ')}
+            >
+              Categoria {tab}
+              <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
+                {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
+              </span>
+              {isBlocked && <span className="ml-1 text-xs">🔒</span>}
+            </button>
+          );
+        })}
       </div>
 
       <div className="grid gap-5 lg:grid-cols-5">
@@ -203,27 +223,36 @@ export default function Finals() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
-                <div>
-                  <label className="text-sm font-medium text-rope-700 block mb-1">Bois (0–10)</label>
-                  <input
-                    type="number" min={0} max={10} placeholder="0"
-                    value={currentForm.cattleCount}
-                    onChange={(e) => { setForms({ ...forms, [activeTab]: { ...currentForm, cattleCount: e.target.value } }); setFormErrors({}); }}
-                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400 ${formErrors.cattle ? 'border-brand-500' : 'border-dust-300'}`}
-                  />
-                  {formErrors.cattle && <p className="text-xs text-brand-500 mt-0.5">{formErrors.cattle}</p>}
-                </div>
+              <div className="flex flex-col gap-4">
+                <QuickSelect
+                  label="Boi Cantado (0–9)"
+                  value={currentForm.calledCattle}
+                  onChange={(v) => setFormField('calledCattle', v)}
+                  min={0}
+                  max={9}
+                  cols={5}
+                />
+
+                <QuickSelect
+                  label="Quantidade de Bois (0–10)"
+                  value={currentForm.cattle}
+                  onChange={(v) => setFormField('cattle', v)}
+                  min={0}
+                  max={10}
+                  cols={6}
+                />
+
                 <div>
                   <label className="text-sm font-medium text-rope-700 block mb-1">Tempo (segundos)</label>
                   <input
                     type="number" min={0.01} step={0.01} placeholder="45.5"
-                    value={currentForm.timeSeconds}
-                    onChange={(e) => { setForms({ ...forms, [activeTab]: { ...currentForm, timeSeconds: e.target.value } }); setFormErrors({}); }}
-                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400 ${formErrors.time ? 'border-brand-500' : 'border-dust-300'}`}
+                    value={currentForm.time}
+                    onChange={(e) => setFormField('time', e.target.value)}
+                    className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400 ${timeError ? 'border-brand-500' : 'border-dust-300'}`}
                   />
-                  {formErrors.time && <p className="text-xs text-brand-500 mt-0.5">{formErrors.time}</p>}
+                  {timeError && <p className="text-xs text-brand-500 mt-0.5">{timeError}</p>}
                 </div>
+
                 <div className="flex gap-2">
                   <Button onClick={() => saveFinalResult(false)} fullWidth>Salvar</Button>
                   <Button onClick={() => saveFinalResult(true)} variant="danger" title="SAT">SAT</Button>
@@ -234,12 +263,10 @@ export default function Finals() {
             <Card>
               <div className="text-center py-4">
                 <div className="text-4xl mb-2">✅</div>
-                <p className="font-semibold text-pasture-700">
-                  Categoria {activeTab} completa!
-                </p>
-                {activeTab === '1D' && pending2D.length > 0 && (
-                  <Button className="mt-3" size="sm" onClick={() => handleTabChange('2D')}>
-                    Ir para 2D →
+                <p className="font-semibold text-pasture-700">Categoria {activeTab} completa!</p>
+                {activeTab === '2D' && pending1D.length > 0 && (
+                  <Button className="mt-3" size="sm" onClick={() => handleTabChange('1D')}>
+                    Ir para 1D →
                   </Button>
                 )}
               </div>
@@ -260,7 +287,7 @@ export default function Finals() {
             </Card>
           )}
 
-          {pending1D.length === 0 && pending2D.length === 0 && (
+          {pending1D.length === 0 && pending2D.length === 0 && finalists.finalists1D.length > 0 && (
             <Button onClick={() => navigate(`/competition/${id}/final-results`)} size="lg" fullWidth>
               Ver Resultados Finais →
             </Button>
@@ -276,14 +303,15 @@ export default function Finals() {
               <table className="w-full text-sm">
                 <thead className="bg-dust-50 border-b border-dust-200">
                   <tr>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">#</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">Dupla</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Q.B</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Q.T</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">F.B</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">F.T</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Méd.B</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Méd.T</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">#</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">Dupla</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">B.C</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Q.B</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Q.T</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">F.B</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">F.T</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Méd.B</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Méd.T</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dust-100">
@@ -298,18 +326,19 @@ export default function Finals() {
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </td>
                         <td className="px-3 py-2.5 font-medium text-rope-800 text-xs max-w-[120px] truncate">{p?.label}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{p?.qualiCattle}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{formatTime(p?.qualiTime ?? 0)}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-500 text-xs">{p?.calledCattle ?? '—'}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.qualiCattle}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{formatTime(p?.qualiTime ?? 0)}</td>
                         <td className="px-3 py-2.5 text-center font-semibold text-rope-800 text-xs">{p?.finalCattle}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{formatTime(p?.finalTime ?? 0)}</td>
-                        <td className="px-3 py-2.5 text-center font-bold text-saddle-700 text-xs">{p?.avgCattle?.toFixed(1)}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{p?.avgTime?.toFixed(2)}s</td>
+                        <td className="px-3 py-2.5 text-center font-bold text-saddle-700 text-xs hidden sm:table-cell">{p?.avgCattle?.toFixed(1)}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.avgTime?.toFixed(2)}s</td>
                       </tr>
                     ))}
                 </tbody>
               </table>
               <div className="px-4 py-2 bg-dust-50 border-t border-dust-200 text-xs text-rope-400">
-                Q.B = Bois Qualif. · Q.T = Tempo Qualif. · F.B = Bois Final · F.T = Tempo Final
+                B.C = Boi Cantado · Q.B = Bois Qualif. · F.B = Bois Final · F.T = Tempo Final
               </div>
             </div>
           )}

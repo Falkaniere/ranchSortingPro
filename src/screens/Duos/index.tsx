@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
+import { useSubscription } from '../../hooks/useSubscription';
 import { exportToExcel } from 'utils/exportExcel';
 import { importDuosFromExcel } from 'utils/importExcel';
 import { Button } from '../../components/ui/Button';
@@ -15,10 +16,10 @@ export default function Duos() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { isPro } = useSubscription();
   const { setDuosMeta } = useResults();
   const { competitors, duos, setDuos, setCompetitors: setCompetitorsCtx } = useCompetition();
 
-  // importDuosFromExcel expects a React dispatch; wrap our setter
   const setCompetitors: React.Dispatch<React.SetStateAction<typeof competitors>> = (
     value
   ) => {
@@ -44,20 +45,44 @@ export default function Duos() {
     }
   }
 
-  function handleExport() {
+  function handleExportGeral() {
     exportToExcel(
-      duos.map((duo) => {
+      duos.map((duo, idx) => {
         const a = competitors.find((c) => c.id === duo.riderOneId);
         const b = competitors.find((c) => c.id === duo.riderTwoId);
         return {
-          Dupla: `${a?.name ?? '?'} 🤝 ${b?.name ?? '?'}`,
+          'Nº Passada': duo.passNumber ?? idx + 1,
+          Dupla: `${a?.name ?? '?'} & ${b?.name ?? '?'}`,
           Categoria: duo.group,
-          Categoria_A: a?.category ?? '',
-          Categoria_B: b?.category ?? '',
+          'Cat. A': a?.category ?? '',
+          'Cat. B': b?.category ?? '',
         };
       }),
-      'Duplas_Cadastradas'
+      'Duplas_Sorteio'
     );
+  }
+
+  function handleExportPorCompetidor() {
+    const rows: { Competidor: string; 'Nº Passada': number; Dupla: string; Categoria: string }[] = [];
+
+    for (const comp of competitors) {
+      const myDuos = duos.filter(
+        (d) => d.riderOneId === comp.id || d.riderTwoId === comp.id
+      );
+      for (const duo of myDuos) {
+        const partner = competitors.find(
+          (c) => c.id === (duo.riderOneId === comp.id ? duo.riderTwoId : duo.riderOneId)
+        );
+        rows.push({
+          Competidor: comp.name,
+          'Nº Passada': duo.passNumber ?? 0,
+          Dupla: duo.label ?? `${comp.name} & ${partner?.name ?? '?'}`,
+          Categoria: duo.group,
+        });
+      }
+    }
+    rows.sort((a, b) => a.Competidor.localeCompare(b.Competidor, 'pt-BR') || a['Nº Passada'] - b['Nº Passada']);
+    exportToExcel(rows, 'Duplas_Por_Competidor');
   }
 
   function DuoList({ items }: { items: typeof duos }) {
@@ -66,14 +91,17 @@ export default function Duos() {
         {items.map((duo, i) => {
           const a = competitors.find((c) => c.id === duo.riderOneId);
           const b = competitors.find((c) => c.id === duo.riderTwoId);
+          const passNum = duo.passNumber ?? i + 1;
           return (
-            <li key={duo.id} className="px-5 py-3 flex items-center gap-3">
-              <span className="text-rope-400 text-xs w-6 text-right shrink-0">{i + 1}.</span>
+            <li key={duo.id} className="px-4 py-3 flex items-center gap-3">
+              <span className="text-rope-400 text-xs w-8 text-right shrink-0 font-mono">
+                {passNum}.
+              </span>
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-1.5 flex-wrap">
                   <span className="font-medium text-rope-800 text-sm">{a?.name ?? '?'}</span>
                   {a && <CategoryBadge category={a.category} />}
-                  <span className="text-rope-400 text-sm">🤝</span>
+                  <span className="text-rope-400 text-sm font-bold">&amp;</span>
                   <span className="font-medium text-rope-800 text-sm">{b?.name ?? '?'}</span>
                   {b && <CategoryBadge category={b.category} />}
                 </div>
@@ -92,9 +120,18 @@ export default function Duos() {
         title="Duplas"
         subtitle={`${duos.length} dupla${duos.length !== 1 ? 's' : ''} sorteada${duos.length !== 1 ? 's' : ''} · ${duos1D.length} na 1D · ${duos2D.length} na 2D`}
         actions={
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={handleExport} disabled={duos.length === 0}>
-              Exportar Excel
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" size="sm" onClick={handleExportGeral} disabled={duos.length === 0}>
+              Exportar Lista
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={isPro ? handleExportPorCompetidor : undefined}
+              disabled={duos.length === 0}
+              title={isPro ? 'Exportar por competidor' : 'Disponível no plano Pro'}
+            >
+              Por Competidor {!isPro && '🔒'}
             </Button>
             <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
               Importar Excel
@@ -124,12 +161,12 @@ export default function Duos() {
       ) : (
         <div className="flex flex-col gap-5">
           {duos1D.length > 0 && (
-            <Card title={`Grupo 1D — Aberta (${duos1D.length} duplas)`} noPadding>
+            <Card title={`Grupo 1D — Profissional (${duos1D.length} duplas)`} noPadding>
               <DuoList items={duos1D} />
             </Card>
           )}
           {duos2D.length > 0 && (
-            <Card title={`Grupo 2D — Demais categorias (${duos2D.length} duplas)`} noPadding>
+            <Card title={`Grupo 2D — Amador (${duos2D.length} duplas)`} noPadding>
               <DuoList items={duos2D} />
             </Card>
           )}

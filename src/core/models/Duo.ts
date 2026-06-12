@@ -8,10 +8,11 @@ export interface Duo {
   riderTwoId: string;
   group: DuoGroup;
   label?: string;
+  passNumber?: number;
 }
 
 export function duoKeyFromRiders(riderAId: string, riderBId: string): string {
-  return [riderAId, riderBId].sort().join('🤝');
+  return [riderAId, riderBId].sort().join('_');
 }
 
 /**
