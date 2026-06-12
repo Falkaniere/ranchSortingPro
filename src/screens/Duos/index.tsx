@@ -51,7 +51,7 @@ export default function Duos() {
         const b = competitors.find((c) => c.id === duo.riderTwoId);
         return {
           Dupla: `${a?.name ?? '?'} 🤝 ${b?.name ?? '?'}`,
-          Grupo: duo.group,
+          Categoria: duo.group,
           Categoria_A: a?.category ?? '',
           Categoria_B: b?.category ?? '',
         };

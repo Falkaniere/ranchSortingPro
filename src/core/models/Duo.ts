@@ -30,7 +30,8 @@ export const VALID_PAIRINGS: Record<RiderCategory, RiderCategory[]> = {
 };
 
 export function canPair(catA: RiderCategory, catB: RiderCategory): boolean {
-  return VALID_PAIRINGS[catA].includes(catB);
+  // Symmetric: valid if either direction allows it
+  return VALID_PAIRINGS[catA].includes(catB) || VALID_PAIRINGS[catB].includes(catA);
 }
 
 export function computeDuoGroup(

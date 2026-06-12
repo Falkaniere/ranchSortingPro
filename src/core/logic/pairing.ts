@@ -231,5 +231,22 @@ export function generateUniqueDuos(
     duos = havelHakimiRegular(competitors, passes, seedState);
   }
 
-  return { duos, warnings: [] };
+  // Detect competitors who received fewer rounds than requested due to category
+  // incompatibilities silently dropping pairs (round-robin skips invalid combos).
+  const roundCount = new Map<string, number>();
+  for (const duo of duos) {
+    roundCount.set(duo.riderOneId, (roundCount.get(duo.riderOneId) ?? 0) + 1);
+    roundCount.set(duo.riderTwoId, (roundCount.get(duo.riderTwoId) ?? 0) + 1);
+  }
+  const underserved = competitors.filter(
+    (c) => (roundCount.get(c.id) ?? 0) < passes!
+  );
+  const warnings: string[] = underserved.length > 0
+    ? [
+        `${underserved.length} competidor(es) ficaram com menos passadas por falta de adversários compatíveis: ` +
+        underserved.map((c) => c.name).join(', '),
+      ]
+    : [];
+
+  return { duos, warnings };
 }

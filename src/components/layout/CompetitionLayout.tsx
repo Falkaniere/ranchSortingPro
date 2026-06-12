@@ -24,17 +24,27 @@ export function CompetitionLayout() {
 
   useEffect(() => {
     if (!id || !user) return;
-    if (competition?.id === id) return;
-    getCompetition(id).then((c) => {
-      if (!c) { navigate('/'); return; }
-      if (c.ownerId !== user.uid) { navigate('/'); return; }
-      loadCompetition(c);
+    if (competition?.id === id) {
+      // Competition already in context (navigated from Dashboard).
+      // ResultContext is separate — still needs to be hydrated.
       initializeFromCompetition(
-        c.qualifierResults ?? [],
-        c.finalResults ?? [],
-        c.duos ?? []
+        competition.qualifierResults ?? [],
+        competition.finalResults ?? [],
+        competition.duos ?? []
       );
-    });
+      return;
+    }
+    getCompetition(id)
+      .then((c) => {
+        if (!c || c.ownerId !== user.uid) { navigate('/'); return; }
+        loadCompetition(c);
+        initializeFromCompetition(
+          c.qualifierResults ?? [],
+          c.finalResults ?? [],
+          c.duos ?? []
+        );
+      })
+      .catch(() => navigate('/'));
   }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!competition) {

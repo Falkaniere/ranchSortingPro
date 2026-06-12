@@ -18,7 +18,7 @@ export default function RoundsOverview() {
   }
 
   function formatTime(s: number) {
-    return s >= 120 ? 'SAT' : `${s.toFixed(2)}s`;
+    return `${s.toFixed(2)}s`;
   }
 
   return (

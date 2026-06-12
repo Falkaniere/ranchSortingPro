@@ -109,9 +109,8 @@ export default function Qualifiers() {
 
   const allRegistered = pendingDuos.length === 0 && duos.length > 0;
 
-  function formatTime(s: number) {
-    if (s >= 120) return 'SAT';
-    return `${s.toFixed(2)}s`;
+  function formatTime(s: number, sat?: boolean) {
+    return sat ? 'SAT' : `${s.toFixed(2)}s`;
   }
 
   return (
@@ -309,7 +308,7 @@ export default function Qualifiers() {
                         ) : (
                           <>
                             <td className="px-4 py-2.5 text-center font-semibold text-rope-700">{p.cattleCount}</td>
-                            <td className="px-4 py-2.5 text-center text-rope-600">{formatTime(p.timeSeconds)}</td>
+                            <td className="px-4 py-2.5 text-center text-rope-600">{formatTime(p.timeSeconds, p.isSAT)}</td>
                             <td className="px-4 py-2.5 text-center">
                               <button
                                 onClick={() => startEdit(p as any)}

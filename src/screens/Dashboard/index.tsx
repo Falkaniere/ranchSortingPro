@@ -282,7 +282,7 @@ function CompetitionCard({
         </div>
       </div>
       <div className="px-5 py-3 border-t border-dust-200 bg-dust-50 rounded-b-xl flex justify-between">
-        <Button variant="primary" size="sm" onClick={onOpen}>
+        <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
           Abrir
         </Button>
         <Button
