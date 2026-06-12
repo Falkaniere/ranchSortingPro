@@ -15,6 +15,7 @@ import { ConfirmModal, Modal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
+import { CompetitorImportModal } from '../../components/ui/CompetitorImportModal';
 import {
   AthleteProfile,
   listAthletes,
@@ -38,6 +39,7 @@ export default function Registration() {
 
   const atCompetitorLimit = !isPro && limits.maxCompetitors !== null && competitors.length >= limits.maxCompetitors;
   const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<RiderCategory>('Open'); // 'Open' = Profissional
@@ -182,17 +184,45 @@ export default function Registration() {
 
   const canSort = competitors.length >= 2;
 
+  function handleImportCompetitors(imported: { name: string; category: RiderCategory }[]) {
+    const limit = !isPro && limits.maxCompetitors !== null ? limits.maxCompetitors : Infinity;
+    const available = Math.max(0, limit - competitors.length);
+    const toAdd = imported.slice(0, available);
+    const skipped = imported.length - toAdd.length;
+
+    const newCompetitors: Competitor[] = toAdd.map((c) => ({
+      id: crypto.randomUUID(),
+      name: c.name,
+      category: c.category,
+      passes: numRounds,
+    }));
+
+    setCompetitors([...competitors, ...newCompetitors]);
+
+    if (skipped > 0) {
+      toast(`${toAdd.length} importados. ${skipped} ignorados — limite do plano Basic atingido.`, 'warning');
+    } else {
+      toast(`${toAdd.length} competidor${toAdd.length !== 1 ? 'es' : ''} importado${toAdd.length !== 1 ? 's' : ''}!`, 'success');
+    }
+  }
+
   return (
     <div>
       <PageHeader
         title="Inscrições"
         subtitle={`${competitors.length} competidor${competitors.length !== 1 ? 'es' : ''} cadastrado${competitors.length !== 1 ? 's' : ''}`}
         actions={
-          canSort ? (
-            <Button onClick={handleSortDuos} loading={isSorting}>
-              Sortear Duplas →
+          <div className="flex items-center gap-2">
+            {!isPro && <UpgradeBadge />}
+            <Button variant="outline" size="sm" onClick={isPro ? () => setImportOpen(true) : () => setUpgradeOpen(true)}>
+              Importar Excel
             </Button>
-          ) : undefined
+            {canSort && (
+              <Button onClick={handleSortDuos} loading={isSorting}>
+                Sortear Duplas →
+              </Button>
+            )}
+          </div>
         }
       />
 
@@ -444,6 +474,13 @@ export default function Registration() {
         title="Remover competidor"
         message={`Tem certeza que deseja remover ${deleteTarget?.name}?`}
         confirmLabel="Remover"
+      />
+
+      <CompetitorImportModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportCompetitors}
+        numRounds={numRounds}
       />
     </div>
   );
