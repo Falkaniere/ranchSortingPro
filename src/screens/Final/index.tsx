@@ -70,14 +70,10 @@ export default function Finals() {
         const duo = duosMeta.find((d: Duo) => d.id === r.duoId);
         const quali = bestScores.get(r.duoId);
         if (!duo || !quali) return null;
-        const logicalGroup: DuoGroup =
-          duo.group === '2D' && finalists.finalists1D.some((f) => f.duoId === duo.id)
-            ? '1D'
-            : duo.group;
         return {
           duoId: r.duoId,
           label: duo.label,
-          group: logicalGroup,
+          group: duo.group,
           qualiCattle: quali.cattleCount,
           qualiTime: quali.timeSeconds,
           finalCattle: r.cattleCount,

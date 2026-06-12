@@ -15,20 +15,14 @@ export function selectFinalists(
 ): FinalsSelection {
   const overall = standingsFromScores(qualifierBestScores);
 
-  // Top 10 (independente da categoria)
-  const finalists1D = overall.slice(0, maxPerFinal);
-
-  // IDs já classificados em 1D
-  const ids1D = new Set(finalists1D.map((f) => f.duoId));
-
-  // Agora só pega 2D que não está no 1D
-  const only2D = overall.filter((e) => e.group === '2D' && !ids1D.has(e.duoId));
-
-  const finalists2D = only2D.slice(0, maxPerFinal);
+  // Each class qualifies its own top independently — groups never mix
+  const finalists1D = overall.filter((e) => e.group === '1D').slice(0, maxPerFinal);
+  const finalists2D = overall.filter((e) => e.group === '2D').slice(0, maxPerFinal);
 
   return {
     finalists1D,
     finalists2D,
+    // Reverse so the last in the list runs first (lowest qualifier goes first)
     finalsOrder1D: finalists1D.map((e) => e.duoId).reverse(),
     finalsOrder2D: finalists2D.map((e) => e.duoId).reverse(),
   };
