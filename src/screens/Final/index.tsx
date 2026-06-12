@@ -25,8 +25,10 @@ export default function Finals() {
   const toast = useToast();
   const { getFinalists, getBestQualifierScores, addFinalResult, finalResults, duosMeta } = useResults();
 
-  const finalists = useMemo(() => getFinalists(), [finalResults]); // eslint-disable-line react-hooks/exhaustive-deps
-  const bestScores = useMemo(() => getBestQualifierScores(), [finalResults]); // eslint-disable-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const finalists = useMemo(() => getFinalists(), [finalResults]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const bestScores = useMemo(() => getBestQualifierScores(), [finalResults]);
 
   const [forms, setForms] = useState({
     '1D': { cattleCount: '', timeSeconds: '' },
