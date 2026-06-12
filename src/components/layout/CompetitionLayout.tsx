@@ -13,6 +13,7 @@ const steps = [
   { key: 'record', label: 'Qualificatória', icon: '🐄' },
   { key: 'final', label: 'Final', icon: '🏆' },
   { key: 'final-results', label: 'Resultados', icon: '📊' },
+  { key: 'announcer', label: 'Locutor', icon: '🎙️' },
 ];
 
 export function CompetitionLayout() {
@@ -90,7 +91,7 @@ export function CompetitionLayout() {
       </header>
 
       {/* Step Navigation */}
-      <nav className="bg-white border-b border-dust-300 px-4 overflow-x-auto">
+      <nav className="bg-white border-b border-dust-300 px-2 sm:px-4 overflow-x-auto">
         <div className="flex gap-0 max-w-5xl mx-auto">
           {steps.map((step) => (
             <NavLink
@@ -98,7 +99,7 @@ export function CompetitionLayout() {
               to={`/competition/${id}/${step.key}`}
               className={({ isActive }) =>
                 [
-                  'flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap',
+                  'flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-4 py-3 text-xs sm:text-sm font-medium whitespace-nowrap',
                   'border-b-2 transition-colors',
                   isActive
                     ? 'border-saddle-600 text-saddle-700'
@@ -107,7 +108,7 @@ export function CompetitionLayout() {
               }
             >
               <span>{step.icon}</span>
-              <span>{step.label}</span>
+              <span className="hidden sm:inline">{step.label}</span>
             </NavLink>
           ))}
         </div>

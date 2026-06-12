@@ -32,14 +32,16 @@ interface ResultsContextValue {
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
-    isSAT?: boolean
+    isSAT?: boolean,
+    calledCattle?: number
   ) => void;
 
   /** Atualiza resultado existente da qualificatória */
   updateQualifierResult: (
     duoId: string,
     cattleCount: number,
-    timeSeconds: number
+    timeSeconds: number,
+    calledCattle?: number
   ) => void;
 
   /** Adiciona resultado da final */
@@ -47,7 +49,8 @@ interface ResultsContextValue {
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
-    isSAT?: boolean
+    isSAT?: boolean,
+    calledCattle?: number
   ) => void;
 
   /** Mapa com o melhor resultado por dupla nas qualificatórias */
@@ -89,7 +92,8 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
-    isSAT = false
+    isSAT = false,
+    calledCattle?: number
   ) {
     const newResult: PassResult = {
       id: crypto.randomUUID(),
@@ -98,16 +102,17 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       cattleCount: isSAT ? 0 : cattleCount,
       timeSeconds: isSAT ? 120 : timeSeconds,
       isSAT,
+      calledCattle,
       createdAtISO: new Date().toISOString(),
     };
     setResults((prev) => [...prev, newResult]);
   }
 
-  /** Atualiza resultado existente da qualificatória */
   function updateQualifierResult(
     duoId: string,
     cattleCount: number,
-    timeSeconds: number
+    timeSeconds: number,
+    calledCattle?: number
   ) {
     setResults((prev) =>
       prev.map((r) =>
@@ -116,6 +121,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
               ...r,
               cattleCount,
               timeSeconds,
+              calledCattle,
               updatedAtISO: new Date().toISOString(),
             }
           : r
@@ -127,7 +133,8 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
-    isSAT = false
+    isSAT = false,
+    calledCattle?: number
   ) {
     const newResult: PassResult = {
       id: crypto.randomUUID(),
@@ -136,6 +143,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       cattleCount: isSAT ? 0 : cattleCount,
       timeSeconds: isSAT ? 120 : timeSeconds,
       isSAT,
+      calledCattle,
       createdAtISO: new Date().toISOString(),
     };
     setFinalResults((prev) => [...prev, newResult]);

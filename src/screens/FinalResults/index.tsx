@@ -81,7 +81,7 @@ export default function FinalResults() {
                     ].join(' ')}
                   >
                     <td className="px-4 py-3 text-lg text-center w-12">{medal(idx + 1)}</td>
-                    <td className="px-4 py-3 font-semibold text-rope-800">{r.duoLabel}</td>
+                    <td className="px-4 py-3 font-semibold text-rope-800 max-w-[160px] truncate">{r.duoLabel}</td>
                     <td className="px-4 py-3 text-center"><GroupBadge group={r.group} size="md" /></td>
                     <td className="px-4 py-3 text-center">
                       <span className="font-bold text-saddle-700 text-base">{r.totalCattle}</span>

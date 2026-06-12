@@ -22,6 +22,9 @@ export interface PassResult {
   /** Indica se foi Sem Aproveitamento Técnico (SAT) */
   isSAT?: boolean;
 
+  /** Número do boi cantado (0–9), campo informativo */
+  calledCattle?: number;
+
   /** Data/hora da criação (ISO) */
   createdAtISO?: string;
 }
