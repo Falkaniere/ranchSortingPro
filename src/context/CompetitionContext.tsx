@@ -42,16 +42,22 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
   const [isSaving, setIsSaving] = useState(false);
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pendingPatchRef = useRef<Partial<Competition>>({});
 
   const save = useCallback(
     (patch: Partial<Competition>) => {
       if (!competition?.id) return;
+      // Merge incoming patch so rapid sequential saves don't drop earlier fields.
+      pendingPatchRef.current = { ...pendingPatchRef.current, ...patch };
       if (debounceRef.current) clearTimeout(debounceRef.current);
+      const currentId = competition.id;
       debounceRef.current = setTimeout(async () => {
+        const accumulated = { ...pendingPatchRef.current };
+        pendingPatchRef.current = {};
         setIsSaving(true);
         try {
-          await updateCompetition(competition.id, patch);
-          setCompetition((prev) => (prev ? { ...prev, ...patch } : prev));
+          await updateCompetition(currentId, accumulated);
+          setCompetition((prev) => (prev ? { ...prev, ...accumulated } : prev));
         } finally {
           setIsSaving(false);
         }
@@ -61,6 +67,9 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
   );
 
   function loadCompetition(c: Competition) {
+    // Cancel any pending save for the previous competition.
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    pendingPatchRef.current = {};
     setCompetition(c);
     setCompetitorsState(c.competitors ?? []);
     setDuosState(c.duos ?? []);
@@ -68,6 +77,8 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
   }
 
   function clearCompetition() {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    pendingPatchRef.current = {};
     setCompetition(null);
     setCompetitorsState([]);
     setDuosState([]);

@@ -8,7 +8,6 @@ import {
   getDoc,
   query,
   where,
-  orderBy,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -100,13 +99,16 @@ export async function deleteCompetition(id: string): Promise<void> {
 }
 
 export async function listCompetitions(ownerId: string): Promise<Competition[]> {
+  // Single-field where clause avoids composite index requirement; sort client-side.
   const q = query(
     collection(db, 'competitions'),
-    where('ownerId', '==', ownerId),
-    orderBy('updatedAt', 'desc')
+    where('ownerId', '==', ownerId)
   );
   const snap = await getDocs(q);
-  return snap.docs.map((d) => toCompetition(d.id, d.data()));
+  const results = snap.docs.map((d) => toCompetition(d.id, d.data()));
+  return results.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
 }
 
 export async function getCompetition(id: string): Promise<Competition | null> {
