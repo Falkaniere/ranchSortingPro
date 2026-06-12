@@ -201,7 +201,12 @@ export function generateUniqueDuos(
 
   if (passes < 0) throw new Error('Passadas não pode ser negativo.');
   if (passes > n - 1) {
-    throw new Error(`Passadas (${passes}) não pode exceder N-1 (${n - 1}).`);
+    throw new Error(
+      `Número de passadas (${passes}) maior do que o permitido.\n` +
+      `Com ${n} competidores, cada um pode correr no máximo ${n - 1} passada${n - 1 !== 1 ? 's' : ''} ` +
+      `(uma contra cada adversário diferente).\n` +
+      `Reduza as passadas para ${n - 1} ou menos, ou adicione mais competidores.`
+    );
   }
 
   // condição necessária: N * passes precisa ser par
