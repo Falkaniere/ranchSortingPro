@@ -1,0 +1,113 @@
+import React, { useEffect } from 'react';
+import { Outlet, useNavigate, useParams, NavLink } from 'react-router-dom';
+import { useCompetition } from '../../context/CompetitionContext';
+import { useResults } from '../../context/ResultContext';
+import { getCompetition } from '../../services/firebase/competitions';
+import { Spinner } from '../ui/Spinner';
+import { useAuth } from '../../context/AuthContext';
+import { ResultSyncBridge } from './ResultSyncBridge';
+
+const steps = [
+  { key: 'registration', label: 'Inscrições', icon: '👥' },
+  { key: 'duos', label: 'Duplas', icon: '🤝' },
+  { key: 'record', label: 'Qualificatória', icon: '🐄' },
+  { key: 'final', label: 'Final', icon: '🏆' },
+  { key: 'final-results', label: 'Resultados', icon: '📊' },
+];
+
+export function CompetitionLayout() {
+  const { id } = useParams<{ id: string }>();
+  const { competition, loadCompetition, isSaving } = useCompetition();
+  const { initializeFromCompetition } = useResults();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!id || !user) return;
+    if (competition?.id === id) return;
+    getCompetition(id).then((c) => {
+      if (!c) { navigate('/'); return; }
+      if (c.ownerId !== user.uid) { navigate('/'); return; }
+      loadCompetition(c);
+      initializeFromCompetition(
+        c.qualifierResults ?? [],
+        c.finalResults ?? [],
+        c.duos ?? []
+      );
+    });
+  }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!competition) {
+    return (
+      <div className="min-h-screen bg-dust-100 flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-dust-100 flex flex-col">
+      {/* Competition Header */}
+      <header className="bg-saddle-800 text-white px-4 py-3 flex items-center justify-between shadow-md">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => navigate('/')}
+            className="text-saddle-300 hover:text-white transition-colors p-1"
+            aria-label="Voltar ao dashboard"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <div>
+            <h1 className="font-serif font-semibold text-white text-base leading-tight">
+              {competition.name}
+            </h1>
+            {competition.location && (
+              <p className="text-saddle-300 text-xs">{competition.location}</p>
+            )}
+          </div>
+        </div>
+        {isSaving && (
+          <div className="flex items-center gap-1.5 text-saddle-300 text-xs">
+            <Spinner size="sm" className="text-saddle-300" />
+            <span>Salvando...</span>
+          </div>
+        )}
+        {!isSaving && (
+          <span className="text-saddle-300 text-xs hidden sm:block">✓ Salvo</span>
+        )}
+      </header>
+
+      {/* Step Navigation */}
+      <nav className="bg-white border-b border-dust-300 px-4 overflow-x-auto">
+        <div className="flex gap-0 max-w-5xl mx-auto">
+          {steps.map((step) => (
+            <NavLink
+              key={step.key}
+              to={`/competition/${id}/${step.key}`}
+              className={({ isActive }) =>
+                [
+                  'flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap',
+                  'border-b-2 transition-colors',
+                  isActive
+                    ? 'border-saddle-600 text-saddle-700'
+                    : 'border-transparent text-rope-400 hover:text-rope-700 hover:border-dust-400',
+                ].join(' ')
+              }
+            >
+              <span>{step.icon}</span>
+              <span>{step.label}</span>
+            </NavLink>
+          ))}
+        </div>
+      </nav>
+
+      {/* Page Content */}
+      <main className="flex-1 max-w-5xl mx-auto w-full px-4 py-6">
+        <ResultSyncBridge />
+        <Outlet />
+      </main>
+    </div>
+  );
+}

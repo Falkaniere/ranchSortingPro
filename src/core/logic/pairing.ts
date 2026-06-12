@@ -1,5 +1,5 @@
 import { Competitor } from '../models/Competidor';
-import { Duo, computeDuoGroup } from '../models/Duo';
+import { Duo, computeDuoGroup, canPair } from '../models/Duo';
 
 export interface PairingOutput {
   duos: Duo[];
@@ -65,10 +65,11 @@ function roundRobinPairs(
     ring = [ring[ring.length - 1], ...ring.slice(0, ring.length - 1)];
   }
 
-  // flatten e map para Duo
+  // flatten e map para Duo (filtra pares inválidos por ASQM)
   const duos: Duo[] = [];
   for (const pairs of rounds) {
     for (const [a, b] of pairs) {
+      if (!canPair(a.category, b.category)) continue;
       const id = [a.id, b.id].sort().join('🤝');
       duos.push({
         id,
@@ -121,7 +122,12 @@ function havelHakimiRegular(
 
       const candidates = nodes
         .slice(1)
-        .filter((u) => u.remaining > 0 && !v.neighbors.has(u.id));
+        .filter(
+          (u) =>
+            u.remaining > 0 &&
+            !v.neighbors.has(u.id) &&
+            canPair(v.category, u.category)
+        );
 
       if (candidates.length < r) {
         ok = false; // encalhou

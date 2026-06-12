@@ -95,9 +95,9 @@ export function buildFinalAggregates(
 }
 
 /**
- * Normaliza tempo: se for SAT (>=120s), retorna o tempo máximo.
+ * Normaliza tempo: valores já normalizados pelo SAT_TIME_SECONDS são mantidos com cap.
+ * Tempos reais acima de 120s são improváveis mas não descartados.
  */
 function normalizeTime(time: number): number {
-  if (time >= SAT_TIME_SECONDS) return SAT_TIME_SECONDS;
-  return time;
+  return Math.min(time, SAT_TIME_SECONDS);
 }
