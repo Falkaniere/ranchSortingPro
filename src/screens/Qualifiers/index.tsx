@@ -14,8 +14,9 @@ import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
+import { QuickSelect } from '../../components/ui/QuickSelect';
 
-type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean };
+type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean; calledCattle?: number };
 
 export default function Qualifiers() {
   const { id } = useParams<{ id: string }>();
@@ -26,13 +27,18 @@ export default function Qualifiers() {
   const { addQualifierResult, updateQualifierResult, results, duosMeta } = useResults();
   const { duos: compDuos } = useCompetition();
 
-  const [form, setForm] = useState({ cattleCount: '', timeSeconds: '' });
-  const [formErrors, setFormErrors] = useState<{ cattle?: string; time?: string }>({});
+  const [cattle, setCattle] = useState<number | null>(null);
+  const [calledCattle, setCalledCattle] = useState<number | null>(null);
+  const [timeSeconds, setTimeSeconds] = useState('');
+  const [timeError, setTimeError] = useState('');
+
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ cattleCount: '', timeSeconds: '' });
+  const [editCattle, setEditCattle] = useState<number | null>(null);
+  const [editCalledCattle, setEditCalledCattle] = useState<number | null>(null);
+  const [editTime, setEditTime] = useState('');
 
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
-  const duos = metaDuos.map((d, index) => ({ ...d, number: index + 1 }));
+  const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
 
   const registeredDuoIds = new Set(
     results.filter((r: PassResult) => r.stage === 'Qualifier').map((r) => r.duoId)
@@ -52,57 +58,57 @@ export default function Qualifiers() {
         cattleCount: r.cattleCount,
         timeSeconds: r.timeSeconds,
         isSAT: r.isSAT,
+        calledCattle: r.calledCattle,
       };
     })
     .sort((a, b) => compareByScore(a, b));
 
+  // Separação para regra de ranking 2D
+  const partials1D = partials.filter((p) => p.group === '1D');
+  const partials2D = partials.filter((p) => p.group === '2D');
+  const show2D = partials1D.length >= 10;
+
   function validateForm() {
-    const e: typeof formErrors = {};
-    const cattle = Number(form.cattleCount);
-    const time = Number(form.timeSeconds);
-    if (form.cattleCount === '' || isNaN(cattle) || cattle < 0 || cattle > 10) {
-      e.cattle = 'Bois: 0 a 10';
+    if (cattle === null) {
+      toast('Selecione a quantidade de bois.', 'error');
+      return false;
     }
-    if (form.timeSeconds === '' || isNaN(time) || time <= 0) {
-      e.time = 'Tempo inválido';
+    const t = Number(timeSeconds);
+    if (!timeSeconds || isNaN(t) || t <= 0) {
+      setTimeError('Tempo inválido');
+      return false;
     }
-    setFormErrors(e);
-    return Object.keys(e).length === 0;
+    setTimeError('');
+    return true;
   }
 
   function saveQualifierResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
 
-    const cattle = isSAT ? 0 : Number(form.cattleCount);
-    const time = isSAT ? 120 : Number(form.timeSeconds);
+    const c = isSAT ? 0 : cattle!;
+    const t = isSAT ? 120 : Number(timeSeconds);
 
-    addQualifierResult(currentDuo.id, cattle, time, isSAT);
-    setForm({ cattleCount: '', timeSeconds: '' });
-    setFormErrors({});
-    toast(isSAT ? `SAT registrado para ${currentDuo.label}` : `Resultado salvo!`, 'success');
+    addQualifierResult(currentDuo.id, c, t, isSAT, calledCattle ?? undefined);
+    setCattle(null);
+    setCalledCattle(null);
+    setTimeSeconds('');
+    setTimeError('');
+    toast(isSAT ? `SAT registrado para ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
-  function startEdit(row: PartialRow & { isSAT?: boolean }) {
+  function startEdit(row: PartialRow) {
     setEditingId(row.duoId);
-    setEditForm({
-      cattleCount: row.cattleCount.toString(),
-      timeSeconds: row.timeSeconds.toString(),
-    });
+    setEditCattle(row.cattleCount);
+    setEditCalledCattle(row.calledCattle ?? null);
+    setEditTime(row.timeSeconds.toString());
   }
 
   function saveEdit(duoId: string) {
-    const cattle = Number(editForm.cattleCount);
-    const time = Number(editForm.timeSeconds);
-    if (isNaN(cattle) || cattle < 0 || cattle > 10) {
-      toast('Bois inválido (0–10)', 'error');
-      return;
-    }
-    if (isNaN(time) || time <= 0) {
-      toast('Tempo inválido', 'error');
-      return;
-    }
-    updateQualifierResult(duoId, cattle, time);
+    if (editCattle === null) { toast('Selecione a quantidade de bois', 'error'); return; }
+    const t = Number(editTime);
+    if (isNaN(t) || t <= 0) { toast('Tempo inválido', 'error'); return; }
+    updateQualifierResult(duoId, editCattle, t, editCalledCattle ?? undefined);
     setEditingId(null);
     toast('Resultado atualizado!', 'success');
   }
@@ -111,6 +117,68 @@ export default function Qualifiers() {
 
   function formatTime(s: number, sat?: boolean) {
     return sat ? 'SAT' : `${s.toFixed(2)}s`;
+  }
+
+  function RankingTable({ rows, title }: { rows: PartialRow[]; title: string }) {
+    return (
+      <div>
+        <h3 className="text-xs font-semibold text-rope-500 uppercase tracking-wide px-4 py-2 border-b border-dust-200 bg-dust-50">
+          {title}
+        </h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="bg-dust-50 border-b border-dust-200">
+              <tr>
+                <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">#</th>
+                <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">Dupla</th>
+                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
+                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
+                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Tempo</th>
+                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500"></th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-dust-100">
+              {rows.map((p, idx) => (
+                <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
+                  <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
+                  <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
+                  {editingId === p.duoId ? (
+                    <>
+                      <td className="px-2 py-1.5">
+                        <input type="number" min={0} max={9} value={editCalledCattle ?? ''} onChange={(e) => setEditCalledCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input type="number" min={0} max={10} value={editCattle ?? ''} onChange={(e) => setEditCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <input type="number" value={editTime} onChange={(e) => setEditTime(e.target.value)} className="w-20 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <div className="flex gap-1">
+                          <button onClick={() => saveEdit(p.duoId)} className="px-2 py-1 bg-pasture-600 text-white text-xs rounded hover:bg-pasture-700">✓</button>
+                          <button onClick={() => setEditingId(null)} className="px-2 py-1 bg-dust-300 text-rope-600 text-xs rounded hover:bg-dust-400">✕</button>
+                        </div>
+                      </td>
+                    </>
+                  ) : (
+                    <>
+                      <td className="px-3 py-2 text-center text-rope-500 text-xs">{p.calledCattle ?? '—'}</td>
+                      <td className="px-3 py-2 text-center font-semibold text-rope-700">{p.cattleCount}</td>
+                      <td className="px-3 py-2 text-center text-rope-600 text-xs">{formatTime(p.timeSeconds, p.isSAT)}</td>
+                      <td className="px-3 py-2 text-center">
+                        <button onClick={() => startEdit(p)} className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                      </td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -132,6 +200,7 @@ export default function Qualifiers() {
                           '#': idx + 1,
                           Dupla: p.duoLabel,
                           Grupo: p.group,
+                          'Boi Cantado': p.calledCattle ?? '',
                           Bois: p.cattleCount,
                           'Tempo (s)': p.timeSeconds,
                           SAT: p.isSAT ? 'Sim' : 'Não',
@@ -167,32 +236,30 @@ export default function Qualifiers() {
             {currentDuo ? (
               <Card title="Registrar resultado">
                 <div className="mb-4 p-3 rounded-lg bg-hay-50 border border-hay-200">
-                  <p className="text-xs text-hay-700 font-medium mb-0.5">Dupla atual</p>
-                  <p className="text-rope-800 font-semibold text-sm">
-                    {currentDuo.number}. {currentDuo.label}
-                  </p>
+                  <p className="text-xs text-hay-700 font-medium mb-0.5">Passada {currentDuo.number}</p>
+                  <p className="text-rope-800 font-semibold text-sm">{currentDuo.label}</p>
                   <GroupBadge group={currentDuo.group} size="sm" />
                 </div>
 
-                <div className="flex flex-col gap-3">
-                  <div>
-                    <label className="text-sm font-medium text-rope-700 block mb-1">
-                      Bois (0–10)
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={10}
-                      placeholder="0"
-                      value={form.cattleCount}
-                      onChange={(e) => { setForm({ ...form, cattleCount: e.target.value }); setFormErrors({}); }}
-                      className={[
-                        'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400',
-                        formErrors.cattle ? 'border-brand-500' : 'border-dust-300',
-                      ].join(' ')}
-                    />
-                    {formErrors.cattle && <p className="text-xs text-brand-500 mt-0.5">{formErrors.cattle}</p>}
-                  </div>
+                <div className="flex flex-col gap-4">
+                  <QuickSelect
+                    label="Boi Cantado (0–9)"
+                    value={calledCattle}
+                    onChange={setCalledCattle}
+                    min={0}
+                    max={9}
+                    cols={5}
+                  />
+
+                  <QuickSelect
+                    label="Quantidade de Bois (0–10)"
+                    value={cattle}
+                    onChange={setCattle}
+                    min={0}
+                    max={10}
+                    cols={6}
+                  />
+
                   <div>
                     <label className="text-sm font-medium text-rope-700 block mb-1">
                       Tempo (segundos)
@@ -202,15 +269,16 @@ export default function Qualifiers() {
                       min={0.01}
                       step={0.01}
                       placeholder="45.5"
-                      value={form.timeSeconds}
-                      onChange={(e) => { setForm({ ...form, timeSeconds: e.target.value }); setFormErrors({}); }}
+                      value={timeSeconds}
+                      onChange={(e) => { setTimeSeconds(e.target.value); setTimeError(''); }}
                       className={[
                         'w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400',
-                        formErrors.time ? 'border-brand-500' : 'border-dust-300',
+                        timeError ? 'border-brand-500' : 'border-dust-300',
                       ].join(' ')}
                     />
-                    {formErrors.time && <p className="text-xs text-brand-500 mt-0.5">{formErrors.time}</p>}
+                    {timeError && <p className="text-xs text-brand-500 mt-0.5">{timeError}</p>}
                   </div>
+
                   <div className="flex gap-2">
                     <Button onClick={() => saveQualifierResult(false)} fullWidth>
                       Salvar
@@ -234,13 +302,12 @@ export default function Qualifiers() {
               </Card>
             )}
 
-            {/* Pending */}
             {pendingDuos.length > 0 && (
               <Card title={`Aguardando (${pendingDuos.length})`} noPadding>
                 <ul className="divide-y divide-dust-200 max-h-64 overflow-y-auto">
                   {pendingDuos.map((duo) => (
                     <li key={duo.id} className="px-4 py-2.5 flex items-center gap-2">
-                      <span className="text-rope-400 text-xs w-5">{duo.number}.</span>
+                      <span className="text-rope-400 text-xs w-6 font-mono">{duo.number}.</span>
                       <span className="text-rope-700 text-sm flex-1 truncate">{duo.label}</span>
                       <GroupBadge group={duo.group} />
                     </li>
@@ -261,70 +328,18 @@ export default function Qualifiers() {
             {partials.length === 0 ? (
               <EmptyState icon="📋" title="Sem resultados ainda" />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-dust-50 border-b border-dust-200">
-                    <tr>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">#</th>
-                      <th className="px-4 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">Dupla</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Grp</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Bois</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Tempo</th>
-                      <th className="px-4 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide"></th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-dust-100">
-                    {partials.map((p, idx) => (
-                      <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
-                        <td className="px-4 py-2.5 text-rope-400 text-xs">{idx + 1}</td>
-                        <td className="px-4 py-2.5 font-medium text-rope-800 max-w-[160px] truncate">{p.duoLabel}</td>
-                        <td className="px-4 py-2.5 text-center"><GroupBadge group={p.group} /></td>
+              <div>
+                <RankingTable rows={partials1D} title={`Ranking 1D — Profissional (${partials1D.length})`} />
 
-                        {editingId === p.duoId ? (
-                          <>
-                            <td className="px-2 py-1.5">
-                              <input
-                                type="number"
-                                value={editForm.cattleCount}
-                                onChange={(e) => setEditForm({ ...editForm, cattleCount: e.target.value })}
-                                className="w-16 px-2 py-1 border border-hay-400 rounded text-sm focus:outline-none focus:ring-1 focus:ring-hay-400 text-center"
-                              />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <input
-                                type="number"
-                                value={editForm.timeSeconds}
-                                onChange={(e) => setEditForm({ ...editForm, timeSeconds: e.target.value })}
-                                className="w-20 px-2 py-1 border border-hay-400 rounded text-sm focus:outline-none focus:ring-1 focus:ring-hay-400 text-center"
-                              />
-                            </td>
-                            <td className="px-2 py-1.5">
-                              <div className="flex gap-1">
-                                <button onClick={() => saveEdit(p.duoId)} className="px-2 py-1 bg-pasture-600 text-white text-xs rounded hover:bg-pasture-700">✓</button>
-                                <button onClick={() => setEditingId(null)} className="px-2 py-1 bg-dust-300 text-rope-600 text-xs rounded hover:bg-dust-400">✕</button>
-                              </div>
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td className="px-4 py-2.5 text-center font-semibold text-rope-700">{p.cattleCount}</td>
-                            <td className="px-4 py-2.5 text-center text-rope-600">{formatTime(p.timeSeconds, p.isSAT)}</td>
-                            <td className="px-4 py-2.5 text-center">
-                              <button
-                                onClick={() => startEdit(p as any)}
-                                className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors"
-                              >
-                                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                </svg>
-                              </button>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                {show2D ? (
+                  <RankingTable rows={partials2D} title={`Ranking 2D — Amador (${partials2D.length})`} />
+                ) : (
+                  <div className="px-4 py-3 border-t border-dust-200 bg-dust-50 text-center">
+                    <p className="text-xs text-rope-500">
+                      Ranking 2D disponível após {10 - partials1D.length} vaga{10 - partials1D.length !== 1 ? 's' : ''} do ranking 1D
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </Card>
