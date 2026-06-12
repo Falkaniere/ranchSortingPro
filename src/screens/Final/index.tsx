@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useToast } from '../../components/ui/Toast';
+import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { exportToExcel } from 'utils/exportExcel';
@@ -10,6 +11,7 @@ import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 
 type PendingEntry = {
   duoId: string;
@@ -23,6 +25,8 @@ export default function Finals() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { isPro } = useSubscription();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { getFinalists, getBestQualifierScores, addFinalResult, finalResults, duosMeta } = useResults();
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -128,29 +132,37 @@ export default function Finals() {
         title="Final"
         subtitle={`${finalists.finalists1D.length} finalistas 1D · ${finalists.finalists2D.length} finalistas 2D`}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              exportToExcel(
-                partialsFiltered.map((p, idx) => ({
-                  '#': idx + 1,
-                  Dupla: p?.label,
-                  Grupo: p?.group,
-                  'Bois Qualif.': p?.qualiCattle,
-                  'Tempo Qualif.': p?.qualiTime?.toFixed(2),
-                  'Bois Final': p?.finalCattle,
-                  'Tempo Final': p?.finalTime?.toFixed(2),
-                  'Média Bois': p?.avgCattle?.toFixed(1),
-                  'Média Tempo': p?.avgTime?.toFixed(2),
-                })),
-                `Resultados_Finais_${activeTab}`
-              );
-            }}
-            disabled={partialsFiltered.length === 0}
-          >
-            Exportar {activeTab}
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isPro && <UpgradeBadge />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={
+                isPro
+                  ? () => {
+                      exportToExcel(
+                        partialsFiltered.map((p, idx) => ({
+                          '#': idx + 1,
+                          Dupla: p?.label,
+                          Grupo: p?.group,
+                          'Bois Qualif.': p?.qualiCattle,
+                          'Tempo Qualif.': p?.qualiTime?.toFixed(2),
+                          'Bois Final': p?.finalCattle,
+                          'Tempo Final': p?.finalTime?.toFixed(2),
+                          'Média Bois': p?.avgCattle?.toFixed(1),
+                          'Média Tempo': p?.avgTime?.toFixed(2),
+                        })),
+                        `Resultados_Finais_${activeTab}`
+                      );
+                    }
+                  : () => setUpgradeOpen(true)
+              }
+              disabled={partialsFiltered.length === 0}
+            >
+              Exportar {activeTab}
+            </Button>
+            <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+          </div>
         }
       />
 

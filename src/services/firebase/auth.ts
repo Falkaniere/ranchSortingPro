@@ -7,7 +7,7 @@ import {
   onAuthStateChanged,
   User,
 } from 'firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../../firebase';
 
 export async function signUp(name: string, email: string, password: string): Promise<User> {
@@ -16,6 +16,7 @@ export async function signUp(name: string, email: string, password: string): Pro
   await setDoc(doc(db, 'users', credential.user.uid), {
     displayName: name,
     email,
+    role: 'basic',
     createdAt: serverTimestamp(),
   });
   return credential.user;
@@ -29,15 +30,23 @@ export async function signIn(email: string, password: string): Promise<User> {
 export async function signInWithGoogle(): Promise<User> {
   const credential = await signInWithPopup(auth, googleProvider);
   const { user } = credential;
-  await setDoc(
-    doc(db, 'users', user.uid),
-    {
+  const userRef = doc(db, 'users', user.uid);
+  const snap = await getDoc(userRef);
+  if (!snap.exists()) {
+    // First Google login — create profile with basic role
+    await setDoc(userRef, {
       displayName: user.displayName,
       email: user.email,
+      role: 'basic',
       createdAt: serverTimestamp(),
-    },
-    { merge: true }
-  );
+    });
+  } else {
+    // Existing user — update display info only, never touch role
+    await updateDoc(userRef, {
+      displayName: user.displayName,
+      email: user.email,
+    });
+  }
   return user;
 }
 

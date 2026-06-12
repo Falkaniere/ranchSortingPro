@@ -5,6 +5,7 @@ import { generateUniqueDuos } from 'core/logic/pairing';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
+import { useSubscription } from '../../hooks/useSubscription';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { CategoryBadge } from '../../components/ui/Badge';
@@ -12,6 +13,7 @@ import { Card } from '../../components/ui/Card';
 import { ConfirmModal } from '../../components/ui/Modal';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 
 const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
   { label: 'Aberta', value: 'Open', hint: 'Pode parear com qualquer categoria' },
@@ -24,8 +26,12 @@ export default function Registration() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
+  const { isPro, limits } = useSubscription();
   const { setDuosMeta } = useResults();
   const { competitors, numRounds, setCompetitors, setDuos, setNumRounds } = useCompetition();
+
+  const atCompetitorLimit = !isPro && limits.maxCompetitors !== null && competitors.length >= limits.maxCompetitors;
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [name, setName] = useState('');
   const [category, setCategory] = useState<RiderCategory>('Open');
@@ -187,9 +193,24 @@ export default function Registration() {
               </div>
             </div>
 
-            <Button onClick={addCompetitor} fullWidth>
-              Adicionar Competidor
-            </Button>
+            {atCompetitorLimit ? (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-hay-50 border border-hay-200">
+                  <span className="text-xs text-hay-800 font-medium">
+                    Limite de {limits.maxCompetitors} competidores atingido
+                  </span>
+                  <UpgradeBadge />
+                </div>
+                <Button onClick={() => setUpgradeOpen(true)} variant="outline" fullWidth disabled>
+                  Adicionar Competidor
+                </Button>
+              </div>
+            ) : (
+              <Button onClick={addCompetitor} fullWidth>
+                Adicionar Competidor
+              </Button>
+            )}
+            <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           </div>
         </Card>
 

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCompetition } from '../../context/CompetitionContext';
+import { useSubscription } from '../../hooks/useSubscription';
 import { signOut } from '../../services/firebase/auth';
 import {
   Competition,
@@ -13,6 +14,7 @@ import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { StatusBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
+import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { Modal } from '../../components/ui/Modal';
 import { ConfirmModal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
@@ -21,9 +23,11 @@ import { useToast } from '../../components/ui/Toast';
 
 export default function DashboardScreen() {
   const { user } = useAuth();
+  const { isPro, limits } = useSubscription();
   const { loadCompetition } = useCompetition();
   const navigate = useNavigate();
   const toast = useToast();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -128,13 +132,30 @@ export default function DashboardScreen() {
             </h1>
             <p className="text-rope-400 text-sm mt-1">
               {competitions.length} competição{competitions.length !== 1 ? 'ões' : ''} registrada{competitions.length !== 1 ? 's' : ''}
+              {!isPro && (
+                <span className="ml-2 text-xs text-hay-700 font-medium">· Plano Basic</span>
+              )}
             </p>
           </div>
-          <Button onClick={() => setCreateOpen(true)} size="lg"
-            leftIcon={<span className="text-base">+</span>}>
-            Nova Competição
-          </Button>
+          {(() => {
+            const activeCount = competitions.filter((c) => c.status !== 'finished').length;
+            const atLimit = !isPro && limits.maxActiveCompetitions !== null && activeCount >= limits.maxActiveCompetitions;
+            return (
+              <div className="flex items-center gap-2">
+                {atLimit && <UpgradeBadge />}
+                <Button
+                  onClick={atLimit ? () => setUpgradeOpen(true) : () => setCreateOpen(true)}
+                  size="lg"
+                  leftIcon={<span className="text-base">+</span>}
+                  variant={atLimit ? 'outline' : 'primary'}
+                >
+                  Nova Competição
+                </Button>
+              </div>
+            );
+          })()}
         </div>
+        <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
 
         {isLoading ? (
           <div className="flex justify-center py-16">

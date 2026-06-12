@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
+import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
@@ -12,12 +13,15 @@ import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 
 type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean };
 
 export default function Qualifiers() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { isPro } = useSubscription();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const toast = useToast();
   const { addQualifierResult, updateQualifierResult, results, duosMeta } = useResults();
   const { duos: compDuos } = useCompetition();
@@ -116,26 +120,33 @@ export default function Qualifiers() {
         title="Qualificatória"
         subtitle={`${registeredDuoIds.size} de ${duos.length} duplas registradas`}
         actions={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              exportToExcel(
-                partials.map((p, idx) => ({
-                  '#': idx + 1,
-                  Dupla: p.duoLabel,
-                  Grupo: p.group,
-                  Bois: p.cattleCount,
-                  'Tempo (s)': p.timeSeconds,
-                  SAT: p.isSAT ? 'Sim' : 'Não',
-                })),
-                'Resultados_Qualificatorias'
-              )
-            }
-            disabled={partials.length === 0}
-          >
-            Exportar Excel
-          </Button>
+          <div className="flex items-center gap-2">
+            {!isPro && <UpgradeBadge />}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={
+                isPro
+                  ? () =>
+                      exportToExcel(
+                        partials.map((p, idx) => ({
+                          '#': idx + 1,
+                          Dupla: p.duoLabel,
+                          Grupo: p.group,
+                          Bois: p.cattleCount,
+                          'Tempo (s)': p.timeSeconds,
+                          SAT: p.isSAT ? 'Sim' : 'Não',
+                        })),
+                        'Resultados_Qualificatorias'
+                      )
+                  : () => setUpgradeOpen(true)
+              }
+              disabled={partials.length === 0}
+            >
+              Exportar Excel
+            </Button>
+            <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+          </div>
         }
       />
 
