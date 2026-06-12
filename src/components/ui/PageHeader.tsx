@@ -12,8 +12,8 @@ interface PageHeaderProps {
 export function PageHeader({ title, subtitle, backTo, backLabel = 'Voltar', actions }: PageHeaderProps) {
   const navigate = useNavigate();
   return (
-    <div className="flex items-start justify-between mb-6">
-      <div>
+    <div className="flex flex-wrap items-start justify-between gap-3 mb-6">
+      <div className="min-w-0">
         {backTo && (
           <button
             onClick={() => navigate(backTo)}
@@ -25,14 +25,14 @@ export function PageHeader({ title, subtitle, backTo, backLabel = 'Voltar', acti
             {backLabel}
           </button>
         )}
-        <h1 className="font-serif font-bold text-rope-800 text-2xl md:text-3xl leading-tight">
+        <h1 className="font-serif font-bold text-rope-800 text-xl md:text-3xl leading-tight">
           {title}
         </h1>
         {subtitle && (
           <p className="text-rope-400 text-sm mt-1">{subtitle}</p>
         )}
       </div>
-      {actions && <div className="flex items-center gap-2 mt-1">{actions}</div>}
+      {actions && <div className="flex flex-wrap items-center gap-2 mt-1 shrink-0">{actions}</div>}
     </div>
   );
 }
