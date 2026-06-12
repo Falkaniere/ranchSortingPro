@@ -50,7 +50,7 @@ export default function Duos() {
         const a = competitors.find((c) => c.id === duo.riderOneId);
         const b = competitors.find((c) => c.id === duo.riderTwoId);
         return {
-          Dupla: `${a?.name ?? '?'} 🤝 ${b?.name ?? '?'}`,
+          Dupla: `${a?.name ?? '?'} & ${b?.name ?? '?'}`,
           Categoria: duo.group,
           Categoria_A: a?.category ?? '',
           Categoria_B: b?.category ?? '',
@@ -73,7 +73,7 @@ export default function Duos() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <span className="font-medium text-rope-800 text-sm">{a?.name ?? '?'}</span>
                   {a && <CategoryBadge category={a.category} />}
-                  <span className="text-rope-400 text-sm">🤝</span>
+                  <span className="text-rope-400 text-sm font-bold">&amp;</span>
                   <span className="font-medium text-rope-800 text-sm">{b?.name ?? '?'}</span>
                   {b && <CategoryBadge category={b.category} />}
                 </div>

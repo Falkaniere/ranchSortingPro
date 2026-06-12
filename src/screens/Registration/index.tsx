@@ -16,10 +16,8 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 
 const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
-  { label: 'Aberta', value: 'Open', hint: 'Pode parear com qualquer categoria' },
-  { label: 'Amador', value: 'Amateur19', hint: 'Apenas com outros Amadores' },
-  { label: 'Amador Light', value: 'AmateurLight', hint: 'Com Light ou Principiante' },
-  { label: 'Principiante', value: 'Beginner', hint: 'Apenas com Principiantes' },
+  { label: 'Profissional', value: 'Open', hint: 'Grupo 1D' },
+  { label: 'Amador', value: 'AmateurLight', hint: 'Grupo 2D' },
 ];
 
 export default function Registration() {
@@ -34,13 +32,13 @@ export default function Registration() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<RiderCategory>('Open');
+  const [category, setCategory] = useState<RiderCategory>('Open'); // 'Open' = Profissional
   const [nameError, setNameError] = useState('');
   const nameInputRef = useRef<HTMLInputElement>(null);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState<RiderCategory>('Open');
+  const [editCategory, setEditCategory] = useState<RiderCategory>('Open'); // 'Open' = Profissional
 
   const [deleteTarget, setDeleteTarget] = useState<Competitor | null>(null);
   const [isSorting, setIsSorting] = useState(false);
@@ -106,7 +104,7 @@ export default function Registration() {
       const duosWithLabels = duos.map((duo) => {
         const riderOne = competitors.find((c) => c.id === duo.riderOneId);
         const riderTwo = competitors.find((c) => c.id === duo.riderTwoId);
-        const label = `${riderOne?.name ?? '?'} 🤝 ${riderTwo?.name ?? '?'}`;
+        const label = `${riderOne?.name ?? '?'} & ${riderTwo?.name ?? '?'}`;
         return { ...duo, label };
       });
 

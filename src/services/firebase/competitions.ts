@@ -36,8 +36,27 @@ export interface Competition {
 
 type CompetitionPayload = Omit<Competition, 'id' | 'createdAt' | 'updatedAt'>;
 
+// Migrates legacy duo IDs that used '🤝' as separator to '_'
+function normalizeDuoIds(competition: Competition): Competition {
+  const remap = new Map<string, string>();
+  const duos = (competition.duos ?? []).map((d) => {
+    if (!d.id.includes('🤝')) return d;
+    const newId = d.id.replace(/🤝/g, '_');
+    remap.set(d.id, newId);
+    return { ...d, id: newId };
+  });
+  const fix = (id: string) => remap.get(id) ?? id;
+  const qualifierResults = (competition.qualifierResults ?? []).map((r) =>
+    remap.has(r.duoId) ? { ...r, duoId: fix(r.duoId) } : r
+  );
+  const finalResults = (competition.finalResults ?? []).map((r) =>
+    remap.has(r.duoId) ? { ...r, duoId: fix(r.duoId) } : r
+  );
+  return { ...competition, duos, qualifierResults, finalResults };
+}
+
 function toCompetition(id: string, data: any): Competition {
-  return {
+  const raw: Competition = {
     id,
     ownerId: data.ownerId,
     name: data.name,
@@ -58,6 +77,7 @@ function toCompetition(id: string, data: any): Competition {
     qualifierResults: data.qualifierResults ?? [],
     finalResults: data.finalResults ?? [],
   };
+  return normalizeDuoIds(raw);
 }
 
 export async function createCompetition(

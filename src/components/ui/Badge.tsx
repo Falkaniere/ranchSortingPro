@@ -11,19 +11,19 @@ interface CategoryBadgeProps {
 
 const categoryConfig: Record<RiderCategory, { label: string; className: string }> = {
   Open: {
-    label: 'Aberta',
+    label: 'Profissional',
     className: 'bg-hay-200 text-rope-700 border border-hay-400',
   },
   Amateur19: {
-    label: 'Amador',
+    label: 'Amador Avançado',
     className: 'bg-pasture-100 text-pasture-800 border border-pasture-400',
   },
   AmateurLight: {
-    label: 'Amador Light',
+    label: 'Amador',
     className: 'bg-saddle-100 text-saddle-700 border border-saddle-400',
   },
   Beginner: {
-    label: 'Principiante',
+    label: 'Iniciante',
     className: 'bg-dust-200 text-rope-500 border border-dust-400',
   },
 };

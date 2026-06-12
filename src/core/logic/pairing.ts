@@ -70,7 +70,7 @@ function roundRobinPairs(
   for (const pairs of rounds) {
     for (const [a, b] of pairs) {
       if (!canPair(a.category, b.category)) continue;
-      const id = [a.id, b.id].sort().join('🤝');
+      const id = [a.id, b.id].sort().join('_');
       duos.push({
         id,
         riderOneId: a.id,
@@ -159,7 +159,7 @@ function havelHakimiRegular(
       const a = byId.get(aId)!;
       const b = byId.get(bId)!;
       return {
-        id: [aId, bId].join('🤝'),
+        id: [aId, bId].join('_'),
         riderOneId: aId,
         riderTwoId: bId,
         group: computeDuoGroup(a.category, b.category),

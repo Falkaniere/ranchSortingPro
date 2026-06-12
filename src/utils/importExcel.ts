@@ -2,9 +2,6 @@ import * as XLSX from 'xlsx';
 import { Duo } from 'core/models/Duo';
 import { Competitor } from 'core/index';
 
-/**
- * Importa duplas de um arquivo Excel e cria competidores ausentes automaticamente.
- */
 export async function importDuosFromExcel(
   file: File,
   competitors: Competitor[],
@@ -19,14 +16,15 @@ export async function importDuosFromExcel(
 
       const newCompetitors: Competitor[] = [];
       const importedDuos: Duo[] = rows.map((row) => {
-        const duoNames = String(row.Dupla || '')
-          .split('🤝')
-          .map((s) => s.trim());
+        const raw = String(row.Dupla || '');
+        // Aceita tanto " & " (novo) quanto " 🤝 " / "🤝" (legado)
+        const duoNames = raw.includes(' & ')
+          ? raw.split(' & ').map((s) => s.trim())
+          : raw.split('🤝').map((s) => s.trim());
         const riderOneName = duoNames[0];
         const riderTwoName = duoNames[1];
         const group = String(row.Categoria || '1D') as Duo['group'];
 
-        // Verifica se os competidores já existem
         let riderOne =
           competitors.find(
             (c) => c.name.toLowerCase() === riderOneName.toLowerCase()
@@ -43,7 +41,6 @@ export async function importDuosFromExcel(
             (c) => c.name.toLowerCase() === riderTwoName.toLowerCase()
           );
 
-        // Cria novos competidores se necessário
         if (!riderOne && riderOneName) {
           riderOne = {
             id: crypto.randomUUID(),
@@ -68,12 +65,11 @@ export async function importDuosFromExcel(
           id: crypto.randomUUID(),
           riderOneId: riderOne!.id,
           riderTwoId: riderTwo!.id,
-          label: `${riderOneName} 🤝 ${riderTwoName}`,
+          label: `${riderOneName} & ${riderTwoName}`,
           group,
         };
       });
 
-      // Atualiza competidores globais
       if (newCompetitors.length > 0) {
         setCompetitors((prev) => [...prev, ...newCompetitors]);
       }
