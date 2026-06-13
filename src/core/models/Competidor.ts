@@ -12,4 +12,6 @@ export interface Competitor {
   category: RiderCategory;
   // Number of passes (rounds) this competitor must ride in the qualifier stage
   passes: number;
+  // Optional link to the global CompetitorProfile (populated by auto-linking)
+  profileId?: string;
 }
