@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { FinalAggregationEntry } from 'core/logic/finals';
+import { useToast } from '../../components/ui/Toast';
 import { exportToExcel } from 'utils/exportExcel';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -13,8 +14,10 @@ import { PageHeader } from '../../components/ui/PageHeader';
 export default function FinalResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { getFinalAggregates, duosMeta } = useResults();
-  const { duos: compDuos } = useCompetition();
+  const { duos: compDuos, competition, advanceStatus } = useCompetition();
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const aggregates = getFinalAggregates();
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
@@ -39,6 +42,18 @@ export default function FinalResults() {
     if (pos === 2) return '🥈';
     if (pos === 3) return '🥉';
     return pos.toString();
+  }
+
+  async function handleFinish() {
+    setIsFinishing(true);
+    try {
+      await advanceStatus('finished');
+      navigate('/');
+    } catch {
+      toast('Erro ao finalizar a competição. Tente novamente.', 'error');
+    } finally {
+      setIsFinishing(false);
+    }
   }
 
   function exportResults() {
@@ -129,9 +144,15 @@ export default function FinalResults() {
           {rows2D.length > 0 && <ResultTable items={rows2D} label={`Classificação 2D (${rows2D.length} duplas)`} />}
 
           <div className="flex justify-center pt-2">
-            <Button variant="secondary" onClick={() => navigate('/')}>
-              Voltar ao Início
-            </Button>
+            {competition?.status === 'finished' ? (
+              <Button variant="secondary" onClick={() => navigate('/')}>
+                Voltar ao Início
+              </Button>
+            ) : (
+              <Button onClick={handleFinish} loading={isFinishing}>
+                Finalizar Competição
+              </Button>
+            )}
           </div>
         </div>
       )}
