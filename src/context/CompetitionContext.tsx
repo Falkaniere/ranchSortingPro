@@ -105,10 +105,10 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
       if (!competition?.id) return;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       const merged = { ...pendingPatchRef.current, status: next };
-      pendingPatchRef.current = {};
       setIsSaving(true);
       try {
         await updateCompetition(competition.id, merged);
+        pendingPatchRef.current = {};
         setCompetition((prev) => (prev ? { ...prev, ...merged } : prev));
       } finally {
         setIsSaving(false);

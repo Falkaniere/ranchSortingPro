@@ -33,6 +33,7 @@ export default function Qualifiers() {
   const [calledCattle, setCalledCattle] = useState<number | null>(null);
   const [timeSeconds, setTimeSeconds] = useState('');
   const [timeError, setTimeError] = useState('');
+  const [isAdvancing, setIsAdvancing] = useState(false);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editCattle, setEditCattle] = useState<number | null>(null);
@@ -171,6 +172,18 @@ export default function Qualifiers() {
       rows: combinedRows,
       fileName: 'Resultados_Qualificatorias',
     });
+  }
+
+  async function handleGoToFinal() {
+    setIsAdvancing(true);
+    try {
+      await advanceStatus('final');
+      navigate(`/competition/${id}/final`);
+    } catch {
+      toast('Erro ao avançar para a Final. Tente novamente.', 'error');
+    } finally {
+      setIsAdvancing(false);
+    }
   }
 
   function RankingTable({ rows, title }: { rows: PartialRow[]; title: string }) {
@@ -390,14 +403,7 @@ export default function Qualifiers() {
             )}
 
             {allRegistered && (
-              <Button
-                onClick={() => {
-                  advanceStatus('final');
-                  navigate(`/competition/${id}/final`);
-                }}
-                size="lg"
-                fullWidth
-              >
+              <Button onClick={handleGoToFinal} loading={isAdvancing} size="lg" fullWidth>
                 Ir para a Final →
               </Button>
             )}

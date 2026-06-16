@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { FinalAggregationEntry } from 'core/logic/finals';
+import { useToast } from '../../components/ui/Toast';
 import { exportToExcel } from 'utils/exportExcel';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -13,6 +14,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 export default function FinalResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const toast = useToast();
   const { getFinalAggregates, duosMeta } = useResults();
   const { duos: compDuos, competition, advanceStatus } = useCompetition();
   const [isFinishing, setIsFinishing] = useState(false);
@@ -46,10 +48,12 @@ export default function FinalResults() {
     setIsFinishing(true);
     try {
       await advanceStatus('finished');
+      navigate('/');
+    } catch {
+      toast('Erro ao finalizar a competição. Tente novamente.', 'error');
     } finally {
       setIsFinishing(false);
     }
-    navigate('/');
   }
 
   function exportResults() {
