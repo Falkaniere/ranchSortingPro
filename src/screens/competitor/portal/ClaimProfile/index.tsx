@@ -143,7 +143,7 @@ export default function ClaimProfile() {
           ) : (
             <div className="flex flex-col gap-3">
               <p className="text-sm text-rope-500 font-medium">
-                {results.length} perfil{results.length !== 1 ? 'is' : ''} encontrado{results.length !== 1 ? 's' : ''}. Selecione o seu:
+                {results.length !== 1 ? `${results.length} perfis encontrados` : '1 perfil encontrado'}. Selecione o seu:
               </p>
               {results.map(({ profile }) => (
                 <Card key={profile.id}>

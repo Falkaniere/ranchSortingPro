@@ -32,6 +32,7 @@ import PortalDashboard from './screens/competitor/portal/Dashboard';
 import MyCompetitionsPage from './screens/competitor/portal/MyCompetitionsPage';
 import MyPassesPage from './screens/competitor/portal/MyPassesPage';
 import CompetitionResults from './screens/competitor/portal/CompetitionResults';
+import ClaimProfile from './screens/competitor/portal/ClaimProfile';
 
 export default function App() {
   return (
@@ -55,6 +56,7 @@ export default function App() {
                   <Route path="/portal" element={<PortalDashboard />}>
                     <Route index element={<MyCompetitionsPage />} />
                     <Route path="passes" element={<MyPassesPage />} />
+                    <Route path="claim" element={<ClaimProfile />} />
                     <Route path="results/:competitionId" element={<CompetitionResults />} />
                   </Route>
                 </Route>

@@ -93,7 +93,7 @@ export default function CompetitorSearch() {
             ) : (
               <div className="flex flex-col gap-3">
                 <p className="text-sm text-rope-500 font-medium">
-                  {results.length} perfil{results.length !== 1 ? 'is' : ''} encontrado{results.length !== 1 ? 's' : ''}
+                  {results.length !== 1 ? `${results.length} perfis encontrados` : '1 perfil encontrado'}
                 </p>
                 {results.map(({ profile }) => (
                   <ProfileCard key={profile.id} profile={profile} />

@@ -12,7 +12,6 @@ import { useAuth } from '../../../../context/AuthContext';
 import { signOut } from '../../../../services/firebase/auth';
 import { Button } from '../../../../components/ui/Button';
 import { Spinner } from '../../../../components/ui/Spinner';
-import ClaimProfile from '../ClaimProfile';
 
 const NAV_ITEMS = [
   { to: '/portal', label: 'Minhas Competições', icon: '🏟️', end: true },
@@ -106,45 +105,49 @@ export default function PortalDashboard() {
         </div>
       </header>
 
-      {/* No profile — show claim flow */}
+      {/* No profile + not on /portal/claim → CTA to claim */}
       {!competitorProfileId && !isClaimRoute && (
-        <main className="max-w-2xl mx-auto px-4 py-12 w-full">
-          <div className="text-center mb-8">
-            <div className="text-5xl mb-4">🔗</div>
-            <h2 className="font-serif font-bold text-rope-800 text-2xl mb-2">
-              Vincule seu perfil de competidor
-            </h2>
-            <p className="text-rope-400">
-              Para acessar seu histórico, você precisa vincular sua conta a um perfil de competidor.
-            </p>
-          </div>
-          <ClaimProfile />
+        <main className="max-w-2xl mx-auto px-4 py-12 w-full text-center">
+          <div className="text-5xl mb-4">🔗</div>
+          <h2 className="font-serif font-bold text-rope-800 text-2xl mb-2">
+            Vincule seu perfil de competidor
+          </h2>
+          <p className="text-rope-400 mb-6">
+            Para acessar seu histórico, vincule sua conta a um perfil de competidor.
+          </p>
+          <Button onClick={() => navigate('/portal/claim')}>
+            Vincular perfil
+          </Button>
         </main>
       )}
 
-      {/* No profile — claim sub-route */}
-      {!competitorProfileId && isClaimRoute && (
+      {/* /portal/claim — render via Outlet (regardless of profile status) */}
+      {isClaimRoute && (
         <main className="max-w-2xl mx-auto px-4 py-8 w-full">
-          <ClaimProfile />
+          <Outlet context={{ history, profile }} />
         </main>
       )}
 
-      {/* Has profile */}
-      {competitorProfileId && (
+      {/* Has profile + not on claim route */}
+      {competitorProfileId && !isClaimRoute && (
         <>
           {/* Stats bar */}
-          {!isResultsRoute && !isClaimRoute && (
+          {!isResultsRoute && (
             <div className="bg-white border-b border-dust-300">
               <div className="max-w-5xl mx-auto px-4 py-4 flex gap-6 text-sm">
                 <div>
                   <span className="font-bold text-saddle-700 text-xl">{history.length}</span>
-                  <span className="text-rope-400 ml-1.5">competição{history.length !== 1 ? 'ões' : ''}</span>
+                  <span className="text-rope-400 ml-1.5">
+                    {history.length !== 1 ? 'competições' : 'competição'}
+                  </span>
                 </div>
                 <div>
                   <span className="font-bold text-saddle-700 text-xl">
                     {history.flatMap((h) => h.passes).length}
                   </span>
-                  <span className="text-rope-400 ml-1.5">passada{history.flatMap((h) => h.passes).length !== 1 ? 's' : ''}</span>
+                  <span className="text-rope-400 ml-1.5">
+                    passada{history.flatMap((h) => h.passes).length !== 1 ? 's' : ''}
+                  </span>
                 </div>
                 <div>
                   <span className="font-bold text-saddle-700 text-xl">
@@ -157,7 +160,7 @@ export default function PortalDashboard() {
           )}
 
           {/* Nav tabs */}
-          {!isResultsRoute && !isClaimRoute && (
+          {!isResultsRoute && (
             <nav className="bg-white border-b border-dust-300">
               <div className="max-w-5xl mx-auto px-4 flex gap-0">
                 {NAV_ITEMS.map((item) => (

@@ -2,12 +2,12 @@ import {
   collection,
   doc,
   addDoc,
-  updateDoc,
-  getDoc,
   getDocs,
+  getDoc,
   query,
   where,
   limit,
+  runTransaction,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
@@ -47,7 +47,11 @@ export async function getCompetitorProfile(id: string): Promise<CompetitorProfil
 }
 
 export async function getProfileByUserId(userId: string): Promise<CompetitorProfile | null> {
-  const q = query(collection(db, 'competitorProfiles'), where('userId', '==', userId));
+  const q = query(
+    collection(db, 'competitorProfiles'),
+    where('userId', '==', userId),
+    limit(1)
+  );
   const snap = await getDocs(q);
   if (snap.empty) return null;
   return toProfile(snap.docs[0].id, snap.docs[0].data());
@@ -74,7 +78,7 @@ export async function searchProfilesForUser(
   const q = query(
     collection(db, 'competitorProfiles'),
     where('normalizedName', '>=', normalized),
-    where('normalizedName', '<=', normalized + ''),
+    where('normalizedName', '<=', normalized + '\uf8ff'),
     limit(50)
   );
   const snap = await getDocs(q);
@@ -131,19 +135,33 @@ export async function createCompetitorProfile(
   };
 }
 
+// Atomically claims a profile: verifies it is still unclaimed, then updates
+// both the profile and the user doc in a single transaction to prevent races.
 export async function claimCompetitorProfile(
   profileId: string,
   userId: string,
   email: string
 ): Promise<void> {
-  await updateDoc(doc(db, 'competitorProfiles', profileId), {
-    userId,
-    email,
-    status: 'claimed',
-    claimedAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  });
-  await updateDoc(doc(db, 'users', userId), {
-    competitorProfileId: profileId,
+  const profileRef = doc(db, 'competitorProfiles', profileId);
+  const userRef = doc(db, 'users', userId);
+
+  await runTransaction(db, async (tx) => {
+    const profileSnap = await tx.get(profileRef);
+    if (!profileSnap.exists()) throw new Error('Perfil não encontrado.');
+
+    const data = profileSnap.data();
+    if (data.status === 'claimed' && data.userId !== userId) {
+      throw new Error('Este perfil já foi reivindicado por outro usuário.');
+    }
+
+    tx.update(profileRef, {
+      userId,
+      email,
+      status: 'claimed',
+      claimedAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    tx.update(userRef, { competitorProfileId: profileId });
   });
 }

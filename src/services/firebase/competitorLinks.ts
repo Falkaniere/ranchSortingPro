@@ -4,6 +4,7 @@ import {
   getDocs,
   query,
   where,
+  limit,
   serverTimestamp,
   Timestamp,
 } from 'firebase/firestore';
