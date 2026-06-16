@@ -52,7 +52,8 @@ export async function getLinkForCompetitor(
   const q = query(
     collection(db, 'competitorLinks'),
     where('competitionId', '==', competitionId),
-    where('competitorId', '==', competitorId)
+    where('competitorId', '==', competitorId),
+    limit(1)
   );
   const snap = await getDocs(q);
   if (snap.empty) return null;
