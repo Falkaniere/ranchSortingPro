@@ -116,6 +116,14 @@ export default function DashboardScreen() {
           <span className="text-saddle-200 text-sm hidden sm:block">
             Olá, {user?.displayName ?? user?.email}
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/portal')}
+            className="text-saddle-200 hover:text-white hover:bg-saddle-700 hidden sm:inline-flex"
+          >
+            Meu Portal
+          </Button>
           <Button variant="ghost" size="sm" onClick={handleLogout}
             className="text-saddle-200 hover:text-white hover:bg-saddle-700">
             Sair

@@ -21,6 +21,7 @@ import {
   saveAthlete,
   importProfilesAsCompetitors,
 } from '../../services/firebase/athletes';
+import { tryAutoLinkCompetitor } from '../../services/competitorLinking';
 
 const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
   { label: 'Profissional', value: 'Open', hint: 'Grupo 1D' },
@@ -77,6 +78,9 @@ export default function Registration() {
       passes: numRounds,
     };
     setCompetitors([...competitors, newCompetitor]);
+
+    // Auto-link in background — fire and forget, never blocks the organizer
+    if (id) tryAutoLinkCompetitor(newCompetitor, id);
 
     if (saveToBase && user?.uid) {
       try {
@@ -169,6 +173,8 @@ export default function Registration() {
       toast('Todos os atletas selecionados já estão cadastrados.', 'info');
     } else {
       setCompetitors([...competitors, ...toAdd]);
+      // Auto-link all imported competitors in background
+      if (id) toAdd.forEach((c) => tryAutoLinkCompetitor(c, id));
       toast(`${toAdd.length} atleta(s) importado(s)!`, 'success');
     }
     setAthletePickerOpen(false);
