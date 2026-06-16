@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
@@ -14,7 +14,8 @@ export default function FinalResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { getFinalAggregates, duosMeta } = useResults();
-  const { duos: compDuos } = useCompetition();
+  const { duos: compDuos, competition, advanceStatus } = useCompetition();
+  const [isFinishing, setIsFinishing] = useState(false);
 
   const aggregates = getFinalAggregates();
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
@@ -39,6 +40,16 @@ export default function FinalResults() {
     if (pos === 2) return '🥈';
     if (pos === 3) return '🥉';
     return pos.toString();
+  }
+
+  async function handleFinish() {
+    setIsFinishing(true);
+    try {
+      await advanceStatus('finished');
+    } finally {
+      setIsFinishing(false);
+    }
+    navigate('/');
   }
 
   function exportResults() {
@@ -129,9 +140,15 @@ export default function FinalResults() {
           {rows2D.length > 0 && <ResultTable items={rows2D} label={`Classificação 2D (${rows2D.length} duplas)`} />}
 
           <div className="flex justify-center pt-2">
-            <Button variant="secondary" onClick={() => navigate('/')}>
-              Voltar ao Início
-            </Button>
+            {competition?.status === 'finished' ? (
+              <Button variant="secondary" onClick={() => navigate('/')}>
+                Voltar ao Início
+              </Button>
+            ) : (
+              <Button onClick={handleFinish} loading={isFinishing}>
+                Finalizar Competição
+              </Button>
+            )}
           </div>
         </div>
       )}

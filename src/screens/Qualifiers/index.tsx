@@ -27,7 +27,7 @@ export default function Qualifiers() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const toast = useToast();
   const { addQualifierResult, updateQualifierResult, results, duosMeta } = useResults();
-  const { duos: compDuos } = useCompetition();
+  const { duos: compDuos, advanceStatus } = useCompetition();
 
   const [cattle, setCattle] = useState<number | null>(null);
   const [calledCattle, setCalledCattle] = useState<number | null>(null);
@@ -390,7 +390,14 @@ export default function Qualifiers() {
             )}
 
             {allRegistered && (
-              <Button onClick={() => navigate(`/competition/${id}/final`)} size="lg" fullWidth>
+              <Button
+                onClick={() => {
+                  advanceStatus('final');
+                  navigate(`/competition/${id}/final`);
+                }}
+                size="lg"
+                fullWidth
+              >
                 Ir para a Final →
               </Button>
             )}

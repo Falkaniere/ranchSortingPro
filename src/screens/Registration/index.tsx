@@ -85,7 +85,8 @@ export default function Registration() {
     if (saveToBase && user?.uid) {
       try {
         await saveAthlete(user.uid, { name: newCompetitor.name, category: newCompetitor.category });
-      } catch {
+      } catch (err) {
+        console.error('[saveAthlete] failed:', err);
         toast('Competidor adicionado, mas falha ao salvar na base', 'warning');
       }
     }
