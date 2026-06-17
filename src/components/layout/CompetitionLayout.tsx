@@ -26,9 +26,10 @@ export function CompetitionLayout() {
 
   useEffect(() => {
     if (!id || !user) return;
-    if (competition?.id === id) {
-      // Competition already in context (navigated from Dashboard).
-      // ResultContext is separate — still needs to be hydrated.
+    // For active competitions already in context, hydrate ResultContext directly
+    // to avoid a round-trip. Finished competitions always re-fetch so the
+    // read-only results view reflects what was actually persisted in Firestore.
+    if (competition?.id === id && competition.status !== 'finished') {
       initializeFromCompetition(
         competition.qualifierResults ?? [],
         competition.finalResults ?? [],

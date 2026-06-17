@@ -10,17 +10,28 @@ import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { Spinner } from '../../components/ui/Spinner';
 
 export default function FinalResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const { getFinalAggregates, duosMeta } = useResults();
+  const { getFinalAggregates, duosMeta, results: qualifierResults, finalResults } = useResults();
   const { duos: compDuos, competition, advanceStatus } = useCompetition();
   const [isFinishing, setIsFinishing] = useState(false);
 
   const aggregates = getFinalAggregates();
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
+
+  // While a finished competition is being loaded from Firestore, ResultContext
+  // may be empty for the first render cycle. Show a spinner in that window
+  // instead of a misleading "no results" empty state.
+  const isFinished = competition?.status === 'finished';
+  const hasFirestoreData =
+    (competition?.qualifierResults?.length ?? 0) > 0 ||
+    (competition?.finalResults?.length ?? 0) > 0;
+  const resultContextReady = qualifierResults.length > 0 || finalResults.length > 0;
+  const isLoadingResults = isFinished && hasFirestoreData && !resultContextReady;
 
   const rows = aggregates.map((a: FinalAggregationEntry, idx: number) => {
     const duo = metaDuos.find((d) => d.id === a.duoId);
@@ -127,15 +138,25 @@ export default function FinalResults() {
         }
       />
 
-      {rows.length === 0 ? (
+      {isLoadingResults ? (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" />
+        </div>
+      ) : rows.length === 0 ? (
         <EmptyState
           icon="🏆"
           title="Sem resultados ainda"
-          description="Registre os resultados da final para ver a classificação."
+          description={
+            isFinished
+              ? 'Nenhum resultado registrado nesta competição.'
+              : 'Registre os resultados da final para ver a classificação.'
+          }
           action={
-            <Button variant="outline" onClick={() => navigate(`/competition/${id}/final`)}>
-              ← Ir para a Final
-            </Button>
+            !isFinished ? (
+              <Button variant="outline" onClick={() => navigate(`/competition/${id}/final`)}>
+                ← Ir para a Final
+              </Button>
+            ) : undefined
           }
         />
       ) : (
