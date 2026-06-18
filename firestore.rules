@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Competitions: owner has full access; any authenticated user can read
+    match /competitions/{compId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if request.auth != null && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Competitor profiles: readable by all auth users
+    // create: allowed for any auth user (organizers create profiles for new competitors)
+    // update: only the profile owner, or a user claiming an unclaimed profile as their own
+    // delete: never allowed
+    match /competitorProfiles/{profileId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (
+        resource.data.userId == request.auth.uid ||
+        (resource.data.status == 'unclaimed' && request.resource.data.userId == request.auth.uid)
+      );
+    }
+
+    // Competitor links: created and read freely; update/delete are never needed and blocked
+    match /competitorLinks/{linkId} {
+      allow read, create: if request.auth != null;
+    }
+
+    // User document: each user manages their own data and subcollections
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Athletes base: only the owner can read/write their athletes
+      match /athletes/{athleteId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+  }
+}
