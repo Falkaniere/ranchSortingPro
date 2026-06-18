@@ -27,14 +27,20 @@ export default function FinalResults() {
   // may be empty for the first render cycle. Show a spinner in that window
   // instead of a misleading "no results" empty state.
   const isFinished = competition?.status === 'finished';
-  const expectedQualifiers = competition?.qualifierResults?.length ?? 0;
-  const expectedFinals = competition?.finalResults?.length ?? 0;
-  const hasFirestoreData = expectedQualifiers > 0 || expectedFinals > 0;
-  // Match exact counts so stale ResultContext data from a previous competition
-  // doesn't satisfy the ready check when the user navigates between competitions.
+  // Use ID-set equality so stale ResultContext data from a *different*
+  // competition (same count by coincidence) doesn't falsely satisfy the check.
+  const competitionResultIds = new Set([
+    ...(competition?.qualifierResults?.map((r) => r.id) ?? []),
+    ...(competition?.finalResults?.map((r) => r.id) ?? []),
+  ]);
+  const contextResultIds = new Set([
+    ...qualifierResults.map((r) => r.id),
+    ...finalResults.map((r) => r.id),
+  ]);
+  const hasFirestoreData = competitionResultIds.size > 0;
   const resultContextReady =
-    qualifierResults.length === expectedQualifiers &&
-    finalResults.length === expectedFinals;
+    hasFirestoreData &&
+    [...competitionResultIds].every((rid) => contextResultIds.has(rid));
   const isLoadingResults = isFinished && hasFirestoreData && !resultContextReady;
 
   const rows = aggregates.map((a: FinalAggregationEntry, idx: number) => {

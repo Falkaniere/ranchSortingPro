@@ -28,18 +28,9 @@ export function CompetitionLayout() {
     let cancelled = false;
 
     if (competition?.id === id) {
-      // Hydrate ResultContext from context immediately so every tab has data
-      // without waiting for a network round-trip.
-      initializeFromCompetition(
-        competition.qualifierResults ?? [],
-        competition.finalResults ?? [],
-        competition.duos ?? []
-      );
-
-      // For finished competitions, always refetch directly from the server
-      // (bypassing local cache) — the cached snapshot from listCompetitions
-      // may predate when qualifierResults / finalResults were last saved.
       if (competition.status === 'finished') {
+        // For finished competitions skip pre-populating from potentially stale
+        // cache — only initialize ResultContext once the server responds.
         getCompetitionFromServer(id)
           .then((c) => {
             if (cancelled) return;
@@ -51,16 +42,58 @@ export function CompetitionLayout() {
               c.duos ?? []
             );
           })
-          .catch(() => {});
+          .catch((err) => {
+            // Server unreachable — fall back to whatever is already in context.
+            console.warn('[CompetitionLayout] Server re-fetch failed, using cached data:', err);
+            if (!cancelled) {
+              initializeFromCompetition(
+                competition.qualifierResults ?? [],
+                competition.finalResults ?? [],
+                competition.duos ?? []
+              );
+            }
+          });
+      } else {
+        // Active competition: hydrate immediately from in-memory context.
+        initializeFromCompetition(
+          competition.qualifierResults ?? [],
+          competition.finalResults ?? [],
+          competition.duos ?? []
+        );
       }
       return () => { cancelled = true; };
     }
 
-    // Competition not yet in context — must fetch before rendering content.
+    // Competition not yet in context — fetch from Firestore.
+    // Use the local cache for initial load; if the competition turns out to be
+    // finished, re-fetch directly from the server to bypass any stale cache.
     getCompetition(id)
       .then((c) => {
         if (cancelled) return;
         if (!c || c.ownerId !== user.uid) { navigate('/'); return; }
+        if (c.status === 'finished') {
+          return getCompetitionFromServer(id)
+            .then((fresh) => {
+              if (cancelled) return;
+              if (!fresh || fresh.ownerId !== user.uid) return;
+              loadCompetition(fresh);
+              initializeFromCompetition(
+                fresh.qualifierResults ?? [],
+                fresh.finalResults ?? [],
+                fresh.duos ?? []
+              );
+            })
+            .catch((err) => {
+              console.warn('[CompetitionLayout] Server re-fetch failed, using cached data:', err);
+              if (cancelled) return;
+              loadCompetition(c);
+              initializeFromCompetition(
+                c.qualifierResults ?? [],
+                c.finalResults ?? [],
+                c.duos ?? []
+              );
+            });
+        }
         loadCompetition(c);
         initializeFromCompetition(
           c.qualifierResults ?? [],
