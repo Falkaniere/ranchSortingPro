@@ -10,19 +10,13 @@ export interface FinalsSelection {
 }
 
 export function selectFinalists(
-  qualifierBestScores: Map<string, DuoScore>,
-  maxPerFinal = 10
+  qualifierBestScores: Map<string, DuoScore>
 ): FinalsSelection {
   const overall = standingsFromScores(qualifierBestScores);
 
-  // 1D final: top N overall regardless of group (a 2D duo can qualify here)
-  const finalists1D = overall.slice(0, maxPerFinal);
-
-  // 2D final: top N from the 2D group only, independent of 1D classification
-  // (a duo may appear in both finals simultaneously)
-  const finalists2D = overall
-    .filter((e) => e.group === '2D')
-    .slice(0, maxPerFinal);
+  // All qualified duos advance to the final — no cap.
+  const finalists1D = overall;
+  const finalists2D = overall.filter((e) => e.group === '2D');
 
   return {
     finalists1D,

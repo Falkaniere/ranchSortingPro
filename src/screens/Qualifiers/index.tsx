@@ -75,7 +75,7 @@ export default function Qualifiers() {
   // Separação para regra de ranking 2D
   const partials1D = partials.filter((p) => p.group === '1D');
   const partials2D = partials.filter((p) => p.group === '2D');
-  const show2D = partials1D.length >= 10;
+  const show2D = partials2D.length > 0;
 
   function validateForm() {
     if (cattle === null) {
@@ -457,14 +457,8 @@ export default function Qualifiers() {
               <div>
                 <RankingTable rows={partials1D} title={`Ranking 1D — Profissional (${partials1D.length})`} />
 
-                {show2D ? (
+                {show2D && (
                   <RankingTable rows={partials2D} title={`Ranking 2D — Amador (${partials2D.length})`} />
-                ) : (
-                  <div className="px-4 py-3 border-t border-dust-200 bg-dust-50 text-center">
-                    <p className="text-xs text-rope-500">
-                      Ranking 2D disponível após {10 - partials1D.length} vaga{10 - partials1D.length !== 1 ? 's' : ''} do ranking 1D
-                    </p>
-                  </div>
                 )}
               </div>
             )}
