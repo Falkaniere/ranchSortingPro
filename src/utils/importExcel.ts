@@ -11,7 +11,7 @@ function parseCategoryValue(raw: string): RiderCategory {
   const v = (raw ?? '').toLowerCase().trim().replace(/\s+/g, '');
   if (
     v === 'amador' || v === 'amateurlight' || v === 'amadorlight' ||
-    v === 'beginner' || v === '2d' || v === 'amador/light'
+    v === 'beginner' || v === '2d' || v === 'amador/light' || v === 'amador/2d'
   ) {
     return 'AmateurLight';
   }
@@ -44,7 +44,16 @@ export function importCompetitorsFromExcel(file: File): Promise<ImportedCompetit
         parsed.push({ name, category: parseCategoryValue(catRaw) });
       }
 
-      resolve(parsed);
+      // Deduplicate by name (case-insensitive), keeping first occurrence
+      const seen = new Set<string>();
+      const deduped = parsed.filter((r) => {
+        const key = r.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      resolve(deduped);
     } catch (err) {
       reject(err);
     }

@@ -211,7 +211,8 @@ export default function Registration() {
           category: r.category,
           passes: numRounds,
         }));
-        setCompetitors([...competitors, ...newCompetitors]);
+        // Use functional update to avoid stale closure overwriting concurrent state changes
+        setCompetitors((prev) => [...prev, ...newCompetitors]);
         if (id) newCompetitors.forEach((c) => tryAutoLinkCompetitor(c, id));
       }
 
@@ -229,7 +230,8 @@ export default function Registration() {
       }
 
       const added = toAdd.length;
-      const skipped = sheetRows.length - toAdd.length;
+      // Only report "skipped" when actually adding to competition (toAdd is filtered against competitors)
+      const skipped = importToCompetition ? sheetRows.length - toAdd.length : 0;
       const parts: string[] = [];
       if (importToCompetition && added > 0) parts.push(`${added} adicionado(s) à competição`);
       if (skipped > 0) parts.push(`${skipped} ignorado(s) (já cadastrados)`);
@@ -564,7 +566,7 @@ export default function Registration() {
               <input
                 ref={sheetInputRef}
                 type="file"
-                accept=".xlsx,.xls,.csv"
+                accept=".xlsx,.xls"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
