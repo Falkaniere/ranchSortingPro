@@ -78,7 +78,10 @@ export default function Registration() {
     setLoadingAthletes(true);
     listAthletes(user.uid)
       .then(setAthletes)
-      .catch(() => toast('Erro ao carregar base de atletas', 'error'))
+      .catch((err) => {
+        console.error('[listAthletes] failed:', err);
+        toast('Erro ao carregar base de atletas. Verifique as regras do Firestore.', 'error');
+      })
       .finally(() => setLoadingAthletes(false));
   }, [athletePickerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -212,13 +215,17 @@ export default function Registration() {
         if (id) newCompetitors.forEach((c) => tryAutoLinkCompetitor(c, id));
       }
 
+      let baseSaveError = false;
       if (importToBase && user?.uid) {
         const toSave = importToCompetition ? toAdd : sheetRows;
-        await Promise.all(
-          toSave.map((r) =>
-            saveAthlete(user.uid!, { name: r.name, category: r.category }).catch(() => null)
-          )
+        const results = await Promise.allSettled(
+          toSave.map((r) => saveAthlete(user.uid!, { name: r.name, category: r.category }))
         );
+        const failed = results.filter((r) => r.status === 'rejected').length;
+        if (failed > 0) {
+          console.error('[handleSheetImport] saveAthlete failed for', failed, 'athletes');
+          baseSaveError = true;
+        }
       }
 
       const added = toAdd.length;
@@ -226,8 +233,12 @@ export default function Registration() {
       const parts: string[] = [];
       if (importToCompetition && added > 0) parts.push(`${added} adicionado(s) à competição`);
       if (skipped > 0) parts.push(`${skipped} ignorado(s) (já cadastrados)`);
-      if (importToBase) parts.push('salvos na base');
-      toast(parts.join(', ') || 'Nenhum competidor novo para importar.', added > 0 ? 'success' : 'info');
+      if (importToBase && !baseSaveError) parts.push('salvos na base');
+      if (baseSaveError) parts.push('falha ao salvar na base — verifique as regras do Firestore');
+      toast(
+        parts.join(', ') || 'Nenhum competidor novo para importar.',
+        baseSaveError ? 'warning' : added > 0 ? 'success' : 'info'
+      );
 
       setSheetImportOpen(false);
       setSheetRows([]);
