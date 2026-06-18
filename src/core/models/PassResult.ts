@@ -27,6 +27,9 @@ export interface PassResult {
 
   /** Data/hora da criação (ISO) */
   createdAtISO?: string;
+
+  /** Data/hora da última edição (ISO) */
+  updatedAtISO?: string;
 }
 
 /**

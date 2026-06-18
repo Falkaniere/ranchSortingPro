@@ -17,7 +17,7 @@ export default function FinalResults() {
   const navigate = useNavigate();
   const toast = useToast();
   const { getFinalAggregates, duosMeta, results: qualifierResults, finalResults } = useResults();
-  const { duos: compDuos, competition, advanceStatus } = useCompetition();
+  const { duos: compDuos, competition, advanceStatus, persistQualifierResults, persistFinalResults } = useCompetition();
   const [isFinishing, setIsFinishing] = useState(false);
 
   const aggregates = getFinalAggregates();
@@ -68,6 +68,12 @@ export default function FinalResults() {
   async function handleFinish() {
     setIsFinishing(true);
     try {
+      // Explicitly flush the latest results into the pending patch before
+      // advancing status. This guards against any timing gap between the last
+      // addResult call and the ResultSyncBridge useEffect — once status becomes
+      // 'finished' the bridge stops writing, so this is the last safe window.
+      persistQualifierResults(qualifierResults);
+      persistFinalResults(finalResults);
       await advanceStatus('finished');
       navigate('/');
     } catch {
