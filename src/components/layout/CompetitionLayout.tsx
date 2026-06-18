@@ -25,6 +25,7 @@ export function CompetitionLayout() {
 
   useEffect(() => {
     if (!id || !user) return;
+    let cancelled = false;
 
     if (competition?.id === id) {
       // Hydrate ResultContext from context immediately so every tab has data
@@ -41,6 +42,7 @@ export function CompetitionLayout() {
       if (competition.status === 'finished') {
         getCompetitionFromServer(id)
           .then((c) => {
+            if (cancelled) return;
             if (!c || c.ownerId !== user.uid) return;
             loadCompetition(c);
             initializeFromCompetition(
@@ -49,14 +51,15 @@ export function CompetitionLayout() {
               c.duos ?? []
             );
           })
-          .catch(() => {}); // silent — context data already shown
+          .catch(() => {});
       }
-      return;
+      return () => { cancelled = true; };
     }
 
     // Competition not yet in context — must fetch before rendering content.
     getCompetition(id)
       .then((c) => {
+        if (cancelled) return;
         if (!c || c.ownerId !== user.uid) { navigate('/'); return; }
         loadCompetition(c);
         initializeFromCompetition(
@@ -65,7 +68,9 @@ export function CompetitionLayout() {
           c.duos ?? []
         );
       })
-      .catch(() => navigate('/'));
+      .catch(() => { if (!cancelled) navigate('/'); });
+
+    return () => { cancelled = true; };
   }, [id, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!competition) {
