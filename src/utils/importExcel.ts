@@ -1,6 +1,64 @@
 import * as XLSX from 'xlsx';
 import { Duo } from 'core/models/Duo';
-import { Competitor } from 'core/index';
+import { Competitor, RiderCategory, normalizeCategory } from 'core/index';
+
+export interface ImportedCompetitorRow {
+  name: string;
+  category: RiderCategory;
+}
+
+function parseCategoryValue(raw: string): RiderCategory {
+  const v = (raw ?? '').toLowerCase().trim().replace(/\s+/g, '');
+  if (
+    v === 'amador' || v === 'amateurlight' || v === 'amadorlight' ||
+    v === 'beginner' || v === '2d' || v === 'amador/light' || v === 'amador/2d'
+  ) {
+    return 'AmateurLight';
+  }
+  return normalizeCategory(raw) ?? 'Open';
+}
+
+export function importCompetitorsFromExcel(file: File): Promise<ImportedCompetitorRow[]> {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: 'array' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: any[] = XLSX.utils.sheet_to_json(sheet);
+
+      const parsed: ImportedCompetitorRow[] = [];
+      for (const row of rows) {
+        // Accept column names in pt-BR or English, case-insensitive
+        const keys = Object.keys(row).reduce<Record<string, string>>((acc, k) => {
+          acc[k.toLowerCase().trim()] = k;
+          return acc;
+        }, {});
+
+        const nameKey = keys['nome'] ?? keys['name'] ?? keys['competidor'] ?? keys['atleta'];
+        const catKey = keys['categoria'] ?? keys['category'] ?? keys['cat'];
+
+        const name = nameKey ? String(row[nameKey] ?? '').trim() : '';
+        const catRaw = catKey ? String(row[catKey] ?? '') : '';
+
+        if (!name) continue;
+        parsed.push({ name, category: parseCategoryValue(catRaw) });
+      }
+
+      // Deduplicate by name (case-insensitive), keeping first occurrence
+      const seen = new Set<string>();
+      const deduped = parsed.filter((r) => {
+        const key = r.name.toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+
+      resolve(deduped);
+    } catch (err) {
+      reject(err);
+    }
+  });
+}
 
 export async function importDuosFromExcel(
   file: File,
