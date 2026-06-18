@@ -201,7 +201,9 @@ export default function Registration() {
     }
     setIsImporting(true);
     try {
-      const existingNames = new Set(competitors.map((c) => c.name.toLowerCase()));
+      // Snapshot competitors before any await so we work with a consistent list
+      const currentCompetitors = competitors;
+      const existingNames = new Set(currentCompetitors.map((c) => c.name.toLowerCase()));
       const toAdd = sheetRows.filter((r) => !existingNames.has(r.name.toLowerCase()));
 
       if (importToCompetition) {
@@ -211,8 +213,7 @@ export default function Registration() {
           category: r.category,
           passes: numRounds,
         }));
-        // Use functional update to avoid stale closure overwriting concurrent state changes
-        setCompetitors((prev) => [...prev, ...newCompetitors]);
+        setCompetitors([...currentCompetitors, ...newCompetitors]);
         if (id) newCompetitors.forEach((c) => tryAutoLinkCompetitor(c, id));
       }
 
