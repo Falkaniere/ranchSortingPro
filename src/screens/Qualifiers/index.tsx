@@ -27,7 +27,8 @@ export default function Qualifiers() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const toast = useToast();
   const { addQualifierResult, updateQualifierResult, results, duosMeta } = useResults();
-  const { duos: compDuos, advanceStatus } = useCompetition();
+  const { duos: compDuos, advanceStatus, competition } = useCompetition();
+  const isFinished = competition?.status === 'finished';
 
   const [cattle, setCattle] = useState<number | null>(null);
   const [calledCattle, setCalledCattle] = useState<number | null>(null);
@@ -201,7 +202,7 @@ export default function Qualifiers() {
                 <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
                 <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
                 <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Tempo</th>
-                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500"></th>
+                {!isFinished && <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500"></th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-dust-100">
@@ -209,7 +210,7 @@ export default function Qualifiers() {
                 <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
                   <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
                   <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
-                  {editingId === p.duoId ? (
+                  {editingId === p.duoId && !isFinished ? (
                     <>
                       <td className="px-2 py-1.5">
                         <input type="number" min={0} max={9} value={editCalledCattle ?? ''} onChange={(e) => setEditCalledCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
@@ -232,11 +233,13 @@ export default function Qualifiers() {
                       <td className="px-3 py-2 text-center text-rope-500 text-xs">{p.calledCattle ?? '—'}</td>
                       <td className="px-3 py-2 text-center font-semibold text-rope-700">{p.cattleCount}</td>
                       <td className="px-3 py-2 text-center text-rope-600 text-xs">{formatTime(p.timeSeconds, p.isSAT)}</td>
-                      <td className="px-3 py-2 text-center">
-                        <button onClick={() => startEdit(p)} className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors">
-                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                        </button>
-                      </td>
+                      {!isFinished && (
+                        <td className="px-3 py-2 text-center">
+                          <button onClick={() => startEdit(p)} className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                          </button>
+                        </td>
+                      )}
                     </>
                   )}
                 </tr>
@@ -307,7 +310,7 @@ export default function Qualifiers() {
       ) : (
         <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
           {/* Entry form */}
-          <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
+          {!isFinished && <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
             {currentDuo ? (
               <Card title="Registrar resultado">
                 <div className="mb-4 p-3 rounded-lg bg-hay-50 border border-hay-200">
@@ -407,7 +410,7 @@ export default function Qualifiers() {
                 Ir para a Final →
               </Button>
             )}
-          </div>
+          </div>}
 
           {/* Modal: seleção manual de dupla */}
           <Modal
@@ -447,7 +450,7 @@ export default function Qualifiers() {
           </Modal>
 
           {/* Results table */}
-          <Card className="md:col-span-1 lg:col-span-3" title={`Parciais (${partials.length})`} noPadding>
+          <Card className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'} title={`Parciais (${partials.length})`} noPadding>
             {partials.length === 0 ? (
               <EmptyState icon="📋" title="Sem resultados ainda" />
             ) : (

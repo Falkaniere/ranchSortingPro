@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Outlet, useNavigate, useParams, NavLink, Navigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate, useParams, NavLink } from 'react-router-dom';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useResults } from '../../context/ResultContext';
 import { getCompetition } from '../../services/firebase/competitions';
@@ -22,21 +22,39 @@ export function CompetitionLayout() {
   const { initializeFromCompetition } = useResults();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (!id || !user) return;
-    // For active competitions already in context, hydrate ResultContext directly
-    // to avoid a round-trip. Finished competitions always re-fetch so the
-    // read-only results view reflects what was actually persisted in Firestore.
-    if (competition?.id === id && competition.status !== 'finished') {
+
+    if (competition?.id === id) {
+      // Hydrate ResultContext from context immediately so every tab has data
+      // without waiting for a network round-trip.
       initializeFromCompetition(
         competition.qualifierResults ?? [],
         competition.finalResults ?? [],
         competition.duos ?? []
       );
+
+      // For finished competitions also refresh silently from Firestore —
+      // listCompetitions may have served a locally-cached snapshot that
+      // predates the last saved results.
+      if (competition.status === 'finished') {
+        getCompetition(id)
+          .then((c) => {
+            if (!c || c.ownerId !== user.uid) return;
+            loadCompetition(c);
+            initializeFromCompetition(
+              c.qualifierResults ?? [],
+              c.finalResults ?? [],
+              c.duos ?? []
+            );
+          })
+          .catch(() => {}); // silent — context data already shown
+      }
       return;
     }
+
+    // Competition not yet in context — must fetch before rendering content.
     getCompetition(id)
       .then((c) => {
         if (!c || c.ownerId !== user.uid) { navigate('/'); return; }
@@ -59,10 +77,6 @@ export function CompetitionLayout() {
   }
 
   const isFinished = competition.status === 'finished';
-  const isOnResultsTab = location.pathname.endsWith('/final-results');
-  if (isFinished && !isOnResultsTab) {
-    return <Navigate to={`/competition/${id}/final-results`} replace />;
-  }
 
   return (
     <div className="min-h-screen bg-dust-100 flex flex-col">
@@ -86,6 +100,11 @@ export function CompetitionLayout() {
               <p className="text-saddle-300 text-xs">{competition.location}</p>
             )}
           </div>
+          {isFinished && (
+            <span className="ml-1 px-2 py-0.5 rounded-full bg-saddle-600 text-white text-[10px] font-semibold uppercase tracking-wide">
+              Encerrada
+            </span>
+          )}
         </div>
         {isSaving && (
           <div className="flex items-center gap-1.5 text-saddle-300 text-xs">
@@ -93,7 +112,7 @@ export function CompetitionLayout() {
             <span>Salvando...</span>
           </div>
         )}
-        {!isSaving && (
+        {!isSaving && !isFinished && (
           <span className="text-saddle-300 text-xs hidden sm:block">✓ Salvo</span>
         )}
       </header>
@@ -101,39 +120,24 @@ export function CompetitionLayout() {
       {/* Step Navigation */}
       <nav className="bg-white border-b border-dust-300 overflow-x-auto scrollbar-none">
         <div className="flex gap-0 max-w-5xl mx-auto min-w-max px-1 sm:px-4">
-          {steps.map((step) => {
-            const isResultsStep = step.key === 'final-results';
-            if (isFinished && !isResultsStep) {
-              return (
-                <span
-                  key={step.key}
-                  className="flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 px-3 sm:px-4 py-2 sm:py-3 text-xs font-medium whitespace-nowrap border-b-2 border-transparent text-rope-300 cursor-not-allowed select-none"
-                  title="Competição encerrada"
-                >
-                  <span className="text-base sm:text-sm">{step.icon}</span>
-                  <span className="text-[10px] sm:text-sm leading-tight">{step.label}</span>
-                </span>
-              );
-            }
-            return (
-              <NavLink
-                key={step.key}
-                to={`/competition/${id}/${step.key}`}
-                className={({ isActive }) =>
-                  [
-                    'flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 px-3 sm:px-4 py-2 sm:py-3',
-                    'text-xs font-medium whitespace-nowrap border-b-2 transition-colors',
-                    isActive
-                      ? 'border-saddle-600 text-saddle-700'
-                      : 'border-transparent text-rope-400 hover:text-rope-700 hover:border-dust-400',
-                  ].join(' ')
-                }
-              >
-                <span className="text-base sm:text-sm">{step.icon}</span>
-                <span className="text-[10px] sm:text-sm leading-tight">{step.label}</span>
-              </NavLink>
-            );
-          })}
+          {steps.map((step) => (
+            <NavLink
+              key={step.key}
+              to={`/competition/${id}/${step.key}`}
+              className={({ isActive }) =>
+                [
+                  'flex flex-col sm:flex-row items-center gap-0.5 sm:gap-1.5 px-3 sm:px-4 py-2 sm:py-3',
+                  'text-xs font-medium whitespace-nowrap border-b-2 transition-colors',
+                  isActive
+                    ? 'border-saddle-600 text-saddle-700'
+                    : 'border-transparent text-rope-400 hover:text-rope-700 hover:border-dust-400',
+                ].join(' ')
+              }
+            >
+              <span className="text-base sm:text-sm">{step.icon}</span>
+              <span className="text-[10px] sm:text-sm leading-tight">{step.label}</span>
+            </NavLink>
+          ))}
         </div>
       </nav>
 

@@ -22,7 +22,8 @@ export default function Duos() {
   const toast = useToast();
   const { isPro } = useSubscription();
   const { setDuosMeta } = useResults();
-  const { competitors, duos, setDuos, setCompetitors: setCompetitorsCtx } = useCompetition();
+  const { competitors, duos, setDuos, setCompetitors: setCompetitorsCtx, competition } = useCompetition();
+  const isFinished = competition?.status === 'finished';
 
   const setCompetitors: React.Dispatch<React.SetStateAction<typeof competitors>> = (value) => {
     const next = typeof value === 'function' ? value(competitors) : value;
@@ -180,16 +181,20 @@ export default function Duos() {
             >
               Por Competidor {!isPro && '🔒'}
             </Button>
-            <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
-              Importar Excel
-            </Button>
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".xlsx,.xls"
-              onChange={handleImport}
-              className="hidden"
-            />
+            {!isFinished && (
+              <>
+                <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()}>
+                  Importar Excel
+                </Button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".xlsx,.xls"
+                  onChange={handleImport}
+                  className="hidden"
+                />
+              </>
+            )}
           </div>
         }
       />
@@ -218,11 +223,13 @@ export default function Duos() {
             </Card>
           )}
 
-          <div className="flex justify-end">
-            <Button onClick={() => navigate(`/competition/${id}/record`)} size="lg">
-              Iniciar Qualificatória →
-            </Button>
-          </div>
+          {!isFinished && (
+            <div className="flex justify-end">
+              <Button onClick={() => navigate(`/competition/${id}/record`)} size="lg">
+                Iniciar Qualificatória →
+              </Button>
+            </div>
+          )}
         </div>
       )}
 

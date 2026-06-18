@@ -35,7 +35,8 @@ export default function Registration() {
   const { user } = useAuth();
   const { isPro, limits } = useSubscription();
   const { setDuosMeta } = useResults();
-  const { competitors, numRounds, setCompetitors, setDuos, setNumRounds } = useCompetition();
+  const { competitors, numRounds, setCompetitors, setDuos, setNumRounds, competition } = useCompetition();
+  const isFinished = competition?.status === 'finished';
 
   const atCompetitorLimit = !isPro && limits.maxCompetitors !== null && competitors.length >= limits.maxCompetitors;
   const [upgradeOpen, setUpgradeOpen] = useState(false);
@@ -195,7 +196,7 @@ export default function Registration() {
         title="Inscrições"
         subtitle={`${competitors.length} competidor${competitors.length !== 1 ? 'es' : ''} cadastrado${competitors.length !== 1 ? 's' : ''}`}
         actions={
-          canSort ? (
+          canSort && !isFinished ? (
             <Button onClick={handleSortDuos} loading={isSorting}>
               Sortear Duplas →
             </Button>
@@ -205,7 +206,7 @@ export default function Registration() {
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         {/* Form */}
-        <Card className="md:col-span-1 lg:col-span-2" title="Adicionar competidor">
+        {!isFinished && <Card className="md:col-span-1 lg:col-span-2" title="Adicionar competidor">
           <div className="flex flex-col gap-4">
             <div>
               <label className="text-sm font-medium text-rope-700 block mb-1">
@@ -288,11 +289,11 @@ export default function Registration() {
 
             <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
           </div>
-        </Card>
+        </Card>}
 
         {/* List */}
         <Card
-          className="md:col-span-1 lg:col-span-3"
+          className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'}
           title={`Competidores (${competitors.length})`}
           noPadding
         >
@@ -306,7 +307,7 @@ export default function Registration() {
             <ul className="divide-y divide-dust-200">
               {competitors.map((c, index) => (
                 <li key={c.id} className="px-4 py-3">
-                  {editingId === c.id ? (
+                  {editingId === c.id && !isFinished ? (
                     <div className="flex flex-col gap-3">
                       <input
                         type="text"
@@ -345,7 +346,7 @@ export default function Registration() {
                         <CategoryBadge category={c.category} />
                       </div>
                       <div className="flex gap-1 shrink-0">
-                        <button
+                        {!isFinished && <button
                           onClick={() => navigate(`/competition/${id}/competitor/${c.id}/history`)}
                           className="p-1.5 rounded-md text-rope-400 hover:text-saddle-700 hover:bg-dust-100 transition-colors"
                           title="Histórico"
@@ -353,8 +354,8 @@ export default function Registration() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                           </svg>
-                        </button>
-                        <button
+                        </button>}
+                        {!isFinished && <button
                           onClick={() => startEdit(c)}
                           className="p-1.5 rounded-md text-rope-400 hover:text-saddle-700 hover:bg-dust-100 transition-colors"
                           title="Editar"
@@ -362,8 +363,8 @@ export default function Registration() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
-                        </button>
-                        <button
+                        </button>}
+                        {!isFinished && <button
                           onClick={() => confirmDelete(c)}
                           className="p-1.5 rounded-md text-rope-400 hover:text-brand-500 hover:bg-brand-50 transition-colors"
                           title="Remover"
@@ -371,7 +372,7 @@ export default function Registration() {
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
-                        </button>
+                        </button>}
                       </div>
                     </div>
                   )}
@@ -379,7 +380,7 @@ export default function Registration() {
               ))}
             </ul>
           )}
-          {canSort && (
+          {canSort && !isFinished && (
             <div className="px-4 py-3 border-t border-dust-200 bg-dust-50 rounded-b-xl">
               <Button onClick={handleSortDuos} loading={isSorting} fullWidth>
                 Sortear Duplas ({competitors.length} competidores, {numRounds} passada{numRounds !== 1 ? 's' : ''})
