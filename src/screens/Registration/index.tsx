@@ -194,6 +194,14 @@ export default function Registration() {
     }
   }
 
+  function closeSheetModal() {
+    setSheetImportOpen(false);
+    setSheetRows([]);
+    setSheetStep('upload');
+    setImportToCompetition(true);
+    setImportToBase(false);
+  }
+
   async function handleSheetImport() {
     if (!importToCompetition && !importToBase) {
       toast('Selecione pelo menos um destino para importar.', 'error');
@@ -219,19 +227,30 @@ export default function Registration() {
 
       let baseSaveError = false;
       if (importToBase && user?.uid) {
-        const toSave = importToCompetition ? toAdd : sheetRows;
-        const results = await Promise.allSettled(
-          toSave.map((r) => saveAthlete(user.uid!, { name: r.name, category: r.category }))
-        );
-        const failed = results.filter((r) => r.status === 'rejected').length;
-        if (failed > 0) {
-          console.error('[handleSheetImport] saveAthlete failed for', failed, 'athletes');
-          baseSaveError = true;
+        // Fetch existing athletes to avoid duplicates in the base
+        let existingAthleteNames = new Set<string>();
+        try {
+          const existing = await listAthletes(user.uid);
+          existingAthleteNames = new Set(existing.map((a) => a.name.toLowerCase()));
+        } catch {
+          // If fetch fails, proceed without dedup rather than blocking the import
+        }
+        const candidates = importToCompetition ? toAdd : sheetRows;
+        const toSave = candidates.filter((r) => !existingAthleteNames.has(r.name.toLowerCase()));
+        if (toSave.length > 0) {
+          const results = await Promise.allSettled(
+            toSave.map((r) => saveAthlete(user.uid!, { name: r.name, category: r.category }))
+          );
+          const failed = results.filter((r) => r.status === 'rejected').length;
+          if (failed > 0) {
+            console.error('[handleSheetImport] saveAthlete failed for', failed, 'athletes');
+            baseSaveError = true;
+          }
         }
       }
 
       const added = toAdd.length;
-      // Only report "skipped" when actually adding to competition (toAdd is filtered against competitors)
+      // Only report "skipped" when actually adding to competition
       const skipped = importToCompetition ? sheetRows.length - toAdd.length : 0;
       const parts: string[] = [];
       if (importToCompetition && added > 0) parts.push(`${added} adicionado(s) à competição`);
@@ -243,11 +262,7 @@ export default function Registration() {
         baseSaveError ? 'warning' : added > 0 ? 'success' : 'info'
       );
 
-      setSheetImportOpen(false);
-      setSheetRows([]);
-      setSheetStep('upload');
-      setImportToCompetition(true);
-      setImportToBase(false);
+      closeSheetModal();
     } catch {
       toast('Erro ao importar competidores.', 'error');
     } finally {
@@ -547,13 +562,7 @@ export default function Registration() {
       {/* Modal: Importar Planilha */}
       <Modal
         isOpen={sheetImportOpen}
-        onClose={() => {
-          setSheetImportOpen(false);
-          setSheetRows([]);
-          setSheetStep('upload');
-          setImportToCompetition(true);
-          setImportToBase(false);
-        }}
+        onClose={closeSheetModal}
         title="Importar Competidores via Planilha"
         size="md"
       >
@@ -580,13 +589,7 @@ export default function Registration() {
               </Button>
             </div>
             <div className="flex justify-end">
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  setSheetImportOpen(false);
-                  setSheetStep('upload');
-                }}
-              >
+              <Button variant="ghost" onClick={closeSheetModal}>
                 Cancelar
               </Button>
             </div>
@@ -625,8 +628,8 @@ export default function Registration() {
             </div>
 
             <ul className="divide-y divide-dust-200 max-h-56 overflow-y-auto border border-dust-200 rounded-lg">
-              {sheetRows.map((r, i) => (
-                <li key={i} className="flex items-center justify-between px-4 py-2">
+              {sheetRows.map((r) => (
+                <li key={r.name} className="flex items-center justify-between px-4 py-2">
                   <span className="text-sm text-rope-800">{r.name}</span>
                   <CategoryBadge category={r.category} />
                 </li>
@@ -638,16 +641,7 @@ export default function Registration() {
                 ← Voltar
               </Button>
               <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setSheetImportOpen(false);
-                    setSheetRows([]);
-                    setSheetStep('upload');
-                    setImportToCompetition(true);
-                    setImportToBase(false);
-                  }}
-                >
+                <Button variant="ghost" onClick={closeSheetModal}>
                   Cancelar
                 </Button>
                 <Button
