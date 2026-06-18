@@ -6,6 +6,7 @@ import {
   deleteDoc,
   getDocs,
   getDoc,
+  getDocFromServer,
   query,
   where,
   serverTimestamp,
@@ -136,6 +137,13 @@ export async function listCompetitions(ownerId: string): Promise<Competition[]> 
 
 export async function getCompetition(id: string): Promise<Competition | null> {
   const snap = await getDoc(doc(db, 'competitions', id));
+  if (!snap.exists()) return null;
+  return toCompetition(snap.id, snap.data());
+}
+
+/** Always fetches directly from Firestore server, bypassing local cache. */
+export async function getCompetitionFromServer(id: string): Promise<Competition | null> {
+  const snap = await getDocFromServer(doc(db, 'competitions', id));
   if (!snap.exists()) return null;
   return toCompetition(snap.id, snap.data());
 }

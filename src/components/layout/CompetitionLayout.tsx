@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useParams, NavLink } from 'react-router-dom';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useResults } from '../../context/ResultContext';
-import { getCompetition } from '../../services/firebase/competitions';
+import { getCompetition, getCompetitionFromServer } from '../../services/firebase/competitions';
 import { Spinner } from '../ui/Spinner';
 import { useAuth } from '../../context/AuthContext';
 import { ResultSyncBridge } from './ResultSyncBridge';
@@ -35,11 +35,11 @@ export function CompetitionLayout() {
         competition.duos ?? []
       );
 
-      // For finished competitions also refresh silently from Firestore —
-      // listCompetitions may have served a locally-cached snapshot that
-      // predates the last saved results.
+      // For finished competitions, always refetch directly from the server
+      // (bypassing local cache) — the cached snapshot from listCompetitions
+      // may predate when qualifierResults / finalResults were last saved.
       if (competition.status === 'finished') {
-        getCompetition(id)
+        getCompetitionFromServer(id)
           .then((c) => {
             if (!c || c.ownerId !== user.uid) return;
             loadCompetition(c);
