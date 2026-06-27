@@ -14,12 +14,16 @@ export function ResultSyncBridge() {
 
   useEffect(() => {
     if (!competition?.id) return;
+    // Never write back to Firestore for finished competitions — results are immutable.
+    if (competition.status === 'finished') { qualInit.current = competition.id; return; }
     if (qualInit.current !== competition.id) { qualInit.current = competition.id; return; }
     persistQualifierResults(results);
   }, [results]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!competition?.id) return;
+    // Never write back to Firestore for finished competitions — results are immutable.
+    if (competition.status === 'finished') { finalInit.current = competition.id; return; }
     if (finalInit.current !== competition.id) { finalInit.current = competition.id; return; }
     persistFinalResults(finalResults);
   }, [finalResults]); // eslint-disable-line react-hooks/exhaustive-deps

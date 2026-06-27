@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
+import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
 import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult } from 'core/models/PassResult';
@@ -33,6 +34,8 @@ export default function Finals() {
   const { isPro } = useSubscription();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { getFinalists, getBestQualifierScores, addFinalResult, finalResults, duosMeta } = useResults();
+  const { competition } = useCompetition();
+  const isFinished = competition?.status === 'finished';
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const finalists = useMemo(() => getFinalists(), [finalResults]);
@@ -260,7 +263,7 @@ export default function Finals() {
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
         {/* Entry form */}
-        <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
+        {!isFinished && <div className="md:col-span-1 lg:col-span-2 flex flex-col gap-4">
           {currentDuo ? (
             <Card title={`Registrar resultado — ${activeTab}`}>
               <div className="mb-4 p-3 rounded-lg bg-hay-50 border border-hay-200">
@@ -343,10 +346,10 @@ export default function Finals() {
               Ver Resultados Finais →
             </Button>
           )}
-        </div>
+        </div>}
 
         {/* Results table */}
-        <Card className="md:col-span-1 lg:col-span-3" title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
+        <Card className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'} title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
           {partialsFiltered.length === 0 ? (
             <EmptyState icon="🏆" title="Sem resultados ainda" />
           ) : (

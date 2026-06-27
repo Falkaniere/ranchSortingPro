@@ -57,7 +57,7 @@ interface ResultsContextValue {
   getBestQualifierScores: () => Map<string, DuoScore>;
 
   /** Seleção de finalistas conforme regras (core/logic/finals) */
-  getFinalists: (maxPerFinal?: number) => FinalsSelection;
+  getFinalists: () => FinalsSelection;
 
   /** Agregados finais (qualificatória + final), com totais */
   getFinalAggregates: () => FinalAggregationEntry[];
@@ -162,9 +162,9 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   // -----------------------------
   //  FINALISTS (core/logic/finals)
   // -----------------------------
-  function getFinalists(maxPerFinal = 10): FinalsSelection {
+  function getFinalists(): FinalsSelection {
     const best = getBestQualifierScores();
-    return selectFinalists(best, maxPerFinal);
+    return selectFinalists(best);
   }
 
   // -----------------------------

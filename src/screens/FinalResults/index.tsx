@@ -10,17 +10,38 @@ import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { Spinner } from '../../components/ui/Spinner';
 
 export default function FinalResults() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const toast = useToast();
-  const { getFinalAggregates, duosMeta } = useResults();
-  const { duos: compDuos, competition, advanceStatus } = useCompetition();
+  const { getFinalAggregates, duosMeta, results: qualifierResults, finalResults } = useResults();
+  const { duos: compDuos, competition, advanceStatus, persistQualifierResults, persistFinalResults } = useCompetition();
   const [isFinishing, setIsFinishing] = useState(false);
 
   const aggregates = getFinalAggregates();
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
+
+  // While a finished competition is being loaded from Firestore, ResultContext
+  // may be empty for the first render cycle. Show a spinner in that window
+  // instead of a misleading "no results" empty state.
+  const isFinished = competition?.status === 'finished';
+  // Use ID-set equality so stale ResultContext data from a *different*
+  // competition (same count by coincidence) doesn't falsely satisfy the check.
+  const competitionResultIds = new Set([
+    ...(competition?.qualifierResults?.map((r) => r.id) ?? []),
+    ...(competition?.finalResults?.map((r) => r.id) ?? []),
+  ]);
+  const contextResultIds = new Set([
+    ...qualifierResults.map((r) => r.id),
+    ...finalResults.map((r) => r.id),
+  ]);
+  const hasFirestoreData = competitionResultIds.size > 0;
+  const resultContextReady =
+    hasFirestoreData &&
+    [...competitionResultIds].every((rid) => contextResultIds.has(rid));
+  const isLoadingResults = isFinished && hasFirestoreData && !resultContextReady;
 
   const rows = aggregates.map((a: FinalAggregationEntry, idx: number) => {
     const duo = metaDuos.find((d) => d.id === a.duoId);
@@ -47,6 +68,12 @@ export default function FinalResults() {
   async function handleFinish() {
     setIsFinishing(true);
     try {
+      // Explicitly flush the latest results into the pending patch before
+      // advancing status. This guards against any timing gap between the last
+      // addResult call and the ResultSyncBridge useEffect — once status becomes
+      // 'finished' the bridge stops writing, so this is the last safe window.
+      persistQualifierResults(qualifierResults);
+      persistFinalResults(finalResults);
       await advanceStatus('finished');
       navigate('/');
     } catch {
@@ -127,15 +154,25 @@ export default function FinalResults() {
         }
       />
 
-      {rows.length === 0 ? (
+      {isLoadingResults ? (
+        <div className="flex justify-center py-16">
+          <Spinner size="lg" />
+        </div>
+      ) : rows.length === 0 ? (
         <EmptyState
           icon="🏆"
           title="Sem resultados ainda"
-          description="Registre os resultados da final para ver a classificação."
+          description={
+            isFinished
+              ? 'Nenhum resultado registrado nesta competição.'
+              : 'Registre os resultados da final para ver a classificação.'
+          }
           action={
-            <Button variant="outline" onClick={() => navigate(`/competition/${id}/final`)}>
-              ← Ir para a Final
-            </Button>
+            !isFinished ? (
+              <Button variant="outline" onClick={() => navigate(`/competition/${id}/final`)}>
+                ← Ir para a Final
+              </Button>
+            ) : undefined
           }
         />
       ) : (
