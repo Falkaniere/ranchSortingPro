@@ -1,4 +1,4 @@
-import { PassResult, DuoScore, SAT_TIME_SECONDS } from 'core/models/PassResult';
+import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 
 /**
@@ -60,44 +60,4 @@ export function standingsFromScores(
   scoresMap: Map<string, DuoScore>
 ): DuoScore[] {
   return Array.from(scoresMap.values()).sort(compareByScore);
-}
-
-/**
- * Gera estatísticas finais combinando resultados da qualificatória e da final.
- * Calcula a média de bois e tempo de cada dupla (somente se participou das duas fases).
- */
-export function buildFinalAggregates(
-  qualifier: Map<string, DuoScore>,
-  finals: PassResult[],
-  duosGroup: Map<string, DuoGroup>
-): DuoScore[] {
-  const aggregates: DuoScore[] = [];
-
-  finals.forEach((f) => {
-    const q = qualifier.get(f.duoId);
-    if (!q) return; // ignorar se não participou das qualificatórias
-
-    const group = duosGroup.get(f.duoId) ?? '1D';
-
-    const avgCattle = (q.cattleCount + f.cattleCount) / 2;
-    const avgTime =
-      (normalizeTime(q.timeSeconds) + normalizeTime(f.timeSeconds)) / 2;
-
-    aggregates.push({
-      duoId: f.duoId,
-      group,
-      cattleCount: avgCattle,
-      timeSeconds: avgTime,
-    });
-  });
-
-  return aggregates.sort(compareByScore);
-}
-
-/**
- * Normaliza tempo: valores já normalizados pelo SAT_TIME_SECONDS são mantidos com cap.
- * Tempos reais acima de 120s são improváveis mas não descartados.
- */
-function normalizeTime(time: number): number {
-  return Math.min(time, SAT_TIME_SECONDS);
 }

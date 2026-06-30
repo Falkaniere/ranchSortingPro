@@ -37,10 +37,8 @@ export default function Finals() {
   const { competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const finalists = useMemo(() => getFinalists(), [finalResults]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const bestScores = useMemo(() => getBestQualifierScores(), [finalResults]);
+  const finalists = useMemo(() => getFinalists(), [getFinalists]);
+  const bestScores = useMemo(() => getBestQualifierScores(), [getBestQualifierScores]);
 
   // Default: 2D vai primeiro
   const [activeTab, setActiveTab] = useState<'1D' | '2D'>('2D');

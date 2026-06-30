@@ -9,6 +9,7 @@ import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import { exportToExcel } from 'utils/exportExcel';
 import { exportResultsToPng } from 'utils/exportPng';
+import { formatTime } from 'utils/formatTime';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
@@ -124,10 +125,6 @@ export default function Qualifiers() {
   }
 
   const allRegistered = pendingDuos.length === 0 && duos.length > 0;
-
-  function formatTime(s: number, sat?: boolean) {
-    return sat ? 'SAT' : `${s.toFixed(2)}s`;
-  }
 
   const QUAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },

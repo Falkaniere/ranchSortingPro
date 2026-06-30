@@ -9,11 +9,11 @@ import {
   limit,
   runTransaction,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CompetitorProfile } from '../../core/models/CompetitorProfile';
 import { normalizeName, nameSimilarity } from '../../utils/nameNormalization';
+import { timestampToISO, timestampToISOOrUndefined } from './firestoreHelpers';
 
 function toProfile(id: string, data: any): CompetitorProfile {
   return {
@@ -25,18 +25,9 @@ function toProfile(id: string, data: any): CompetitorProfile {
     email: data.email ?? undefined,
     status: data.status ?? 'unclaimed',
     mergedIntoProfileId: data.mergedIntoProfileId ?? undefined,
-    createdAt:
-      data.createdAt instanceof Timestamp
-        ? data.createdAt.toDate().toISOString()
-        : data.createdAt ?? new Date().toISOString(),
-    updatedAt:
-      data.updatedAt instanceof Timestamp
-        ? data.updatedAt.toDate().toISOString()
-        : data.updatedAt ?? new Date().toISOString(),
-    claimedAt:
-      data.claimedAt instanceof Timestamp
-        ? data.claimedAt.toDate().toISOString()
-        : data.claimedAt ?? undefined,
+    createdAt: timestampToISO(data.createdAt),
+    updatedAt: timestampToISO(data.updatedAt),
+    claimedAt: timestampToISOOrUndefined(data.claimedAt),
   };
 }
 

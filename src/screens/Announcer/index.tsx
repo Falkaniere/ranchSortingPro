@@ -4,6 +4,7 @@ import { useCompetition } from '../../context/CompetitionContext';
 import { PassResult } from 'core/models/PassResult';
 import { GroupBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { formatTime } from '../../utils/formatTime';
 
 function StatCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
@@ -74,10 +75,6 @@ export default function Announcer() {
   const total = orderedDuos.length;
   const done = registeredIds.size;
   const remaining = total - done;
-
-  function formatTime(s: number, sat?: boolean) {
-    return sat ? 'SAT' : `${s.toFixed(2)}s`;
-  }
 
   const stageLabel = status === 'final' ? 'Final' : 'Qualificatória';
 

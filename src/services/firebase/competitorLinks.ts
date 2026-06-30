@@ -6,10 +6,10 @@ import {
   where,
   limit,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { CompetitorLink } from '../../core/models/CompetitorProfile';
+import { timestampToISO } from './firestoreHelpers';
 
 function toLink(id: string, data: any): CompetitorLink {
   return {
@@ -19,10 +19,7 @@ function toLink(id: string, data: any): CompetitorLink {
     competitorId: data.competitorId,
     matchType: data.matchType,
     confidence: data.confidence ?? 1.0,
-    createdAt:
-      data.createdAt instanceof Timestamp
-        ? data.createdAt.toDate().toISOString()
-        : data.createdAt ?? new Date().toISOString(),
+    createdAt: timestampToISO(data.createdAt),
     createdBy: data.createdBy,
   };
 }
