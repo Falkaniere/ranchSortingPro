@@ -1,4 +1,4 @@
-import { PassResult, DuoScore } from 'core/models/PassResult';
+import { PassResult, DuoScore, normalizeSAT } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 
 /**
@@ -27,14 +27,15 @@ export function buildBestQualifierScorePerDuo(
   results
     .filter((r) => r.stage === 'Qualifier')
     .forEach((r) => {
+      const n = normalizeSAT(r);
       const group = duoGroupById.get(r.duoId) ?? '1D';
       const existing = best.get(r.duoId);
 
       const current: DuoScore = {
         duoId: r.duoId,
         group,
-        cattleCount: r.cattleCount,
-        timeSeconds: r.timeSeconds,
+        cattleCount: n.cattleCount,
+        timeSeconds: n.timeSeconds,
       };
 
       if (!existing) {
@@ -42,9 +43,9 @@ export function buildBestQualifierScorePerDuo(
       } else {
         // Mantém o melhor: mais bois e menor tempo
         const better =
-          r.cattleCount > existing.cattleCount ||
-          (r.cattleCount === existing.cattleCount &&
-            r.timeSeconds < existing.timeSeconds);
+          n.cattleCount > existing.cattleCount ||
+          (n.cattleCount === existing.cattleCount &&
+            n.timeSeconds < existing.timeSeconds);
 
         if (better) best.set(r.duoId, current);
       }

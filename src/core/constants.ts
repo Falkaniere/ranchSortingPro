@@ -23,6 +23,9 @@ export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[]
   { label: 'Amador', value: 'AmateurLight', hint: 'Grupo 2D' },
 ];
 
+/** Tempo máximo permitido por passada (segundos). */
+export const MAX_PASS_TIME_SECONDS = 90;
+
 /** Limites de uso por plano de assinatura. */
 export const PLAN_LIMITS = {
   basic: {

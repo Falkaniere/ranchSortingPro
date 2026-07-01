@@ -20,7 +20,7 @@ interface CompetitorListProps {
   onSortDuos: () => void;
 }
 
-export function CompetitorList({
+export const CompetitorList = React.memo(function CompetitorList({
   competitors,
   setCompetitors,
   isFinished,
@@ -177,4 +177,4 @@ export function CompetitorList({
       />
     </>
   );
-}
+});

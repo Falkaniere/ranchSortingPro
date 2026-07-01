@@ -7,6 +7,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult, DuoScore } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
+import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
 import { exportToExcel } from 'utils/exportExcel';
 import { exportResultsToPng } from 'utils/exportPng';
 import { formatTime } from 'utils/formatTime';
@@ -84,8 +85,8 @@ export default function Qualifiers() {
       return false;
     }
     const t = Number(timeSeconds);
-    if (!timeSeconds || isNaN(t) || t <= 0) {
-      setTimeError('Tempo inválido');
+    if (!timeSeconds || isNaN(t) || t <= 0 || t > MAX_PASS_TIME_SECONDS) {
+      setTimeError(`Tempo inválido (máximo ${MAX_PASS_TIME_SECONDS}s)`);
       return false;
     }
     setTimeError('');
@@ -118,7 +119,7 @@ export default function Qualifiers() {
   function saveEdit(duoId: string) {
     if (editCattle === null) { toast('Selecione a quantidade de bois', 'error'); return; }
     const t = Number(editTime);
-    if (isNaN(t) || t <= 0) { toast('Tempo inválido', 'error'); return; }
+    if (isNaN(t) || t <= 0 || t > MAX_PASS_TIME_SECONDS) { toast(`Tempo inválido (máximo ${MAX_PASS_TIME_SECONDS}s)`, 'error'); return; }
     updateQualifierResult(duoId, editCattle, t, editCalledCattle ?? undefined);
     setEditingId(null);
     toast('Resultado atualizado!', 'success');
@@ -216,7 +217,7 @@ export default function Qualifiers() {
                         <input type="number" min={0} max={10} value={editCattle ?? ''} onChange={(e) => setEditCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
                       </td>
                       <td className="px-2 py-1.5">
-                        <input type="number" value={editTime} onChange={(e) => setEditTime(e.target.value)} className="w-20 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                        <input type="number" min={0.01} max={MAX_PASS_TIME_SECONDS} step={0.01} value={editTime} onChange={(e) => setEditTime(e.target.value)} className="w-20 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
                       </td>
                       <td className="px-2 py-1.5">
                         <div className="flex gap-1">
@@ -353,6 +354,7 @@ export default function Qualifiers() {
                     <input
                       type="number"
                       min={0.01}
+                      max={MAX_PASS_TIME_SECONDS}
                       step={0.01}
                       placeholder="45.5"
                       value={timeSeconds}

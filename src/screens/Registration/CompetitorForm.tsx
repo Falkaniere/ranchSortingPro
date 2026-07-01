@@ -44,6 +44,10 @@ export function CompetitorForm({
 
   async function addCompetitor() {
     if (!name.trim()) { setNameError('O nome é obrigatório'); return; }
+    const isDuplicate = competitors.some(
+      (c) => c.name.toLowerCase() === name.trim().toLowerCase()
+    );
+    if (isDuplicate) { setNameError('Já existe um competidor com este nome'); return; }
     const newCompetitor: Competitor = {
       id: crypto.randomUUID(),
       name: name.trim(),

@@ -7,6 +7,7 @@ import { useSubscription } from '../../hooks/useSubscription';
 import { PassResult } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { exportToExcel } from 'utils/exportExcel';
+import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
 import { exportResultsToPng } from 'utils/exportPng';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
@@ -103,8 +104,8 @@ export default function Finals() {
       return false;
     }
     const t = Number(currentForm.time);
-    if (!currentForm.time || isNaN(t) || t <= 0) {
-      setTimeError('Tempo inválido');
+    if (!currentForm.time || isNaN(t) || t <= 0 || t > MAX_PASS_TIME_SECONDS) {
+      setTimeError(`Tempo inválido (máximo ${MAX_PASS_TIME_SECONDS}s)`);
       return false;
     }
     setTimeError('');
@@ -297,7 +298,7 @@ export default function Finals() {
                 <div>
                   <label className="text-sm font-medium text-rope-700 block mb-1">Tempo (segundos)</label>
                   <input
-                    type="number" min={0.01} step={0.01} placeholder="45.5"
+                    type="number" min={0.01} max={MAX_PASS_TIME_SECONDS} step={0.01} placeholder="45.5"
                     value={currentForm.time}
                     onChange={(e) => setFormField('time', e.target.value)}
                     className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400 ${timeError ? 'border-brand-500' : 'border-dust-300'}`}

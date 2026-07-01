@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { generateUniqueDuos } from 'core/logic/pairing';
 import { useResults } from 'context/ResultContext';
@@ -23,7 +23,7 @@ export default function Registration() {
   const [athletePickerOpen, setAthletePickerOpen] = useState(false);
   const [sheetImportOpen, setSheetImportOpen] = useState(false);
 
-  function handleSortDuos() {
+  const handleSortDuos = useCallback(function handleSortDuos() {
     if (competitors.length < 2) {
       toast('É necessário pelo menos 2 competidores para sortear as duplas.', 'error');
       return;
@@ -57,7 +57,11 @@ export default function Registration() {
     } finally {
       setIsSorting(false);
     }
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [competitors, numRounds, id]);
+
+  const openAthletePicker = useCallback(() => setAthletePickerOpen(true), []);
+  const openSheetImport = useCallback(() => setSheetImportOpen(true), []);
 
   const canSort = competitors.length >= 2;
 
@@ -83,8 +87,8 @@ export default function Registration() {
             numRounds={numRounds}
             setNumRounds={setNumRounds}
             competitionId={id}
-            onOpenAthletePicker={() => setAthletePickerOpen(true)}
-            onOpenSheetImport={() => setSheetImportOpen(true)}
+            onOpenAthletePicker={openAthletePicker}
+            onOpenSheetImport={openSheetImport}
           />
         )}
 
