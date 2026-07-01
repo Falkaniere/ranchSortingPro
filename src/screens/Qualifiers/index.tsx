@@ -4,7 +4,7 @@ import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
 import { useSubscription } from '../../hooks/useSubscription';
-import { PassResult, DuoScore } from 'core/models/PassResult';
+import { PassResult, DuoScore, normalizeSAT } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
@@ -45,6 +45,8 @@ export default function Qualifiers() {
 
   const [selectDuoOpen, setSelectDuoOpen] = useState(false);
   const [overrideDuoId, setOverrideDuoId] = useState<string | null>(null);
+  const [satModalOpen, setSatModalOpen] = useState(false);
+  const [satReason, setSatReason] = useState('');
 
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
   const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
@@ -61,13 +63,14 @@ export default function Qualifiers() {
   const partials: PartialRow[] = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
     .map((r) => {
+      const n = normalizeSAT(r);
       const duo = duos.find((d) => d.id === r.duoId);
       return {
         duoId: r.duoId,
         duoLabel: duo?.label ?? r.duoId,
         group: (duo?.group ?? '1D') as DuoGroup,
-        cattleCount: r.cattleCount,
-        timeSeconds: r.timeSeconds,
+        cattleCount: n.cattleCount,
+        timeSeconds: n.timeSeconds,
         isSAT: r.isSAT,
         calledCattle: r.calledCattle,
       };
@@ -93,7 +96,7 @@ export default function Qualifiers() {
     return true;
   }
 
-  function saveQualifierResult(isSAT = false) {
+  function saveQualifierResult(isSAT = false, reason = '') {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
 
@@ -106,7 +109,7 @@ export default function Qualifiers() {
     setTimeSeconds('');
     setTimeError('');
     setOverrideDuoId(null);
-    toast(isSAT ? `SAT registrado para ${currentDuo.label}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
   }
 
   function startEdit(row: PartialRow) {
@@ -372,7 +375,7 @@ export default function Qualifiers() {
                       Salvar
                     </Button>
                     <Button
-                      onClick={() => saveQualifierResult(true)}
+                      onClick={() => setSatModalOpen(true)}
                       variant="danger"
                       title="Sem Aproveitamento Técnico"
                     >
@@ -445,6 +448,46 @@ export default function Qualifiers() {
                   </li>
                 ))}
               </ul>
+            </div>
+          </Modal>
+
+          {/* SAT Confirmation Modal */}
+          <Modal
+            isOpen={satModalOpen}
+            onClose={() => { setSatModalOpen(false); setSatReason(''); }}
+            title="Confirmar SAT"
+            size="sm"
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); }}>
+                  Cancelar
+                </Button>
+                <Button variant="danger" onClick={() => {
+                  saveQualifierResult(true, satReason);
+                  setSatModalOpen(false);
+                  setSatReason('');
+                }}>
+                  Confirmar SAT
+                </Button>
+              </>
+            }
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-rope-600">
+                Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
+                <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
+              </p>
+              <div>
+                <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (opcional)</label>
+                <input
+                  type="text"
+                  value={satReason}
+                  onChange={(e) => setSatReason(e.target.value)}
+                  placeholder="Ex: boi saiu do curral, tempo esgotado..."
+                  className="w-full px-3 py-2 rounded-lg border border-dust-300 focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm"
+                  autoFocus
+                />
+              </div>
             </div>
           </Modal>
 

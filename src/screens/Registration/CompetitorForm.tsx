@@ -88,7 +88,7 @@ export function CompetitorForm({
             min={1}
             max={50}
             value={numRounds}
-            onChange={(e) => setNumRounds(Number(e.target.value))}
+            onChange={(e) => { const v = Number(e.target.value); setNumRounds(isNaN(v) ? 1 : Math.max(1, Math.min(50, v))); }}
             className="w-full px-3 py-2 rounded-lg border border-dust-300 hover:border-saddle-400 focus:outline-none focus:ring-2 focus:ring-hay-400 focus:border-hay-400 text-sm text-rope-800"
           />
         </div>
@@ -98,6 +98,7 @@ export function CompetitorForm({
           label="Nome do competidor"
           placeholder="Ex: João da Silva"
           value={name}
+          maxLength={50}
           onChange={(e) => { setName(e.target.value); setNameError(''); }}
           onKeyDown={(e) => e.key === 'Enter' && addCompetitor()}
           error={nameError}

@@ -53,37 +53,37 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     [debouncedSave, competition?.id]
   );
 
-  function loadCompetition(c: Competition) {
+  const loadCompetition = useCallback((c: Competition) => {
     // Cancel any pending save for the previous competition.
     cancelPending();
     setCompetition(c);
     setCompetitorsState(c.competitors ?? []);
     setDuosState(c.duos ?? []);
     setNumRoundsState(c.numRounds ?? 1);
-  }
+  }, [cancelPending]);
 
-  function clearCompetition() {
+  const clearCompetition = useCallback(() => {
     cancelPending();
     setCompetition(null);
     setCompetitorsState([]);
     setDuosState([]);
     setNumRoundsState(1);
-  }
+  }, [cancelPending]);
 
-  function setCompetitors(c: Competitor[]) {
+  const setCompetitors = useCallback((c: Competitor[]) => {
     setCompetitorsState(c);
     save({ competitors: c });
-  }
+  }, [save]);
 
-  function setDuos(d: Duo[]) {
+  const setDuos = useCallback((d: Duo[]) => {
     setDuosState(d);
     save({ duos: d });
-  }
+  }, [save]);
 
-  function setNumRounds(n: number) {
+  const setNumRounds = useCallback((n: number) => {
     setNumRoundsState(n);
     save({ numRounds: n });
-  }
+  }, [save]);
 
   const advanceStatus = useCallback(
     async (next: CompetitionStatus): Promise<void> => {
@@ -93,13 +93,13 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     [competition?.id, flushNow]
   );
 
-  function persistQualifierResults(results: PassResult[]) {
+  const persistQualifierResults = useCallback((results: PassResult[]) => {
     save({ qualifierResults: results });
-  }
+  }, [save]);
 
-  function persistFinalResults(results: PassResult[]) {
+  const persistFinalResults = useCallback((results: PassResult[]) => {
     save({ finalResults: results });
-  }
+  }, [save]);
 
   return (
     <CompetitionContext.Provider
