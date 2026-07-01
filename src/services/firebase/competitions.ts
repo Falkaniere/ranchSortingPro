@@ -10,12 +10,12 @@ import {
   query,
   where,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Competitor, normalizeCategory } from '../../core/models/Competidor';
 import { Duo } from '../../core/models/Duo';
 import { PassResult } from '../../core/models/PassResult';
+import { timestampToISO } from './firestoreHelpers';
 
 export type CompetitionStatus = 'draft' | 'qualifier' | 'final' | 'finished';
 
@@ -63,14 +63,8 @@ function toCompetition(id: string, data: any): Competition {
     name: data.name,
     location: data.location ?? '',
     eventDate: data.eventDate ?? '',
-    createdAt:
-      data.createdAt instanceof Timestamp
-        ? data.createdAt.toDate().toISOString()
-        : data.createdAt ?? new Date().toISOString(),
-    updatedAt:
-      data.updatedAt instanceof Timestamp
-        ? data.updatedAt.toDate().toISOString()
-        : data.updatedAt ?? new Date().toISOString(),
+    createdAt: timestampToISO(data.createdAt),
+    updatedAt: timestampToISO(data.updatedAt),
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
     competitors: (data.competitors ?? []).map((c: any) => ({

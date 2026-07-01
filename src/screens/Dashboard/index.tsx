@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useSubscription } from '../../hooks/useSubscription';
+import { STATUS_ROUTES } from '../../core/constants';
 import { signOut } from '../../services/firebase/auth';
 import {
   Competition,
@@ -86,13 +87,7 @@ export default function DashboardScreen() {
 
   function handleOpen(competition: Competition) {
     loadCompetition(competition);
-    const routes: Record<string, string> = {
-      draft: 'registration',
-      qualifier: 'record',
-      final: 'final',
-      finished: 'final-results',
-    };
-    navigate(`/competition/${competition.id}/${routes[competition.status] ?? 'registration'}`);
+    navigate(`/competition/${competition.id}/${STATUS_ROUTES[competition.status]}`);
   }
 
   async function handleLogout() {

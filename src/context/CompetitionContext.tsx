@@ -2,7 +2,6 @@ import React, {
   createContext,
   useCallback,
   useContext,
-  useRef,
   useState,
 } from 'react';
 import { Competitor } from '../core/models/Competidor';
@@ -13,6 +12,7 @@ import {
   CompetitionStatus,
   updateCompetition,
 } from '../services/firebase/competitions';
+import { useDebouncedFirestoreSave } from '../hooks/useDebouncedFirestoreSave';
 
 interface CompetitionContextValue {
   competition: Competition | null;
@@ -39,91 +39,67 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
   const [competitors, setCompetitorsState] = useState<Competitor[]>([]);
   const [duos, setDuosState] = useState<Duo[]>([]);
   const [numRounds, setNumRoundsState] = useState(1);
-  const [isSaving, setIsSaving] = useState(false);
 
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const pendingPatchRef = useRef<Partial<Competition>>({});
+  const persist = useCallback(async (id: string, patch: Partial<Competition>) => {
+    await updateCompetition(id, patch);
+    setCompetition((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  const { isSaving, save: debouncedSave, flushNow, cancelPending } =
+    useDebouncedFirestoreSave<Competition>({ persist });
 
   const save = useCallback(
-    (patch: Partial<Competition>) => {
-      if (!competition?.id) return;
-      // Merge incoming patch so rapid sequential saves don't drop earlier fields.
-      pendingPatchRef.current = { ...pendingPatchRef.current, ...patch };
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      const currentId = competition.id;
-      debounceRef.current = setTimeout(async () => {
-        const accumulated = { ...pendingPatchRef.current };
-        pendingPatchRef.current = {};
-        setIsSaving(true);
-        try {
-          await updateCompetition(currentId, accumulated);
-          setCompetition((prev) => (prev ? { ...prev, ...accumulated } : prev));
-        } finally {
-          setIsSaving(false);
-        }
-      }, 1500);
-    },
-    [competition?.id]
+    (patch: Partial<Competition>) => debouncedSave(competition?.id, patch),
+    [debouncedSave, competition?.id]
   );
 
-  function loadCompetition(c: Competition) {
+  const loadCompetition = useCallback((c: Competition) => {
     // Cancel any pending save for the previous competition.
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    pendingPatchRef.current = {};
+    cancelPending();
     setCompetition(c);
     setCompetitorsState(c.competitors ?? []);
     setDuosState(c.duos ?? []);
     setNumRoundsState(c.numRounds ?? 1);
-  }
+  }, [cancelPending]);
 
-  function clearCompetition() {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    pendingPatchRef.current = {};
+  const clearCompetition = useCallback(() => {
+    cancelPending();
     setCompetition(null);
     setCompetitorsState([]);
     setDuosState([]);
     setNumRoundsState(1);
-  }
+  }, [cancelPending]);
 
-  function setCompetitors(c: Competitor[]) {
+  const setCompetitors = useCallback((c: Competitor[]) => {
     setCompetitorsState(c);
     save({ competitors: c });
-  }
+  }, [save]);
 
-  function setDuos(d: Duo[]) {
+  const setDuos = useCallback((d: Duo[]) => {
     setDuosState(d);
     save({ duos: d });
-  }
+  }, [save]);
 
-  function setNumRounds(n: number) {
+  const setNumRounds = useCallback((n: number) => {
     setNumRoundsState(n);
     save({ numRounds: n });
-  }
+  }, [save]);
 
   const advanceStatus = useCallback(
     async (next: CompetitionStatus): Promise<void> => {
       if (!competition?.id) return;
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      const merged = { ...pendingPatchRef.current, status: next };
-      setIsSaving(true);
-      try {
-        await updateCompetition(competition.id, merged);
-        pendingPatchRef.current = {};
-        setCompetition((prev) => (prev ? { ...prev, ...merged } : prev));
-      } finally {
-        setIsSaving(false);
-      }
+      await flushNow(competition.id, { status: next });
     },
-    [competition?.id]
+    [competition?.id, flushNow]
   );
 
-  function persistQualifierResults(results: PassResult[]) {
+  const persistQualifierResults = useCallback((results: PassResult[]) => {
     save({ qualifierResults: results });
-  }
+  }, [save]);
 
-  function persistFinalResults(results: PassResult[]) {
+  const persistFinalResults = useCallback((results: PassResult[]) => {
     save({ finalResults: results });
-  }
+  }, [save]);
 
   return (
     <CompetitionContext.Provider
