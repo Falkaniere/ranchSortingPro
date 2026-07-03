@@ -16,7 +16,7 @@ const categoryConfig: Record<RiderCategory, { label: string; className: string }
     className: 'bg-hay-100 text-rope-600 border border-hay-300',
   },
   '19': {
-    label: '19',
+    label: 'Amador 19',
     className: 'bg-hay-100 text-rope-600 border border-hay-300',
   },
   Light: {

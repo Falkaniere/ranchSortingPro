@@ -137,7 +137,7 @@ export function ExcelImportModal({
             Selecione uma planilha <span className="font-medium">.xlsx</span> ou <span className="font-medium">.xls</span> com as colunas <span className="font-medium">Nome</span> e <span className="font-medium">Categoria</span>.
           </p>
           <div className="rounded-lg border-2 border-dashed border-dust-300 bg-dust-50 p-6 text-center">
-            <p className="text-xs text-rope-400 mb-3">Valores aceitos em Categoria: Aberta, 19, Light, Amador, Principiante, Beginner</p>
+            <p className="text-xs text-rope-400 mb-3">Valores aceitos em Categoria: Aberta, Amador 19, Light, Amador, Principiante, Beginner</p>
             <input
               ref={sheetInputRef}
               type="file"

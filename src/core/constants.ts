@@ -19,9 +19,9 @@ export const STATUS_LABELS: Record<CompetitionStatus, string> = {
 
 /** Categorias de competidor disponíveis no formulário de inscrição. */
 export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
-  { label: 'Aberta', value: 'Aberta', hint: 'Combina com 19, Light ou Principiante' },
-  { label: '19', value: '19', hint: 'Combina com Aberta, 19, Light ou Principiante' },
-  { label: 'Light', value: 'Light', hint: 'Combina com Aberta, 19, Light ou Principiante' },
+  { label: 'Aberta', value: 'Aberta', hint: 'Combina com Amador 19, Light ou Principiante' },
+  { label: 'Amador 19', value: '19', hint: 'Combina com Aberta, Amador 19 ou Light' },
+  { label: 'Light', value: 'Light', hint: 'Combina com Aberta, Amador 19 ou Light' },
   { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D' },
 ];
 
