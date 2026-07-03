@@ -8,10 +8,6 @@ export interface ImportedCompetitorRow {
 }
 
 function parseCategoryValue(raw: string): RiderCategory {
-  const v = (raw ?? '').toLowerCase().trim().replace(/\s+/g, '');
-  if (v === '19' || v === 'amateur19' || v === 'amador19') return '19';
-  if (v === 'light' || v === 'amador' || v === 'amateurlight' || v === 'amadorlight') return 'Light';
-  if (v === 'principiante' || v === 'beginner' || v === '2d') return 'Principiante';
   return normalizeCategory(raw);
 }
 
@@ -79,6 +75,9 @@ export async function importDuosFromExcel(
         const riderOneName = duoNames[0];
         const riderTwoName = duoNames[1];
         const group = String(row.Categoria || '1D') as Duo['group'];
+        // Principiante+Principiante and Light+Light are both valid pairs, unlike Aberta+Aberta —
+        // pick a default that can never form an invalid combo when both riders are auto-created.
+        const fallbackCategory: RiderCategory = group === '2D' ? 'Principiante' : 'Light';
 
         let riderOne =
           competitors.find(
@@ -100,7 +99,7 @@ export async function importDuosFromExcel(
           riderOne = {
             id: crypto.randomUUID(),
             name: riderOneName,
-            category: 'Aberta',
+            category: fallbackCategory,
             passes: 0,
           };
           newCompetitors.push(riderOne);
@@ -110,7 +109,7 @@ export async function importDuosFromExcel(
           riderTwo = {
             id: crypto.randomUUID(),
             name: riderTwoName,
-            category: 'Aberta',
+            category: fallbackCategory,
             passes: 0,
           };
           newCompetitors.push(riderTwo);

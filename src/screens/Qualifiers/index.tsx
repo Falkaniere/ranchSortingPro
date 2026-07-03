@@ -243,11 +243,11 @@ export default function Qualifiers() {
     const rows1D = buildQualifierRows(partials1D);
     const rows2D = buildQualifierRows(partials2D);
     const combinedRows = [
-      { cells: [`Ranking 1D — Elite/Profissional (${partials1D.length})`], isGroupHeader: true },
+      { cells: [`Ranking 1D (${partials1D.length})`], isGroupHeader: true },
       ...rows1D,
       ...(show2D
         ? [
-            { cells: [`Ranking 2D — Amador/Principiante (${partials2D.length})`], isGroupHeader: true },
+            { cells: [`Ranking 2D (${partials2D.length})`], isGroupHeader: true },
             ...rows2D,
           ]
         : []),
@@ -522,7 +522,7 @@ export default function Qualifiers() {
               <div>
                 <RankingTable
                   rows={partials1D}
-                  title={`Ranking 1D — Elite/Profissional (${partials1D.length})`}
+                  title={`Ranking 1D (${partials1D.length})`}
                   isFinished={isFinished}
                   editingId={editingId}
                   setEditingId={setEditingId}
@@ -539,7 +539,7 @@ export default function Qualifiers() {
                 {show2D && (
                   <RankingTable
                     rows={partials2D}
-                    title={`Ranking 2D — Amador/Principiante (${partials2D.length})`}
+                    title={`Ranking 2D (${partials2D.length})`}
                     isFinished={isFinished}
                     editingId={editingId}
                     setEditingId={setEditingId}

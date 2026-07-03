@@ -177,8 +177,8 @@ export default function FinalResults() {
         />
       ) : (
         <div className="flex flex-col gap-5">
-          {rows1D.length > 0 && <ResultTable items={rows1D} label={`Classificação 1D — Elite/Profissional (${rows1D.length} duplas)`} />}
-          {rows2D.length > 0 && <ResultTable items={rows2D} label={`Classificação 2D — Amador/Principiante (${rows2D.length} duplas)`} />}
+          {rows1D.length > 0 && <ResultTable items={rows1D} label={`Classificação 1D (${rows1D.length} duplas)`} />}
+          {rows2D.length > 0 && <ResultTable items={rows2D} label={`Classificação 2D (${rows2D.length} duplas)`} />}
 
           <div className="flex justify-center pt-2">
             {competition?.status === 'finished' ? (
