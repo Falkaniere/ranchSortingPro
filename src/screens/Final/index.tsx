@@ -48,6 +48,7 @@ export default function Finals() {
   const [timeError, setTimeError] = useState('');
   const [satModalOpen, setSatModalOpen] = useState(false);
   const [satReason, setSatReason] = useState('');
+  const [satReasonError, setSatReasonError] = useState('');
 
   function toPendingEntries(entries: Array<{ duoId: string; cattleCount: number; timeSeconds: number }>): PendingEntry[] {
     return entries.map((e) => {
@@ -301,7 +302,7 @@ export default function Finals() {
                 <div>
                   <label className="text-sm font-medium text-rope-700 block mb-1">Tempo (segundos)</label>
                   <input
-                    type="number" min={0.01} max={MAX_PASS_TIME_SECONDS} step={0.01} placeholder="45.5"
+                    type="number" min={0.01} step={0.01} placeholder="45.5"
                     value={currentForm.time}
                     onChange={(e) => setFormField('time', e.target.value)}
                     className={`w-full px-3 py-2 rounded-lg border text-sm focus:outline-none focus:ring-2 focus:ring-hay-400 ${timeError ? 'border-brand-500' : 'border-dust-300'}`}
@@ -311,7 +312,7 @@ export default function Finals() {
 
                 <div className="flex gap-2">
                   <Button onClick={() => saveFinalResult(false)} fullWidth>Salvar</Button>
-                  <Button onClick={() => setSatModalOpen(true)} variant="danger" title="SAT">SAT</Button>
+                  <Button onClick={() => { setSatModalOpen(true); setSatReasonError(''); }} variant="danger" title="SAT">SAT</Button>
                 </div>
               </div>
             </Card>
@@ -353,18 +354,20 @@ export default function Finals() {
         {/* SAT Confirmation Modal */}
         <Modal
           isOpen={satModalOpen}
-          onClose={() => { setSatModalOpen(false); setSatReason(''); }}
+          onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
           title="Confirmar SAT"
           size="sm"
           footer={
             <>
-              <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); }}>
+              <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
                 Cancelar
               </Button>
               <Button variant="danger" onClick={() => {
+                if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
                 saveFinalResult(true, satReason);
                 setSatModalOpen(false);
                 setSatReason('');
+                setSatReasonError('');
               }}>
                 Confirmar SAT
               </Button>
@@ -377,15 +380,16 @@ export default function Finals() {
               <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
             </p>
             <div>
-              <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (opcional)</label>
+              <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
               <input
                 type="text"
                 value={satReason}
-                onChange={(e) => setSatReason(e.target.value)}
+                onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
                 placeholder="Ex: boi saiu do curral, tempo esgotado..."
-                className="w-full px-3 py-2 rounded-lg border border-dust-300 focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm"
+                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
                 autoFocus
               />
+              {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
             </div>
           </div>
         </Modal>
