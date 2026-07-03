@@ -57,8 +57,7 @@ export default function Registration() {
     } finally {
       setIsSorting(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [competitors, numRounds, id]);
+  }, [competitors, numRounds, id, toast, navigate, setDuos, setDuosMeta]);
 
   const openAthletePicker = useCallback(() => setAthletePickerOpen(true), []);
   const openSheetImport = useCallback(() => setSheetImportOpen(true), []);

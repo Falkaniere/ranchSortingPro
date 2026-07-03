@@ -125,7 +125,7 @@ export const CompetitorList = React.memo(function CompetitorList({
                     </div>
                     <div className="flex gap-1 shrink-0">
                       {!isFinished && <button
-                        onClick={() => navigate(`/competition/${competitionId}/competitor/${c.id}/history`)}
+                        onClick={() => { if (!competitionId) return; navigate(`/competition/${competitionId}/competitor/${c.id}/history`); }}
                         className="p-1.5 rounded-md text-rope-400 hover:text-saddle-700 hover:bg-dust-100 transition-colors"
                         title="Histórico"
                       >

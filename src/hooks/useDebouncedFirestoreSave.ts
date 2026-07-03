@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 interface UseDebouncedFirestoreSaveOptions<T> {
   delayMs?: number;
@@ -19,8 +19,17 @@ export function useDebouncedFirestoreSave<T>({
   const pendingPatchRef = useRef<Partial<T>>({});
 
   const cancelPending = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
     pendingPatchRef.current = {};
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
   }, []);
 
   const save = useCallback(
@@ -31,9 +40,12 @@ export function useDebouncedFirestoreSave<T>({
       debounceRef.current = setTimeout(async () => {
         const accumulated = { ...pendingPatchRef.current };
         pendingPatchRef.current = {};
+        debounceRef.current = null;
         setIsSaving(true);
         try {
           await persist(id, accumulated);
+        } catch (err) {
+          console.error('[useDebouncedFirestoreSave] persist failed:', err);
         } finally {
           setIsSaving(false);
         }

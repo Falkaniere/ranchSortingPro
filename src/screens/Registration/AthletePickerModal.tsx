@@ -47,7 +47,7 @@ export function AthletePickerModal({
         toast('Erro ao carregar base de atletas. Verifique as regras do Firestore.', 'error');
       })
       .finally(() => setLoadingAthletes(false));
-  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isOpen, user?.uid, toast]);
 
   function handleClose() {
     setSelectedAthleteIds(new Set());

@@ -87,7 +87,7 @@ export default function DashboardScreen() {
 
   function handleOpen(competition: Competition) {
     loadCompetition(competition);
-    navigate(`/competition/${competition.id}/${STATUS_ROUTES[competition.status]}`);
+    navigate(`/competition/${competition.id}/${STATUS_ROUTES[competition.status] ?? 'registration'}`);
   }
 
   async function handleLogout() {

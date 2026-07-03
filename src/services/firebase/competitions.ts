@@ -17,7 +17,8 @@ import { Duo } from '../../core/models/Duo';
 import { PassResult } from '../../core/models/PassResult';
 import { timestampToISO } from './firestoreHelpers';
 
-export type CompetitionStatus = 'draft' | 'qualifier' | 'final' | 'finished';
+import type { CompetitionStatus } from '../../core/models/CompetitionStatus';
+export type { CompetitionStatus };
 
 export interface Competition {
   id: string;

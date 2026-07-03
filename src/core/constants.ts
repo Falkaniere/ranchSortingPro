@@ -1,4 +1,4 @@
-import { CompetitionStatus } from '../services/firebase/competitions';
+import type { CompetitionStatus } from './models/CompetitionStatus';
 import { RiderCategory } from './models/Competidor';
 
 /** Rota (relativa à competição) para a qual navegar de acordo com o status atual. */

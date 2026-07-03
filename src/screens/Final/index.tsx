@@ -4,7 +4,8 @@ import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
 import { useSubscription } from '../../hooks/useSubscription';
-import { PassResult } from 'core/models/PassResult';
+import { PassResult, SAT_TIME_SECONDS } from 'core/models/PassResult';
+import { formatTime } from 'utils/formatTime';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { exportToExcel } from 'utils/exportExcel';
 import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
@@ -94,6 +95,7 @@ export default function Finals() {
           qualiTime: quali.timeSeconds,
           finalCattle: r.cattleCount,
           finalTime: r.timeSeconds,
+          finalIsSAT: r.isSAT ?? false,
           calledCattle: r.calledCattle,
           avgCattle: (quali.cattleCount + r.cattleCount) / 2,
           avgTime: (quali.timeSeconds + r.timeSeconds) / 2,
@@ -120,7 +122,7 @@ export default function Finals() {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
     const c = isSAT ? 0 : currentForm.cattle!;
-    const t = isSAT ? 120 : Number(currentForm.time);
+    const t = isSAT ? SAT_TIME_SECONDS : Number(currentForm.time);
     addFinalResult(currentDuo.duoId, c, t, isSAT, currentForm.calledCattle ?? undefined);
     setForms({ ...forms, [activeTab]: emptyForm() });
     setTimeError('');
@@ -136,10 +138,6 @@ export default function Finals() {
   function setFormField(field: keyof FormState, value: any) {
     setForms({ ...forms, [activeTab]: { ...currentForm, [field]: value } });
     if (field === 'time') setTimeError('');
-  }
-
-  function formatTime(s: number) {
-    return s >= 120 ? 'SAT' : `${s.toFixed(2)}s`;
   }
 
   const partialsFiltered = partials.filter((p) => p?.group === activeTab);
@@ -168,14 +166,14 @@ export default function Finals() {
         p?.group ?? '',
         p?.calledCattle != null ? String(p.calledCattle) : '—',
         String(p?.qualiCattle ?? ''),
-        formatTime(p?.qualiTime ?? 0),
+        formatTime(p?.qualiTime ?? 0, (p?.qualiTime ?? 0) >= SAT_TIME_SECONDS),
         String(p?.finalCattle ?? ''),
-        formatTime(p?.finalTime ?? 0),
+        formatTime(p?.finalTime ?? 0, p?.finalIsSAT),
         (p?.avgCattle ?? 0).toFixed(1),
-        formatTime(p?.avgTime ?? 0),
+        formatTime(p?.avgTime ?? 0, (p?.avgTime ?? 0) >= SAT_TIME_SECONDS),
       ],
       highlight: idx < 3,
-      isSAT: (p?.finalTime ?? 0) >= 120,
+      isSAT: p?.finalIsSAT ?? false,
     }));
     exportResultsToPng({
       title: `Final ${activeTab} — Parciais`,
@@ -275,7 +273,7 @@ export default function Finals() {
                 <div className="flex gap-2 mt-1">
                   <GroupBadge group={currentDuo.group} />
                   <span className="text-xs text-rope-400">
-                    Qualif.: {currentDuo.cattleCount} bois / {formatTime(currentDuo.timeSeconds)}
+                    Qualif.: {currentDuo.cattleCount} bois / {formatTime(currentDuo.timeSeconds, currentDuo.timeSeconds >= SAT_TIME_SECONDS)}
                   </span>
                 </div>
               </div>
@@ -428,9 +426,9 @@ export default function Finals() {
                         <td className="px-3 py-2.5 font-medium text-rope-800 text-xs max-w-[120px] truncate">{p?.label}</td>
                         <td className="px-3 py-2.5 text-center text-rope-500 text-xs">{p?.calledCattle ?? '—'}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.qualiCattle}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{formatTime(p?.qualiTime ?? 0)}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{formatTime(p?.qualiTime ?? 0, (p?.qualiTime ?? 0) >= SAT_TIME_SECONDS)}</td>
                         <td className="px-3 py-2.5 text-center font-semibold text-rope-800 text-xs">{p?.finalCattle}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{formatTime(p?.finalTime ?? 0)}</td>
+                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{formatTime(p?.finalTime ?? 0, p?.finalIsSAT)}</td>
                         <td className="px-3 py-2.5 text-center font-bold text-saddle-700 text-xs hidden sm:table-cell">{p?.avgCattle?.toFixed(1)}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.avgTime?.toFixed(2)}s</td>
                       </tr>

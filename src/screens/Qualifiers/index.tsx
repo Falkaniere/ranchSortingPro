@@ -4,7 +4,7 @@ import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
 import { useSubscription } from '../../hooks/useSubscription';
-import { PassResult, DuoScore, normalizeSAT } from 'core/models/PassResult';
+import { PassResult, DuoScore, normalizeSAT, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
 import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
@@ -186,7 +186,7 @@ export default function Qualifiers() {
     if (!isSAT && !validateForm()) return;
 
     const c = isSAT ? 0 : cattle!;
-    const t = isSAT ? 120 : Number(timeSeconds);
+    const t = isSAT ? SAT_TIME_SECONDS : Number(timeSeconds);
 
     addQualifierResult(currentDuo.id, c, t, isSAT, calledCattle ?? undefined);
     setCattle(null);
