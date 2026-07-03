@@ -15,7 +15,6 @@ interface CompetitorFormProps {
   competitors: Competitor[];
   setCompetitors: (c: Competitor[]) => void;
   numRounds: number;
-  setNumRounds: (n: number) => void;
   competitionId: string | undefined;
   onOpenAthletePicker: () => void;
   onOpenSheetImport: () => void;
@@ -25,7 +24,6 @@ export function CompetitorForm({
   competitors,
   setCompetitors,
   numRounds,
-  setNumRounds,
   competitionId,
   onOpenAthletePicker,
   onOpenSheetImport,
@@ -78,20 +76,6 @@ export function CompetitorForm({
   return (
     <Card className="md:col-span-1 lg:col-span-2" title="Adicionar competidor">
       <div className="flex flex-col gap-4">
-        <div>
-          <label className="text-sm font-medium text-rope-700 block mb-1">
-            Número de passadas
-          </label>
-          <input
-            type="number"
-            min={1}
-            max={50}
-            value={numRounds}
-            onChange={(e) => { const v = Number(e.target.value); setNumRounds(isNaN(v) ? 1 : Math.max(1, Math.min(50, v))); }}
-            className="w-full px-3 py-2 rounded-lg border border-dust-300 hover:border-saddle-400 focus:outline-none focus:ring-2 focus:ring-hay-400 focus:border-hay-400 text-sm text-rope-800"
-          />
-        </div>
-
         <Input
           ref={nameInputRef}
           label="Nome do competidor"

@@ -213,12 +213,12 @@ export default function Duos() {
       ) : (
         <div className="flex flex-col gap-5">
           {duos1D.length > 0 && (
-            <Card title={`Grupo 1D — Profissional (${duos1D.length} duplas)`} noPadding>
+            <Card title={`Grupo 1D — Elite/Profissional (${duos1D.length} duplas)`} noPadding>
               <DuoList items={duos1D} />
             </Card>
           )}
           {duos2D.length > 0 && (
-            <Card title={`Grupo 2D — Amador (${duos2D.length} duplas)`} noPadding>
+            <Card title={`Grupo 2D — Amador/Principiante (${duos2D.length} duplas)`} noPadding>
               <DuoList items={duos2D} />
             </Card>
           )}

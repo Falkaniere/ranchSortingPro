@@ -83,7 +83,8 @@ export async function createCompetition(
   ownerId: string,
   name: string,
   location?: string,
-  eventDate?: string
+  eventDate?: string,
+  numRounds = 1
 ): Promise<Competition> {
   const payload = {
     ownerId,
@@ -93,7 +94,7 @@ export async function createCompetition(
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     status: 'draft' as CompetitionStatus,
-    numRounds: 1,
+    numRounds,
     competitors: [],
     duos: [],
     qualifierResults: [],

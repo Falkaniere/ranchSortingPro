@@ -24,7 +24,6 @@ interface CompetitionContextValue {
   clearCompetition: () => void;
   setCompetitors: (c: Competitor[]) => void;
   setDuos: (d: Duo[]) => void;
-  setNumRounds: (n: number) => void;
   advanceStatus: (next: CompetitionStatus) => Promise<void>;
   persistQualifierResults: (results: PassResult[]) => void;
   persistFinalResults: (results: PassResult[]) => void;
@@ -80,11 +79,6 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     save({ duos: d });
   }, [save]);
 
-  const setNumRounds = useCallback((n: number) => {
-    setNumRoundsState(n);
-    save({ numRounds: n });
-  }, [save]);
-
   const advanceStatus = useCallback(
     async (next: CompetitionStatus): Promise<void> => {
       if (!competition?.id) return;
@@ -113,7 +107,6 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
         clearCompetition,
         setCompetitors,
         setDuos,
-        setNumRounds,
         advanceStatus,
         persistQualifierResults,
         persistFinalResults,

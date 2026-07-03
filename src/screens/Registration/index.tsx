@@ -16,7 +16,7 @@ export default function Registration() {
   const navigate = useNavigate();
   const toast = useToast();
   const { setDuosMeta } = useResults();
-  const { competitors, numRounds, setCompetitors, setDuos, setNumRounds, competition } = useCompetition();
+  const { competitors, numRounds, setCompetitors, setDuos, competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
   const [isSorting, setIsSorting] = useState(false);
@@ -68,7 +68,7 @@ export default function Registration() {
     <div>
       <PageHeader
         title="Inscrições"
-        subtitle={`${competitors.length} competidor${competitors.length !== 1 ? 'es' : ''} cadastrado${competitors.length !== 1 ? 's' : ''}`}
+        subtitle={`${competitors.length} competidor${competitors.length !== 1 ? 'es' : ''} cadastrado${competitors.length !== 1 ? 's' : ''} · ${numRounds} passada${numRounds !== 1 ? 's' : ''} por competidor`}
         actions={
           canSort && !isFinished ? (
             <Button onClick={handleSortDuos} loading={isSorting}>
@@ -84,7 +84,6 @@ export default function Registration() {
             competitors={competitors}
             setCompetitors={setCompetitors}
             numRounds={numRounds}
-            setNumRounds={setNumRounds}
             competitionId={id}
             onOpenAthletePicker={openAthletePicker}
             onOpenSheetImport={openSheetImport}
