@@ -15,7 +15,7 @@ export function selectFinalists(
   const overall = standingsFromScores(qualifierBestScores);
 
   // All qualified duos advance to the final — no cap.
-  const finalists1D = overall;
+  const finalists1D = overall.filter((e) => e.group === '1D');
   const finalists2D = overall.filter((e) => e.group === '2D');
 
   return {

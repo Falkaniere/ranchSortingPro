@@ -19,8 +19,10 @@ export const STATUS_LABELS: Record<CompetitionStatus, string> = {
 
 /** Categorias de competidor disponíveis no formulário de inscrição. */
 export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
-  { label: 'Profissional', value: 'Open', hint: 'Grupo 1D' },
-  { label: 'Amador', value: 'AmateurLight', hint: 'Grupo 2D' },
+  { label: 'Aberta', value: 'Aberta', hint: 'Combina com 19, Light ou Principiante' },
+  { label: '19', value: '19', hint: 'Combina com Aberta, 19, Light ou Principiante' },
+  { label: 'Light', value: 'Light', hint: 'Combina com Aberta, 19, Light ou Principiante' },
+  { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D' },
 ];
 
 /** Tempo máximo permitido por passada (segundos). */

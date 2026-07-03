@@ -56,7 +56,7 @@ export async function getCompetitorHistory(
           duoId: r.duoId,
           stage: r.stage,
           partnerName: partner?.name ?? '?',
-          partnerCategory: partner?.category ?? 'Open',
+          partnerCategory: partner?.category ?? 'Aberta',
           group: (duo?.group ?? '1D') as '1D' | '2D',
           cattleCount: r.cattleCount,
           timeSeconds: r.timeSeconds,

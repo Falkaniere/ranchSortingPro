@@ -22,7 +22,7 @@ function toAthleteProfile(id: string, data: any): AthleteProfile {
   return {
     id,
     name: data.name,
-    category: normalizeCategory(data.category ?? 'Open'),
+    category: normalizeCategory(data.category ?? 'Aberta'),
     createdAt: timestampToISO(data.createdAt),
   };
 }

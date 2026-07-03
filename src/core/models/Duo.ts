@@ -17,20 +17,18 @@ export function duoKeyFromRiders(riderAId: string, riderBId: string): string {
 
 /**
  * Pairing compatibility rules.
- * Open (Profissional/1D) can pair with anyone.
- * AmateurLight (Amador/2D) can only pair with AmateurLight.
- * Open + AmateurLight is valid (symmetric check) and results in 1D.
+ * Aberta+Aberta is the only invalid combination — two Aberta riders cannot form a dupla.
+ * Every other combination of Aberta/19/Light/Principiante is valid.
+ * 1D: Aberta+19, Aberta+Light, 19+19, 19+Light, Light+Light
+ * 2D: any pairing involving Principiante (Aberta+Principiante, 19+Principiante,
+ *     Light+Principiante, Principiante+Principiante)
  */
-export const VALID_PAIRINGS: Record<RiderCategory, RiderCategory[]> = {
-  Open: ['Open', 'AmateurLight'],
-  AmateurLight: ['AmateurLight'],
-};
-
 export function canPair(catA: RiderCategory, catB: RiderCategory): boolean {
-  return VALID_PAIRINGS[catA].includes(catB) || VALID_PAIRINGS[catB].includes(catA);
+  if (catA === 'Aberta' && catB === 'Aberta') return false;
+  return true;
 }
 
 export function computeDuoGroup(catA: RiderCategory, catB: RiderCategory): DuoGroup {
-  if (catA === 'Open' || catB === 'Open') return '1D';
-  return '2D';
+  if (catA === 'Principiante' || catB === 'Principiante') return '2D';
+  return '1D';
 }

@@ -9,13 +9,10 @@ export interface ImportedCompetitorRow {
 
 function parseCategoryValue(raw: string): RiderCategory {
   const v = (raw ?? '').toLowerCase().trim().replace(/\s+/g, '');
-  if (
-    v === 'amador' || v === 'amateurlight' || v === 'amadorlight' ||
-    v === 'beginner' || v === '2d' || v === 'amador/light' || v === 'amador/2d'
-  ) {
-    return 'AmateurLight';
-  }
-  return normalizeCategory(raw) ?? 'Open';
+  if (v === '19' || v === 'amateur19') return '19';
+  if (v === 'light' || v === 'amador' || v === 'amateurlight' || v === 'amadorlight') return 'Light';
+  if (v === 'principiante' || v === 'beginner' || v === '2d') return 'Principiante';
+  return normalizeCategory(raw);
 }
 
 export function importCompetitorsFromExcel(file: File): Promise<ImportedCompetitorRow[]> {
@@ -103,7 +100,7 @@ export async function importDuosFromExcel(
           riderOne = {
             id: crypto.randomUUID(),
             name: riderOneName,
-            category: 'Open',
+            category: 'Aberta',
             passes: 0,
           };
           newCompetitors.push(riderOne);
@@ -113,7 +110,7 @@ export async function importDuosFromExcel(
           riderTwo = {
             id: crypto.randomUUID(),
             name: riderTwoName,
-            category: 'Open',
+            category: 'Aberta',
             passes: 0,
           };
           newCompetitors.push(riderTwo);

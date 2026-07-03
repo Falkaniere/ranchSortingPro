@@ -1,9 +1,12 @@
-export type RiderCategory = 'Open' | 'AmateurLight';
+export type RiderCategory = 'Aberta' | '19' | 'Light' | 'Principiante';
 
-// Migrates legacy category values to the simplified 2-category model.
+// Migrates legacy category values (2-category model, or raw imports) to the current 4-category model.
 export function normalizeCategory(cat: string): RiderCategory {
-  if (cat === 'AmateurLight' || cat === 'Beginner') return 'AmateurLight';
-  return 'Open'; // Open, Amateur19, or any unknown value → Open
+  const v = (cat ?? '').toLowerCase().trim();
+  if (v === '19' || v === 'amateur19') return '19';
+  if (v === 'light' || v === 'amateurlight' || v === 'amador') return 'Light';
+  if (v === 'principiante' || v === 'beginner') return 'Principiante';
+  return 'Aberta'; // Aberta, Open, or any unknown value → Aberta
 }
 
 export interface Competitor {

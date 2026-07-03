@@ -37,7 +37,7 @@ export function CompetitorForm({
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [name, setName] = useState('');
-  const [category, setCategory] = useState<RiderCategory>('Open'); // 'Open' = Profissional
+  const [category, setCategory] = useState<RiderCategory>('Aberta');
   const [nameError, setNameError] = useState('');
   const [saveToBase, setSaveToBase] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
@@ -70,7 +70,6 @@ export function CompetitorForm({
 
     setName('');
     setNameError('');
-    setCategory('Open');
     setSaveToBase(false);
     nameInputRef.current?.focus();
     toast(`${newCompetitor.name} adicionado!`, 'success');

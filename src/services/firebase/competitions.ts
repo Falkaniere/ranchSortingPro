@@ -70,7 +70,7 @@ function toCompetition(id: string, data: any): Competition {
     numRounds: data.numRounds ?? 1,
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
-      category: normalizeCategory(c.category ?? 'Open'),
+      category: normalizeCategory(c.category ?? 'Aberta'),
     })),
     duos: data.duos ?? [],
     qualifierResults: data.qualifierResults ?? [],
