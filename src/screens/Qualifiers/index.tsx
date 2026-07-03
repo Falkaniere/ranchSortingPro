@@ -4,11 +4,13 @@ import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useToast } from '../../components/ui/Toast';
 import { useSubscription } from '../../hooks/useSubscription';
-import { PassResult, DuoScore } from 'core/models/PassResult';
+import { PassResult, DuoScore, normalizeSAT, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
+import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
 import { exportToExcel } from 'utils/exportExcel';
 import { exportResultsToPng } from 'utils/exportPng';
+import { formatTime } from 'utils/formatTime';
 import { Button } from '../../components/ui/Button';
 import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
@@ -19,6 +21,90 @@ import { QuickSelect } from '../../components/ui/QuickSelect';
 import { Modal } from '../../components/ui/Modal';
 
 type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean; calledCattle?: number };
+
+interface RankingTableProps {
+  rows: PartialRow[];
+  title: string;
+  isFinished: boolean;
+  editingId: string | null;
+  setEditingId: (id: string | null) => void;
+  editCalledCattle: number | null;
+  setEditCalledCattle: (v: number | null) => void;
+  editCattle: number | null;
+  setEditCattle: (v: number | null) => void;
+  editTime: string;
+  setEditTime: (v: string) => void;
+  saveEdit: (duoId: string) => void;
+  startEdit: (row: PartialRow) => void;
+}
+
+const RankingTable = React.memo(function RankingTable({
+  rows, title, isFinished, editingId, setEditingId,
+  editCalledCattle, setEditCalledCattle, editCattle, setEditCattle,
+  editTime, setEditTime, saveEdit, startEdit,
+}: RankingTableProps) {
+  return (
+    <div>
+      <h3 className="text-xs font-semibold text-rope-500 uppercase tracking-wide px-4 py-2 border-b border-dust-200 bg-dust-50">
+        {title}
+      </h3>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead className="bg-dust-50 border-b border-dust-200">
+            <tr>
+              <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">#</th>
+              <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">Dupla</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Tempo</th>
+              {!isFinished && <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500"></th>}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-dust-100">
+            {rows.map((p, idx) => (
+              <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
+                <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
+                <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
+                {editingId === p.duoId && !isFinished ? (
+                  <>
+                    <td className="px-2 py-1.5">
+                      <input type="number" min={0} max={9} value={editCalledCattle ?? ''} onChange={(e) => setEditCalledCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input type="number" min={0} max={10} value={editCattle ?? ''} onChange={(e) => setEditCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <input type="number" min={0.01} step={0.01} value={editTime} onChange={(e) => setEditTime(e.target.value)} className="w-20 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <div className="flex gap-1">
+                        <button onClick={() => saveEdit(p.duoId)} className="px-2 py-1 bg-pasture-600 text-white text-xs rounded hover:bg-pasture-700">✓</button>
+                        <button onClick={() => setEditingId(null)} className="px-2 py-1 bg-dust-300 text-rope-600 text-xs rounded hover:bg-dust-400">✕</button>
+                      </div>
+                    </td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-3 py-2 text-center text-rope-500 text-xs">{p.calledCattle ?? '—'}</td>
+                    <td className="px-3 py-2 text-center font-semibold text-rope-700">{p.cattleCount}</td>
+                    <td className="px-3 py-2 text-center text-rope-600 text-xs">{formatTime(p.timeSeconds, p.isSAT)}</td>
+                    {!isFinished && (
+                      <td className="px-3 py-2 text-center">
+                        <button onClick={() => startEdit(p)} className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors">
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                        </button>
+                      </td>
+                    )}
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+});
 
 export default function Qualifiers() {
   const { id } = useParams<{ id: string }>();
@@ -43,6 +129,9 @@ export default function Qualifiers() {
 
   const [selectDuoOpen, setSelectDuoOpen] = useState(false);
   const [overrideDuoId, setOverrideDuoId] = useState<string | null>(null);
+  const [satModalOpen, setSatModalOpen] = useState(false);
+  const [satReason, setSatReason] = useState('');
+  const [satReasonError, setSatReasonError] = useState('');
 
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
   const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
@@ -59,13 +148,14 @@ export default function Qualifiers() {
   const partials: PartialRow[] = results
     .filter((r: PassResult) => r.stage === 'Qualifier')
     .map((r) => {
+      const n = normalizeSAT(r);
       const duo = duos.find((d) => d.id === r.duoId);
       return {
         duoId: r.duoId,
         duoLabel: duo?.label ?? r.duoId,
         group: (duo?.group ?? '1D') as DuoGroup,
-        cattleCount: r.cattleCount,
-        timeSeconds: r.timeSeconds,
+        cattleCount: n.cattleCount,
+        timeSeconds: n.timeSeconds,
         isSAT: r.isSAT,
         calledCattle: r.calledCattle,
       };
@@ -83,20 +173,20 @@ export default function Qualifiers() {
       return false;
     }
     const t = Number(timeSeconds);
-    if (!timeSeconds || isNaN(t) || t <= 0) {
-      setTimeError('Tempo inválido');
+    if (!timeSeconds || isNaN(t) || t <= 0 || t > MAX_PASS_TIME_SECONDS) {
+      setTimeError(`Tempo inválido (máximo ${MAX_PASS_TIME_SECONDS}s)`);
       return false;
     }
     setTimeError('');
     return true;
   }
 
-  function saveQualifierResult(isSAT = false) {
+  function saveQualifierResult(isSAT = false, reason = '') {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
 
     const c = isSAT ? 0 : cattle!;
-    const t = isSAT ? 120 : Number(timeSeconds);
+    const t = isSAT ? SAT_TIME_SECONDS : Number(timeSeconds);
 
     addQualifierResult(currentDuo.id, c, t, isSAT, calledCattle ?? undefined);
     setCattle(null);
@@ -104,7 +194,7 @@ export default function Qualifiers() {
     setTimeSeconds('');
     setTimeError('');
     setOverrideDuoId(null);
-    toast(isSAT ? `SAT registrado para ${currentDuo.label}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
   }
 
   function startEdit(row: PartialRow) {
@@ -117,17 +207,13 @@ export default function Qualifiers() {
   function saveEdit(duoId: string) {
     if (editCattle === null) { toast('Selecione a quantidade de bois', 'error'); return; }
     const t = Number(editTime);
-    if (isNaN(t) || t <= 0) { toast('Tempo inválido', 'error'); return; }
+    if (isNaN(t) || t <= 0 || t > MAX_PASS_TIME_SECONDS) { toast(`Tempo inválido (máximo ${MAX_PASS_TIME_SECONDS}s)`, 'error'); return; }
     updateQualifierResult(duoId, editCattle, t, editCalledCattle ?? undefined);
     setEditingId(null);
     toast('Resultado atualizado!', 'success');
   }
 
   const allRegistered = pendingDuos.length === 0 && duos.length > 0;
-
-  function formatTime(s: number, sat?: boolean) {
-    return sat ? 'SAT' : `${s.toFixed(2)}s`;
-  }
 
   const QUAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
@@ -185,70 +271,6 @@ export default function Qualifiers() {
     } finally {
       setIsAdvancing(false);
     }
-  }
-
-  function RankingTable({ rows, title }: { rows: PartialRow[]; title: string }) {
-    return (
-      <div>
-        <h3 className="text-xs font-semibold text-rope-500 uppercase tracking-wide px-4 py-2 border-b border-dust-200 bg-dust-50">
-          {title}
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-dust-50 border-b border-dust-200">
-              <tr>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">#</th>
-                <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">Dupla</th>
-                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
-                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
-                <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Tempo</th>
-                {!isFinished && <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500"></th>}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-dust-100">
-              {rows.map((p, idx) => (
-                <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
-                  <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
-                  <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
-                  {editingId === p.duoId && !isFinished ? (
-                    <>
-                      <td className="px-2 py-1.5">
-                        <input type="number" min={0} max={9} value={editCalledCattle ?? ''} onChange={(e) => setEditCalledCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input type="number" min={0} max={10} value={editCattle ?? ''} onChange={(e) => setEditCattle(e.target.value ? Number(e.target.value) : null)} className="w-14 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <input type="number" value={editTime} onChange={(e) => setEditTime(e.target.value)} className="w-20 px-2 py-1 border border-hay-400 rounded text-sm text-center focus:outline-none" />
-                      </td>
-                      <td className="px-2 py-1.5">
-                        <div className="flex gap-1">
-                          <button onClick={() => saveEdit(p.duoId)} className="px-2 py-1 bg-pasture-600 text-white text-xs rounded hover:bg-pasture-700">✓</button>
-                          <button onClick={() => setEditingId(null)} className="px-2 py-1 bg-dust-300 text-rope-600 text-xs rounded hover:bg-dust-400">✕</button>
-                        </div>
-                      </td>
-                    </>
-                  ) : (
-                    <>
-                      <td className="px-3 py-2 text-center text-rope-500 text-xs">{p.calledCattle ?? '—'}</td>
-                      <td className="px-3 py-2 text-center font-semibold text-rope-700">{p.cattleCount}</td>
-                      <td className="px-3 py-2 text-center text-rope-600 text-xs">{formatTime(p.timeSeconds, p.isSAT)}</td>
-                      {!isFinished && (
-                        <td className="px-3 py-2 text-center">
-                          <button onClick={() => startEdit(p)} className="p-1.5 rounded text-rope-400 hover:text-saddle-600 hover:bg-dust-100 transition-colors">
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                          </button>
-                        </td>
-                      )}
-                    </>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    );
   }
 
   return (
@@ -373,7 +395,7 @@ export default function Qualifiers() {
                       Salvar
                     </Button>
                     <Button
-                      onClick={() => saveQualifierResult(true)}
+                      onClick={() => setSatModalOpen(true)}
                       variant="danger"
                       title="Sem Aproveitamento Técnico"
                     >
@@ -449,16 +471,87 @@ export default function Qualifiers() {
             </div>
           </Modal>
 
+          {/* SAT Confirmation Modal */}
+          <Modal
+            isOpen={satModalOpen}
+            onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
+            title="Confirmar SAT"
+            size="sm"
+            footer={
+              <>
+                <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
+                  Cancelar
+                </Button>
+                <Button variant="danger" onClick={() => {
+                  if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
+                  saveQualifierResult(true, satReason);
+                  setSatModalOpen(false);
+                  setSatReason('');
+                  setSatReasonError('');
+                }}>
+                  Confirmar SAT
+                </Button>
+              </>
+            }
+          >
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-rope-600">
+                Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
+                <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
+              </p>
+              <div>
+                <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
+                <input
+                  type="text"
+                  value={satReason}
+                  onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
+                  placeholder="Ex: boi saiu do curral, tempo esgotado..."
+                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
+                  autoFocus
+                />
+                {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
+              </div>
+            </div>
+          </Modal>
+
           {/* Results table */}
           <Card className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'} title={`Parciais (${partials.length})`} noPadding>
             {partials.length === 0 ? (
               <EmptyState icon="📋" title="Sem resultados ainda" />
             ) : (
               <div>
-                <RankingTable rows={partials1D} title={`Ranking 1D — Profissional (${partials1D.length})`} />
+                <RankingTable
+                  rows={partials1D}
+                  title={`Ranking 1D — Profissional (${partials1D.length})`}
+                  isFinished={isFinished}
+                  editingId={editingId}
+                  setEditingId={setEditingId}
+                  editCalledCattle={editCalledCattle}
+                  setEditCalledCattle={setEditCalledCattle}
+                  editCattle={editCattle}
+                  setEditCattle={setEditCattle}
+                  editTime={editTime}
+                  setEditTime={setEditTime}
+                  saveEdit={saveEdit}
+                  startEdit={startEdit}
+                />
 
                 {show2D && (
-                  <RankingTable rows={partials2D} title={`Ranking 2D — Amador (${partials2D.length})`} />
+                  <RankingTable
+                    rows={partials2D}
+                    title={`Ranking 2D — Amador (${partials2D.length})`}
+                    isFinished={isFinished}
+                    editingId={editingId}
+                    setEditingId={setEditingId}
+                    editCalledCattle={editCalledCattle}
+                    setEditCalledCattle={setEditCalledCattle}
+                    editCattle={editCattle}
+                    setEditCattle={setEditCattle}
+                    editTime={editTime}
+                    setEditTime={setEditTime}
+                    saveEdit={saveEdit}
+                    startEdit={startEdit}
+                  />
                 )}
               </div>
             )}

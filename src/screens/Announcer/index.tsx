@@ -4,6 +4,7 @@ import { useCompetition } from '../../context/CompetitionContext';
 import { PassResult } from 'core/models/PassResult';
 import { GroupBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { formatTime } from '../../utils/formatTime';
 
 function StatCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (
@@ -75,10 +76,6 @@ export default function Announcer() {
   const done = registeredIds.size;
   const remaining = total - done;
 
-  function formatTime(s: number, sat?: boolean) {
-    return sat ? 'SAT' : `${s.toFixed(2)}s`;
-  }
-
   const stageLabel = status === 'final' ? 'Final' : 'Qualificatória';
 
   return (
@@ -103,7 +100,7 @@ export default function Announcer() {
               <p className="text-4xl sm:text-5xl font-bold font-serif text-hay-300 mb-2">
                 #{currentDuo.passNumber ?? '—'}
               </p>
-              <p className="text-lg sm:text-2xl font-semibold leading-tight mb-3 break-words">{currentDuo.label}</p>
+              <p className="text-lg sm:text-2xl font-semibold leading-tight mb-3 line-clamp-2 overflow-hidden">{currentDuo.label}</p>
               <GroupBadge group={currentDuo.group} size="md" />
             </>
           ) : (
@@ -121,7 +118,7 @@ export default function Announcer() {
               <p className="text-2xl sm:text-3xl font-bold font-serif text-saddle-600 mb-2">
                 #{nextDuo.passNumber ?? '—'}
               </p>
-              <p className="text-base sm:text-xl font-semibold text-rope-800 leading-tight mb-3 break-words">{nextDuo.label}</p>
+              <p className="text-base sm:text-xl font-semibold text-rope-800 leading-tight mb-3 line-clamp-2 overflow-hidden">{nextDuo.label}</p>
               <GroupBadge group={nextDuo.group} size="md" />
             </>
           ) : (
@@ -136,7 +133,7 @@ export default function Announcer() {
           <p className="text-rope-400 text-xs uppercase tracking-widest mb-3">Última Passada</p>
           <div className="flex flex-wrap items-start gap-3 sm:gap-4">
             <div className="flex-1 min-w-0">
-              <p className="font-semibold text-rope-800 text-base sm:text-lg break-words leading-snug">{lastDuo.label}</p>
+              <p className="font-semibold text-rope-800 text-base sm:text-lg line-clamp-2 overflow-hidden leading-snug">{lastDuo.label}</p>
               <GroupBadge group={lastDuo.group} />
             </div>
             <div className="flex gap-4 sm:gap-6 text-center shrink-0">

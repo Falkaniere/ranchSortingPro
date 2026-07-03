@@ -3,7 +3,7 @@ import React from 'react';
 interface QuickSelectProps {
   label: string;
   value: number | null;
-  onChange: (v: number) => void;
+  onChange: (v: number | null) => void;
   min: number;
   max: number;
   cols?: number;
@@ -22,7 +22,7 @@ export function QuickSelect({ label, value, onChange, min, max, cols = 6 }: Quic
           <button
             key={n}
             type="button"
-            onClick={() => onChange(n)}
+            onClick={() => onChange(value === n ? null : n)}
             className={[
               'py-2 rounded-lg text-sm font-semibold border transition-all min-h-[40px]',
               value === n

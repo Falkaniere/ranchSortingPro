@@ -3,13 +3,7 @@ import { Link } from 'react-router-dom';
 import { CompetitionHistoryEntry } from '../../../../services/firebase/competitorHistory';
 import { Card } from '../../../../components/ui/Card';
 import { EmptyState } from '../../../../components/ui/EmptyState';
-
-const STATUS_LABEL: Record<string, string> = {
-  draft: 'Rascunho',
-  qualifier: 'Qualificatória',
-  final: 'Final',
-  finished: 'Encerrada',
-};
+import { STATUS_LABELS } from '../../../../core/constants';
 
 const STATUS_COLOR: Record<string, string> = {
   draft: 'bg-dust-200 text-rope-500',
@@ -74,7 +68,7 @@ function CompetitionCard({ entry }: { entry: CompetitionHistoryEntry }) {
               STATUS_COLOR[entry.status] ?? 'bg-dust-200 text-rope-500',
             ].join(' ')}
           >
-            {STATUS_LABEL[entry.status] ?? entry.status}
+            {STATUS_LABELS[entry.status as keyof typeof STATUS_LABELS] ?? entry.status}
           </span>
         </div>
 

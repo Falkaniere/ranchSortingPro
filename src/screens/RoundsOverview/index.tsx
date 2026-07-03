@@ -6,6 +6,7 @@ import { Card } from '../../components/ui/Card';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
+import { formatTime } from '../../utils/formatTime';
 
 export default function RoundsOverview() {
   const { results, duosMeta } = useResults();
@@ -15,10 +16,6 @@ export default function RoundsOverview() {
 
   function resultsForDuo(duoId: string): PassResult[] {
     return results.filter((r: PassResult) => r.duoId === duoId);
-  }
-
-  function formatTime(s: number) {
-    return `${s.toFixed(2)}s`;
   }
 
   return (

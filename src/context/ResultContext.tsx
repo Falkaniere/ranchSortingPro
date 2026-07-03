@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState } from 'react';
-import { PassResult, DuoScore } from 'core/models/PassResult';
+import React, { createContext, useCallback, useContext, useState } from 'react';
+import { PassResult, DuoScore, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { buildBestQualifierScorePerDuo } from 'core/logic/scoring';
 import {
@@ -100,7 +100,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       duoId,
       stage: 'Qualifier',
       cattleCount: isSAT ? 0 : cattleCount,
-      timeSeconds: isSAT ? 120 : timeSeconds,
+      timeSeconds: isSAT ? SAT_TIME_SECONDS : timeSeconds,
       isSAT,
       calledCattle,
       createdAtISO: new Date().toISOString(),
@@ -141,7 +141,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       duoId,
       stage: 'Final',
       cattleCount: isSAT ? 0 : cattleCount,
-      timeSeconds: isSAT ? 120 : timeSeconds,
+      timeSeconds: isSAT ? SAT_TIME_SECONDS : timeSeconds,
       isSAT,
       calledCattle,
       createdAtISO: new Date().toISOString(),
@@ -152,28 +152,28 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   // -----------------------------
   //  BEST QUALIFIER SCORES
   // -----------------------------
-  function getBestQualifierScores(): Map<string, DuoScore> {
+  const getBestQualifierScores = useCallback((): Map<string, DuoScore> => {
     const duoGroupById: Map<string, DuoGroup> = new Map(
       duosMeta.map((d) => [d.id, d.group])
     );
     return buildBestQualifierScorePerDuo(results, duoGroupById);
-  }
+  }, [results, duosMeta]);
 
   // -----------------------------
   //  FINALISTS (core/logic/finals)
   // -----------------------------
-  function getFinalists(): FinalsSelection {
+  const getFinalists = useCallback((): FinalsSelection => {
     const best = getBestQualifierScores();
     return selectFinalists(best);
-  }
+  }, [getBestQualifierScores]);
 
   // -----------------------------
   //  FINAL AGGREGATES (core/logic/finals)
   // -----------------------------
-  function getFinalAggregates(): FinalAggregationEntry[] {
+  const getFinalAggregates = useCallback((): FinalAggregationEntry[] => {
     const best = getBestQualifierScores();
     return aggregateFinals(best, finalResults);
-  }
+  }, [getBestQualifierScores, finalResults]);
 
   const value: ResultsContextValue = {
     results,

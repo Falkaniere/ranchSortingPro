@@ -3,8 +3,8 @@ import { DuoGroup } from '../models/Duo';
 import { standingsFromScores } from './scoring';
 
 export interface FinalsSelection {
-  finalists1D: any[];
-  finalists2D: any[];
+  finalists1D: DuoScore[];
+  finalists2D: DuoScore[];
   finalsOrder1D: string[];
   finalsOrder2D: string[];
 }

@@ -3,6 +3,7 @@ import { CompetitionHistoryEntry } from '../../../../services/firebase/competito
 import { Card } from '../../../../components/ui/Card';
 import { EmptyState } from '../../../../components/ui/EmptyState';
 import { GroupBadge } from '../../../../components/ui/Badge';
+import { formatTime } from '../../../../utils/formatTime';
 
 interface Props {
   history: CompetitionHistoryEntry[];
@@ -33,10 +34,6 @@ export default function MyPasses({ history }: Props) {
   );
 }
 
-function formatTime(seconds: number, isSAT: boolean) {
-  if (isSAT) return 'SAT';
-  return `${seconds.toFixed(2)}s`;
-}
 
 function CompetitionPassBlock({ entry }: { entry: CompetitionHistoryEntry }) {
   const date = entry.eventDate

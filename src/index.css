@@ -33,3 +33,7 @@
     @apply bg-hay-200 text-rope-800;
   }
 }
+
+vercel-live-feedback {
+  display: none !important;
+}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { RiderCategory } from '../../core/models/Competidor';
 import { CompetitionStatus } from '../../services/firebase/competitions';
+import { STATUS_LABELS } from '../../core/constants';
 
 type DuoGroup = '1D' | '2D';
 
@@ -61,10 +62,10 @@ interface StatusBadgeProps {
 }
 
 const statusConfig: Record<CompetitionStatus, { label: string; className: string }> = {
-  draft: { label: 'Rascunho', className: 'bg-dust-200 text-rope-500 border border-dust-400' },
-  qualifier: { label: 'Qualificatória', className: 'bg-hay-200 text-hay-700 border border-hay-400' },
-  final: { label: 'Final', className: 'bg-saddle-100 text-saddle-700 border border-saddle-400' },
-  finished: { label: 'Encerrada', className: 'bg-pasture-100 text-pasture-800 border border-pasture-400' },
+  draft: { label: STATUS_LABELS.draft, className: 'bg-dust-200 text-rope-500 border border-dust-400' },
+  qualifier: { label: STATUS_LABELS.qualifier, className: 'bg-hay-200 text-hay-700 border border-hay-400' },
+  final: { label: STATUS_LABELS.final, className: 'bg-saddle-100 text-saddle-700 border border-saddle-400' },
+  finished: { label: STATUS_LABELS.finished, className: 'bg-pasture-100 text-pasture-800 border border-pasture-400' },
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {

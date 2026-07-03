@@ -7,6 +7,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { GroupBadge } from '../../components/ui/Badge';
 import { EmptyState } from '../../components/ui/EmptyState';
 import { Button } from '../../components/ui/Button';
+import { formatTime } from '../../utils/formatTime';
 
 export default function CompetitorHistory() {
   const { competitorId } = useParams<{ competitorId: string }>();
@@ -66,10 +67,6 @@ export default function CompetitorHistory() {
     const avgTime = finResults.reduce((s, r) => s + r.timeSeconds, 0) / finResults.length;
     return { sats, avgCattle, avgTime };
   }, [finResults]);
-
-  function formatTime(s: number, sat?: boolean) {
-    return sat ? 'SAT' : `${s.toFixed(2)}s`;
-  }
 
   if (!competitor) {
     return (

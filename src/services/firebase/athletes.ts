@@ -5,11 +5,11 @@ import {
   deleteDoc,
   getDocs,
   serverTimestamp,
-  Timestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { RiderCategory, normalizeCategory } from '../../core/models/Competidor';
 import { Competitor } from '../../core/models/Competidor';
+import { timestampToISO } from './firestoreHelpers';
 
 export interface AthleteProfile {
   id: string;
@@ -23,10 +23,7 @@ function toAthleteProfile(id: string, data: any): AthleteProfile {
     id,
     name: data.name,
     category: normalizeCategory(data.category ?? 'Open'),
-    createdAt:
-      data.createdAt instanceof Timestamp
-        ? data.createdAt.toDate().toISOString()
-        : data.createdAt ?? new Date().toISOString(),
+    createdAt: timestampToISO(data.createdAt),
   };
 }
 
