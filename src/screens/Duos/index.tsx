@@ -15,6 +15,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { Modal } from '../../components/ui/Modal';
 import { UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { Competitor } from '../../core/models/Competidor';
+import { PdfImportModal } from './PdfImportModal';
 
 export default function Duos() {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +35,7 @@ export default function Duos() {
   const [competitorPickerOpen, setCompetitorPickerOpen] = useState(false);
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [competitorSearch, setCompetitorSearch] = useState('');
+  const [pdfImportOpen, setPdfImportOpen] = useState(false);
 
   const duos1D = duos.filter((d) => d.group === '1D');
   const duos2D = duos.filter((d) => d.group === '2D');
@@ -193,6 +195,9 @@ export default function Duos() {
                   onChange={handleImport}
                   className="hidden"
                 />
+                <Button variant="secondary" size="sm" onClick={() => setPdfImportOpen(true)}>
+                  Importar PDF
+                </Button>
               </>
             )}
           </div>
@@ -293,6 +298,17 @@ export default function Duos() {
       </Modal>
 
       <UpgradeModal isOpen={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+
+      <PdfImportModal
+        isOpen={pdfImportOpen}
+        onClose={() => setPdfImportOpen(false)}
+        competitors={competitors}
+        setCompetitors={setCompetitors}
+        onImported={(importedDuos) => {
+          setDuos(importedDuos);
+          setDuosMeta(importedDuos);
+        }}
+      />
     </div>
   );
 }
