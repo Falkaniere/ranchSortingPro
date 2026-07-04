@@ -3,10 +3,10 @@ import type { TextItem } from 'pdfjs-dist/types/src/display/api';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { Competitor, RiderCategory } from 'core/index';
 
-GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).toString();
+// Servido como asset estático comum (copiado para public/ pelo script
+// scripts/copy-pdf-worker.js) em vez de resolvido via `new URL(import.meta.url)`,
+// que depende de como cada host/bundler serve chunks emitidos dinamicamente.
+GlobalWorkerOptions.workerSrc = `${process.env.PUBLIC_URL}/pdfjs/pdf.worker.min.mjs`;
 
 // Uma linha "ORDEM DE ENTRADAS NA COMPETIÇÃO" tem colunas: Insc., Competidor 1,
 // Competidor 2, Categoria (D1/D2/D3...), Boi Sort, Tempo, Qt Boi.
