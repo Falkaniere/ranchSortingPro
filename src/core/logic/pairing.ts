@@ -209,11 +209,19 @@ export function generateUniqueDuos(
     );
   }
 
+  // Round-robin descarta silenciosamente os pares incompatíveis (ex.: Aberta+Aberta)
+  // em vez de realocá-los, deixando os competidores envolvidos com passadas a menos.
+  // Só é seguro usá-lo quando todo mundo pode parear com todo mundo.
+  const hasIncompatiblePair = competitors.some((a, i) =>
+    competitors.slice(i + 1).some((b) => !canPair(a.category, b.category))
+  );
+
   let duos: Duo[] = [];
   if (
     (options.method === 'roundRobin' || options.method === 'auto') &&
     n % 2 === 0 &&
-    !extraCompetitorId
+    !extraCompetitorId &&
+    !hasIncompatiblePair
   ) {
     duos = roundRobinPairs(competitors, passes, seedState);
   } else if (options.method === 'roundRobin' && n % 2 !== 0) {

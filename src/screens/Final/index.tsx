@@ -177,7 +177,7 @@ export default function Finals() {
     }));
     exportResultsToPng({
       title: `Final ${activeTab} — Parciais`,
-      subtitle: `${partialsFiltered.length} duplas · ${activeTab === '1D' ? 'Profissional' : 'Amador'}`,
+      subtitle: `${partialsFiltered.length} duplas`,
       columns: FINAL_COLUMNS,
       rows,
       fileName: `Resultados_Final_${activeTab}`,

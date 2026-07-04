@@ -35,7 +35,7 @@ export const CompetitorList = React.memo(function CompetitorList({
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState<RiderCategory>('Open'); // 'Open' = Profissional
+  const [editCategory, setEditCategory] = useState<RiderCategory>('Aberta');
 
   const [deleteTarget, setDeleteTarget] = useState<Competitor | null>(null);
 

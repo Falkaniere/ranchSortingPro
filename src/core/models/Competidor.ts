@@ -1,9 +1,14 @@
-export type RiderCategory = 'Open' | 'AmateurLight';
+export type RiderCategory = 'Aberta' | '19' | 'Light' | 'Principiante';
 
-// Migrates legacy category values to the simplified 2-category model.
+// Migrates legacy category values (2-category model, or raw imports) to the current 4-category model.
+// Strips spaces/punctuation so aliases like "Amador/Light" or "Amador 19" normalize the same as "AmadorLight"/"Amador19".
 export function normalizeCategory(cat: string): RiderCategory {
-  if (cat === 'AmateurLight' || cat === 'Beginner') return 'AmateurLight';
-  return 'Open'; // Open, Amateur19, or any unknown value → Open
+  const v = (cat ?? '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (v === '19' || v === 'amateur19' || v === 'amador19') return '19';
+  if (v === 'light' || v === 'amateurlight' || v === 'amadorlight') return 'Light';
+  // Bare "Amador" (old 2-category model) always meant the 2D group, same as "2D"/"Beginner".
+  if (v === 'principiante' || v === 'beginner' || v === '2d' || v === 'amador' || v === 'amador2d') return 'Principiante';
+  return 'Aberta'; // Aberta, Open, 1D, or any unknown value → Aberta
 }
 
 export interface Competitor {
