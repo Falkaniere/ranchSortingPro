@@ -1,5 +1,5 @@
 import { Competitor } from '../models/Competidor';
-import { Duo, computeDuoGroup, canPair } from '../models/Duo';
+import { Duo, computeDuoGroup, canPair, isDoublePrincipiante } from '../models/Duo';
 
 export interface PairingOutput {
   duos: Duo[];
@@ -68,6 +68,7 @@ function roundRobinPairs(
         riderOneId: a.id,
         riderTwoId: b.id,
         group: computeDuoGroup(a.category, b.category),
+        doublePrincipiante: isDoublePrincipiante(a.category, b.category),
       });
     }
   }
@@ -146,6 +147,7 @@ function havelHakimiRegular(
         riderOneId: aId,
         riderTwoId: bId,
         group: computeDuoGroup(a.category, b.category),
+        doublePrincipiante: isDoublePrincipiante(a.category, b.category),
       };
     });
 

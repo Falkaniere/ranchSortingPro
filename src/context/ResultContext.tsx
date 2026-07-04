@@ -160,10 +160,10 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   //  BEST QUALIFIER SCORES
   // -----------------------------
   const getBestQualifierScores = useCallback((): Map<string, DuoScore> => {
-    const duoGroupById: Map<string, DuoGroup> = new Map(
-      duosMeta.map((d) => [d.id, d.group])
+    const duoMetaById = new Map(
+      duosMeta.map((d) => [d.id, { group: d.group, doublePrincipiante: d.doublePrincipiante }])
     );
-    return buildBestQualifierScorePerDuo(results, duoGroupById);
+    return buildBestQualifierScorePerDuo(results, duoMetaById);
   }, [results, duosMeta]);
 
   // -----------------------------

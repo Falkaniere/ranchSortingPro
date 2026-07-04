@@ -22,7 +22,7 @@ export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[]
   { label: 'Aberta', value: 'Aberta', hint: 'Combina com Amador 19, Light ou Principiante' },
   { label: 'Amador 19', value: '19', hint: 'Combina com Aberta, Amador 19 ou Light' },
   { label: 'Light', value: 'Light', hint: 'Combina com Aberta, Amador 19 ou Light' },
-  { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D' },
+  { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D (Principiante+Principiante conta como 1D)' },
 ];
 
 /** Tempo máximo permitido por passada (segundos). */

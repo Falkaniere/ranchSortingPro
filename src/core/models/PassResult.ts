@@ -15,9 +15,9 @@ export interface PassResult {
 
   /**
    * Qual final esta passada pertence (somente quando stage === 'Final').
-   * Uma dupla 2D que também entra no top geral pode ter uma passada em
-   * cada bracket ('1D' e '2D'), por isso o bracket não é sempre igual
-   * ao group da dupla.
+   * Uma dupla 2D que também entra no top geral corre a final 1D em vez da
+   * 2D, por isso o bracket nem sempre é igual ao group da dupla — mas cada
+   * dupla corre em apenas um bracket (nunca nos dois).
    */
   bracket?: DuoGroup;
 
@@ -47,6 +47,8 @@ export interface PassResult {
 export interface DuoScore {
   duoId: string;
   group: DuoGroup;
+  /** Dupla Principiante+Principiante — elegível à final 2D como reserva mesmo tendo group '1D'. */
+  doublePrincipiante?: boolean;
   cattleCount: number;
   timeSeconds: number;
 }

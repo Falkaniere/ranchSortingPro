@@ -14,9 +14,12 @@ export interface FinalsSelection {
  * Seleciona os finalistas conforme o corte (top X) configurado na prova.
  *
  * A final 1D é aberta: reúne o top X geral, independente da categoria da
- * dupla. A final 2D é restrita: reúne apenas o top X entre as duplas da
- * categoria 2D. Por isso uma dupla 2D pode aparecer nas duas finais (ela
- * corre em ambas), mas uma dupla 1D nunca aparece na final 2D.
+ * dupla — uma dupla 2D pode entrar nela se ranquear alto o suficiente.
+ *
+ * A final 2D é restrita às duplas 2D (e às Principiante+Principiante, que
+ * contam como 1D mas servem de reserva) que NÃO entraram no top X da 1D —
+ * uma dupla nunca disputa as duas finais, e uma dupla 1D "de verdade" (sem
+ * Principiante) nunca cai na 2D.
  */
 export function selectFinalists(
   qualifierBestScores: Map<string, DuoScore>,
@@ -25,7 +28,11 @@ export function selectFinalists(
   const overall = standingsFromScores(qualifierBestScores);
 
   const finalists1D = overall.slice(0, topN);
-  const finalists2D = overall.filter((e) => e.group === '2D').slice(0, topN);
+  const finalists1DIds = new Set(finalists1D.map((e) => e.duoId));
+
+  const finalists2D = overall
+    .filter((e) => (e.group === '2D' || e.doublePrincipiante) && !finalists1DIds.has(e.duoId))
+    .slice(0, topN);
 
   return {
     finalists1D,

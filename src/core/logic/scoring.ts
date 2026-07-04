@@ -18,9 +18,14 @@ export function compareByScore(a: DuoScore, b: DuoScore): number {
  * Calcula o melhor resultado por dupla dentro das qualificatórias.
  * Recebe todos os resultados e retorna um mapa (duoId -> melhor resultado).
  */
+export interface DuoScoreMeta {
+  group: DuoGroup;
+  doublePrincipiante?: boolean;
+}
+
 export function buildBestQualifierScorePerDuo(
   results: PassResult[],
-  duoGroupById: Map<string, DuoGroup>
+  duoMetaById: Map<string, DuoScoreMeta>
 ): Map<string, DuoScore> {
   const best = new Map<string, DuoScore>();
 
@@ -28,12 +33,13 @@ export function buildBestQualifierScorePerDuo(
     .filter((r) => r.stage === 'Qualifier')
     .forEach((r) => {
       const n = normalizeSAT(r);
-      const group = duoGroupById.get(r.duoId) ?? '1D';
+      const meta = duoMetaById.get(r.duoId);
       const existing = best.get(r.duoId);
 
       const current: DuoScore = {
         duoId: r.duoId,
-        group,
+        group: meta?.group ?? '1D',
+        doublePrincipiante: meta?.doublePrincipiante,
         cattleCount: n.cattleCount,
         timeSeconds: n.timeSeconds,
       };
