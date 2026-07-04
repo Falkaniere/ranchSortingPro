@@ -1,13 +1,12 @@
 import { selectFinalists, aggregateFinals } from './finals';
-import { DuoScore, PassResult } from '../models/PassResult';
 
-function score(duoId: string, group: '1D' | '2D', cattleCount: number, timeSeconds: number): DuoScore {
+function score(duoId, group, cattleCount, timeSeconds) {
   return { duoId, group, cattleCount, timeSeconds };
 }
 
 describe('selectFinalists', () => {
   it('classifica o top X geral para a final 1D e o top X da categoria 2D para a final 2D', () => {
-    const scores = new Map<string, DuoScore>([
+    const scores = new Map([
       ['a', score('a', '1D', 10, 20)],
       ['b', score('b', '2D', 10, 21)], // 2ª geral, mas 1ª entre as 2D
       ['c', score('c', '1D', 9, 20)],
@@ -22,7 +21,7 @@ describe('selectFinalists', () => {
   });
 
   it('nunca inclui uma dupla 1D na final 2D', () => {
-    const scores = new Map<string, DuoScore>([
+    const scores = new Map([
       ['a', score('a', '1D', 10, 20)],
       ['b', score('b', '1D', 9, 20)],
     ]);
@@ -32,7 +31,7 @@ describe('selectFinalists', () => {
   });
 
   it('usa o corte padrão (top 10) quando nenhum topN é informado', () => {
-    const scores = new Map<string, DuoScore>(
+    const scores = new Map(
       Array.from({ length: 15 }, (_, i) => [`d${i}`, score(`d${i}`, '1D', 15 - i, 20)])
     );
     const { finalists1D } = selectFinalists(scores);
@@ -42,10 +41,10 @@ describe('selectFinalists', () => {
 
 describe('aggregateFinals', () => {
   it('mantém totais separados por bracket quando uma dupla 2D corre nas duas finais', () => {
-    const base = new Map<string, DuoScore>([
+    const base = new Map([
       ['b', score('b', '2D', 10, 21)],
     ]);
-    const finalResults: PassResult[] = [
+    const finalResults = [
       { id: '1', duoId: 'b', stage: 'Final', bracket: '2D', cattleCount: 9, timeSeconds: 22 },
       { id: '2', duoId: 'b', stage: 'Final', bracket: '1D', cattleCount: 10, timeSeconds: 18 },
     ];
