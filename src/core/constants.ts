@@ -28,6 +28,9 @@ export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[]
 /** Tempo máximo permitido por passada (segundos). */
 export const MAX_PASS_TIME_SECONDS = 90;
 
+/** Quantidade padrão de duplas classificadas para a final (top X). */
+export const DEFAULT_FINALS_CUTOFF = 10;
+
 /** Limites de uso por plano de assinatura. */
 export const PLAN_LIMITS = {
   basic: {

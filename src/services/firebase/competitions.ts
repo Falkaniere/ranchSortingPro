@@ -15,6 +15,7 @@ import { db } from '../../firebase';
 import { Competitor, normalizeCategory } from '../../core/models/Competidor';
 import { Duo } from '../../core/models/Duo';
 import { PassResult } from '../../core/models/PassResult';
+import { DEFAULT_FINALS_CUTOFF } from '../../core/constants';
 import { timestampToISO } from './firestoreHelpers';
 
 import type { CompetitionStatus } from '../../core/models/CompetitionStatus';
@@ -30,6 +31,8 @@ export interface Competition {
   updatedAt: string;
   status: CompetitionStatus;
   numRounds: number;
+  /** Quantas duplas (top X) se classificam para a final. Padrão: 10. */
+  finalsCutoff: number;
   competitors: Competitor[];
   duos: Duo[];
   qualifierResults: PassResult[];
@@ -68,6 +71,7 @@ function toCompetition(id: string, data: any): Competition {
     updatedAt: timestampToISO(data.updatedAt),
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
+    finalsCutoff: data.finalsCutoff ?? DEFAULT_FINALS_CUTOFF,
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
       category: normalizeCategory(c.category ?? 'Aberta'),
@@ -84,7 +88,8 @@ export async function createCompetition(
   name: string,
   location?: string,
   eventDate?: string,
-  numRounds = 1
+  numRounds = 1,
+  finalsCutoff = DEFAULT_FINALS_CUTOFF
 ): Promise<Competition> {
   const payload = {
     ownerId,
@@ -95,6 +100,7 @@ export async function createCompetition(
     updatedAt: serverTimestamp(),
     status: 'draft' as CompetitionStatus,
     numRounds,
+    finalsCutoff,
     competitors: [],
     duos: [],
     qualifierResults: [],

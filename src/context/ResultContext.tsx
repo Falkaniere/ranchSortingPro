@@ -44,9 +44,14 @@ interface ResultsContextValue {
     calledCattle?: number
   ) => void;
 
-  /** Adiciona resultado da final */
+  /**
+   * Adiciona resultado da final.
+   * `bracket` indica qual final ('1D' ou '2D') esta passada pertence — uma
+   * dupla 2D que também está no top geral pode ter uma passada em cada.
+   */
   addFinalResult: (
     duoId: string,
+    bracket: DuoGroup,
     cattleCount: number,
     timeSeconds: number,
     isSAT?: boolean,
@@ -57,7 +62,7 @@ interface ResultsContextValue {
   getBestQualifierScores: () => Map<string, DuoScore>;
 
   /** Seleção de finalistas conforme regras (core/logic/finals) */
-  getFinalists: () => FinalsSelection;
+  getFinalists: (topN?: number) => FinalsSelection;
 
   /** Agregados finais (qualificatória + final), com totais */
   getFinalAggregates: () => FinalAggregationEntry[];
@@ -131,6 +136,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   function addFinalResult(
     duoId: string,
+    bracket: DuoGroup,
     cattleCount: number,
     timeSeconds: number,
     isSAT = false,
@@ -140,6 +146,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       id: crypto.randomUUID(),
       duoId,
       stage: 'Final',
+      bracket,
       cattleCount: isSAT ? 0 : cattleCount,
       timeSeconds: isSAT ? SAT_TIME_SECONDS : timeSeconds,
       isSAT,
@@ -162,9 +169,9 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   // -----------------------------
   //  FINALISTS (core/logic/finals)
   // -----------------------------
-  const getFinalists = useCallback((): FinalsSelection => {
+  const getFinalists = useCallback((topN?: number): FinalsSelection => {
     const best = getBestQualifierScores();
-    return selectFinalists(best);
+    return selectFinalists(best, topN);
   }, [getBestQualifierScores]);
 
   // -----------------------------

@@ -40,7 +40,7 @@ export default function Finals() {
   const { competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
-  const finalists = useMemo(() => getFinalists(), [getFinalists]);
+  const finalists = useMemo(() => getFinalists(competition?.finalsCutoff), [getFinalists, competition?.finalsCutoff]);
   const bestScores = useMemo(() => getBestQualifierScores(), [getBestQualifierScores]);
 
   // Default: 2D vai primeiro
@@ -64,12 +64,14 @@ export default function Finals() {
     });
   }
 
-  function getPendingList(category: '1D' | '2D'): PendingEntry[] {
-    const sorted = category === '1D'
+  function getPendingList(bracket: '1D' | '2D'): PendingEntry[] {
+    const sorted = bracket === '1D'
       ? [...finalists.finalists1D].reverse()
       : [...finalists.finalists2D].reverse();
     return toPendingEntries(sorted).filter(
-      (entry) => !finalResults.some((r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final')
+      (entry) => !finalResults.some(
+        (r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final' && r.bracket === bracket
+      )
     );
   }
 
@@ -91,6 +93,7 @@ export default function Finals() {
           duoId: r.duoId,
           label: duo.label,
           group: duo.group,
+          bracket: r.bracket ?? duo.group,
           qualiCattle: quali.cattleCount,
           qualiTime: quali.timeSeconds,
           finalCattle: r.cattleCount,
@@ -123,7 +126,7 @@ export default function Finals() {
     if (!isSAT && !validateForm()) return;
     const c = isSAT ? 0 : currentForm.cattle!;
     const t = isSAT ? SAT_TIME_SECONDS : Number(currentForm.time);
-    addFinalResult(currentDuo.duoId, c, t, isSAT, currentForm.calledCattle ?? undefined);
+    addFinalResult(currentDuo.duoId, activeTab, c, t, isSAT, currentForm.calledCattle ?? undefined);
     setForms({ ...forms, [activeTab]: emptyForm() });
     setTimeError('');
     toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
@@ -140,7 +143,7 @@ export default function Finals() {
     if (field === 'time') setTimeError('');
   }
 
-  const partialsFiltered = partials.filter((p) => p?.group === activeTab);
+  const partialsFiltered = partials.filter((p) => p?.bracket === activeTab);
 
   const FINAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },

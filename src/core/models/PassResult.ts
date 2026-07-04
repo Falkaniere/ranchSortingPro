@@ -13,6 +13,14 @@ export interface PassResult {
   /** Etapa da competição: qualificatória ou final */
   stage: 'Qualifier' | 'Final';
 
+  /**
+   * Qual final esta passada pertence (somente quando stage === 'Final').
+   * Uma dupla 2D que também entra no top geral pode ter uma passada em
+   * cada bracket ('1D' e '2D'), por isso o bracket não é sempre igual
+   * ao group da dupla.
+   */
+  bracket?: DuoGroup;
+
   /** Número de bois passados corretamente */
   cattleCount: number;
 

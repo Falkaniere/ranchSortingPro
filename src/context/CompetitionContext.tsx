@@ -7,6 +7,7 @@ import React, {
 import { Competitor } from '../core/models/Competidor';
 import { Duo } from '../core/models/Duo';
 import { PassResult } from '../core/models/PassResult';
+import { DEFAULT_FINALS_CUTOFF } from '../core/constants';
 import {
   Competition,
   CompetitionStatus,
@@ -19,6 +20,7 @@ interface CompetitionContextValue {
   competitors: Competitor[];
   duos: Duo[];
   numRounds: number;
+  finalsCutoff: number;
   isSaving: boolean;
   loadCompetition: (c: Competition) => void;
   clearCompetition: () => void;
@@ -38,6 +40,7 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
   const [competitors, setCompetitorsState] = useState<Competitor[]>([]);
   const [duos, setDuosState] = useState<Duo[]>([]);
   const [numRounds, setNumRoundsState] = useState(1);
+  const [finalsCutoff, setFinalsCutoffState] = useState(DEFAULT_FINALS_CUTOFF);
 
   const persist = useCallback(async (id: string, patch: Partial<Competition>) => {
     await updateCompetition(id, patch);
@@ -59,6 +62,7 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     setCompetitorsState(c.competitors ?? []);
     setDuosState(c.duos ?? []);
     setNumRoundsState(c.numRounds ?? 1);
+    setFinalsCutoffState(c.finalsCutoff ?? DEFAULT_FINALS_CUTOFF);
   }, [cancelPending]);
 
   const clearCompetition = useCallback(() => {
@@ -67,6 +71,7 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     setCompetitorsState([]);
     setDuosState([]);
     setNumRoundsState(1);
+    setFinalsCutoffState(DEFAULT_FINALS_CUTOFF);
   }, [cancelPending]);
 
   const setCompetitors = useCallback((c: Competitor[]) => {
@@ -102,6 +107,7 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
         competitors,
         duos,
         numRounds,
+        finalsCutoff,
         isSaving,
         loadCompetition,
         clearCompetition,

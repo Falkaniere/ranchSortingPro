@@ -43,20 +43,22 @@ export default function FinalResults() {
     [...competitionResultIds].every((rid) => contextResultIds.has(rid));
   const isLoadingResults = isFinished && hasFirestoreData && !resultContextReady;
 
-  const rows = aggregates.map((a: FinalAggregationEntry, idx: number) => {
+  const rows = aggregates.map((a: FinalAggregationEntry) => {
     const duo = metaDuos.find((d) => d.id === a.duoId);
     return {
-      position: idx + 1,
       duoId: a.duoId,
       duoLabel: duo?.label ?? a.duoId,
       group: a.group,
+      bracket: a.bracket,
       totalCattle: a.totalCattle,
       totalTime: a.totalTimeSeconds,
     };
   });
 
-  const rows1D = rows.filter((r) => r.group === '1D');
-  const rows2D = rows.filter((r) => r.group === '2D');
+  // Posição calculada dentro de cada final (bracket), não globalmente —
+  // uma dupla 2D pode aparecer nas duas classificações com posições diferentes.
+  const rows1D = rows.filter((r) => r.bracket === '1D').map((r, idx) => ({ ...r, position: idx + 1 }));
+  const rows2D = rows.filter((r) => r.bracket === '2D').map((r, idx) => ({ ...r, position: idx + 1 }));
 
   function medal(pos: number) {
     if (pos === 1) return '🥇';
@@ -84,11 +86,16 @@ export default function FinalResults() {
   }
 
   function exportResults() {
+    const combined = [
+      ...rows1D.map((r) => ({ ...r, final: '1D' as const })),
+      ...rows2D.map((r) => ({ ...r, final: '2D' as const })),
+    ];
     exportToExcel(
-      rows.map((r) => ({
+      combined.map((r) => ({
         '#': r.position,
+        Final: r.final,
         Dupla: r.duoLabel,
-        Grupo: r.group,
+        Categoria: r.group,
         'Total Bois': r.totalCattle,
         'Total Tempo (s)': r.totalTime.toFixed(2),
       })),
@@ -96,7 +103,7 @@ export default function FinalResults() {
     );
   }
 
-  function ResultTable({ items, label }: { items: typeof rows; label: string }) {
+  function ResultTable({ items, label }: { items: typeof rows1D; label: string }) {
     return (
       <Card title={label} noPadding>
         {items.length === 0 ? (

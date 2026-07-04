@@ -1,5 +1,6 @@
 import { DuoScore, PassResult, normalizeSAT } from '../models/PassResult';
 import { DuoGroup } from '../models/Duo';
+import { DEFAULT_FINALS_CUTOFF } from '../constants';
 import { standingsFromScores } from './scoring';
 
 export interface FinalsSelection {
@@ -9,14 +10,22 @@ export interface FinalsSelection {
   finalsOrder2D: string[];
 }
 
+/**
+ * Seleciona os finalistas conforme o corte (top X) configurado na prova.
+ *
+ * A final 1D é aberta: reúne o top X geral, independente da categoria da
+ * dupla. A final 2D é restrita: reúne apenas o top X entre as duplas da
+ * categoria 2D. Por isso uma dupla 2D pode aparecer nas duas finais (ela
+ * corre em ambas), mas uma dupla 1D nunca aparece na final 2D.
+ */
 export function selectFinalists(
-  qualifierBestScores: Map<string, DuoScore>
+  qualifierBestScores: Map<string, DuoScore>,
+  topN: number = DEFAULT_FINALS_CUTOFF
 ): FinalsSelection {
   const overall = standingsFromScores(qualifierBestScores);
 
-  // All qualified duos advance to the final — no cap.
-  const finalists1D = overall.filter((e) => e.group === '1D');
-  const finalists2D = overall.filter((e) => e.group === '2D');
+  const finalists1D = overall.slice(0, topN);
+  const finalists2D = overall.filter((e) => e.group === '2D').slice(0, topN);
 
   return {
     finalists1D,
@@ -28,7 +37,10 @@ export function selectFinalists(
 
 export interface FinalAggregationEntry {
   duoId: string;
+  /** Categoria real da dupla (1D ou 2D). */
   group: DuoGroup;
+  /** Qual final este total pertence — pode diferir de `group` para duplas 2D que também correm na final 1D. */
+  bracket: DuoGroup;
   totalCattle: number;
   totalTimeSeconds: number;
 }
@@ -42,9 +54,11 @@ export function aggregateFinals(
     const n = normalizeSAT(pass);
     const base = qualifierBestScores.get(n.duoId);
     if (!base) continue;
-    map.set(n.duoId, {
+    const bracket = pass.bracket ?? base.group;
+    map.set(`${n.duoId}:${bracket}`, {
       duoId: n.duoId,
       group: base.group,
+      bracket,
       totalCattle: base.cattleCount + n.cattleCount,
       totalTimeSeconds: base.timeSeconds + n.timeSeconds,
     });

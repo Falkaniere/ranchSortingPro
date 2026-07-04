@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useSubscription } from '../../hooks/useSubscription';
-import { STATUS_ROUTES } from '../../core/constants';
+import { STATUS_ROUTES, DEFAULT_FINALS_CUTOFF } from '../../core/constants';
 import { signOut } from '../../services/firebase/auth';
 import {
   Competition,
@@ -41,6 +41,7 @@ export default function DashboardScreen() {
   const [newLocation, setNewLocation] = useState('');
   const [newDate, setNewDate] = useState('');
   const [newNumRounds, setNewNumRounds] = useState(1);
+  const [newFinalsCutoff, setNewFinalsCutoff] = useState(DEFAULT_FINALS_CUTOFF);
   const [nameError, setNameError] = useState('');
 
   useEffect(() => {
@@ -57,10 +58,10 @@ export default function DashboardScreen() {
     if (!user) return;
     setCreating(true);
     try {
-      const c = await createCompetition(user.uid, newName.trim(), newLocation.trim(), newDate, newNumRounds);
+      const c = await createCompetition(user.uid, newName.trim(), newLocation.trim(), newDate, newNumRounds, newFinalsCutoff);
       setCompetitions((prev) => [c, ...prev]);
       setCreateOpen(false);
-      setNewName(''); setNewLocation(''); setNewDate(''); setNewNumRounds(1);
+      setNewName(''); setNewLocation(''); setNewDate(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF);
       toast('Competição criada!', 'success');
       loadCompetition(c);
       navigate(`/competition/${c.id}/registration`);
@@ -195,7 +196,7 @@ export default function DashboardScreen() {
       {/* Create Modal */}
       <Modal
         isOpen={createOpen}
-        onClose={() => { setCreateOpen(false); setNewName(''); setNameError(''); setNewNumRounds(1); }}
+        onClose={() => { setCreateOpen(false); setNewName(''); setNameError(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF); }}
         title="Nova Competição"
         footer={
           <>
@@ -243,6 +244,22 @@ export default function DashboardScreen() {
             />
             <p className="text-xs text-rope-400 mt-1">
               Aplicado a todos os competidores desta prova.
+            </p>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-rope-700 block mb-1">
+              Duplas classificadas para a final (top X)
+            </label>
+            <input
+              type="number"
+              min={1}
+              max={100}
+              value={newFinalsCutoff}
+              onChange={(e) => { const v = Number(e.target.value); setNewFinalsCutoff(isNaN(v) ? DEFAULT_FINALS_CUTOFF : Math.max(1, Math.min(100, v))); }}
+              className="w-full px-3 py-2 rounded-lg border border-dust-300 hover:border-saddle-400 focus:outline-none focus:ring-2 focus:ring-hay-400 focus:border-hay-400 text-sm text-rope-800"
+            />
+            <p className="text-xs text-rope-400 mt-1">
+              Na final 1D entram as top {newFinalsCutoff} duplas gerais. Na final 2D entram as top {newFinalsCutoff} duplas da categoria 2D.
             </p>
           </div>
         </div>
