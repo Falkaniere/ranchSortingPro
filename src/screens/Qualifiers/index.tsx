@@ -129,9 +129,6 @@ export default function Qualifiers() {
 
   const [selectDuoOpen, setSelectDuoOpen] = useState(false);
   const [overrideDuoId, setOverrideDuoId] = useState<string | null>(null);
-  const [satModalOpen, setSatModalOpen] = useState(false);
-  const [satReason, setSatReason] = useState('');
-  const [satReasonError, setSatReasonError] = useState('');
 
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
   const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
@@ -181,7 +178,7 @@ export default function Qualifiers() {
     return true;
   }
 
-  function saveQualifierResult(isSAT = false, reason = '') {
+  function saveQualifierResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
 
@@ -194,7 +191,7 @@ export default function Qualifiers() {
     setTimeSeconds('');
     setTimeError('');
     setOverrideDuoId(null);
-    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
   function startEdit(row: PartialRow) {
@@ -395,7 +392,7 @@ export default function Qualifiers() {
                       Salvar
                     </Button>
                     <Button
-                      onClick={() => setSatModalOpen(true)}
+                      onClick={() => saveQualifierResult(true)}
                       variant="danger"
                       title="Sem Aproveitamento Técnico"
                     >
@@ -468,49 +465,6 @@ export default function Qualifiers() {
                   </li>
                 ))}
               </ul>
-            </div>
-          </Modal>
-
-          {/* SAT Confirmation Modal */}
-          <Modal
-            isOpen={satModalOpen}
-            onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
-            title="Confirmar SAT"
-            size="sm"
-            footer={
-              <>
-                <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
-                  Cancelar
-                </Button>
-                <Button variant="danger" onClick={() => {
-                  if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
-                  saveQualifierResult(true, satReason);
-                  setSatModalOpen(false);
-                  setSatReason('');
-                  setSatReasonError('');
-                }}>
-                  Confirmar SAT
-                </Button>
-              </>
-            }
-          >
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-rope-600">
-                Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
-                <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
-              </p>
-              <div>
-                <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
-                <input
-                  type="text"
-                  value={satReason}
-                  onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
-                  placeholder="Ex: boi saiu do curral, tempo esgotado..."
-                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
-                  autoFocus
-                />
-                {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
-              </div>
             </div>
           </Modal>
 

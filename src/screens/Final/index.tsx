@@ -17,7 +17,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
-import { Modal } from '../../components/ui/Modal';
 
 type PendingEntry = {
   duoId: string;
@@ -47,9 +46,6 @@ export default function Finals() {
   const [activeTab, setActiveTab] = useState<'1D' | '2D'>('2D');
   const [forms, setForms] = useState<Record<'1D' | '2D', FormState>>({ '1D': emptyForm(), '2D': emptyForm() });
   const [timeError, setTimeError] = useState('');
-  const [satModalOpen, setSatModalOpen] = useState(false);
-  const [satReason, setSatReason] = useState('');
-  const [satReasonError, setSatReasonError] = useState('');
 
   function toPendingEntries(entries: Array<{ duoId: string; cattleCount: number; timeSeconds: number }>): PendingEntry[] {
     return entries.map((e) => {
@@ -121,7 +117,7 @@ export default function Finals() {
     return true;
   }
 
-  function saveFinalResult(isSAT = false, reason = '') {
+  function saveFinalResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
     const c = isSAT ? 0 : currentForm.cattle!;
@@ -129,7 +125,7 @@ export default function Finals() {
     addFinalResult(currentDuo.duoId, activeTab, c, t, isSAT, currentForm.calledCattle ?? undefined);
     setForms({ ...forms, [activeTab]: emptyForm() });
     setTimeError('');
-    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
   function handleTabChange(tab: '1D' | '2D') {
@@ -313,7 +309,7 @@ export default function Finals() {
 
                 <div className="flex gap-2">
                   <Button onClick={() => saveFinalResult(false)} fullWidth>Salvar</Button>
-                  <Button onClick={() => { setSatModalOpen(true); setSatReasonError(''); }} variant="danger" title="SAT">SAT</Button>
+                  <Button onClick={() => saveFinalResult(true)} variant="danger" title="SAT">SAT</Button>
                 </div>
               </div>
             </Card>
@@ -351,49 +347,6 @@ export default function Finals() {
             </Button>
           )}
         </div>}
-
-        {/* SAT Confirmation Modal */}
-        <Modal
-          isOpen={satModalOpen}
-          onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
-          title="Confirmar SAT"
-          size="sm"
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
-                Cancelar
-              </Button>
-              <Button variant="danger" onClick={() => {
-                if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
-                saveFinalResult(true, satReason);
-                setSatModalOpen(false);
-                setSatReason('');
-                setSatReasonError('');
-              }}>
-                Confirmar SAT
-              </Button>
-            </>
-          }
-        >
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-rope-600">
-              Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
-              <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
-            </p>
-            <div>
-              <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
-              <input
-                type="text"
-                value={satReason}
-                onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
-                placeholder="Ex: boi saiu do curral, tempo esgotado..."
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
-                autoFocus
-              />
-              {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
-            </div>
-          </div>
-        </Modal>
 
         {/* Results table */}
         <Card className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'} title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
