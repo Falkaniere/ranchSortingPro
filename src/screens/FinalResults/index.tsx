@@ -48,6 +48,7 @@ export default function FinalResults() {
     return {
       duoId: a.duoId,
       duoLabel: duo?.label ?? a.duoId,
+      passNumber: duo?.passNumber,
       group: a.group,
       bracket: a.bracket,
       totalCattle: a.totalCattle,
@@ -94,6 +95,7 @@ export default function FinalResults() {
       combined.map((r) => ({
         '#': r.position,
         Final: r.final,
+        Passada: r.passNumber ?? '',
         Dupla: r.duoLabel,
         Categoria: r.group,
         'Total Bois': r.totalCattle,
@@ -114,6 +116,7 @@ export default function FinalResults() {
               <thead className="bg-dust-50 border-b border-dust-200">
                 <tr>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide w-12">#</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Passada</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">Dupla</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Grupo</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Total Bois</th>
@@ -130,6 +133,7 @@ export default function FinalResults() {
                     ].join(' ')}
                   >
                     <td className="px-4 py-3 text-lg text-center w-12">{medal(idx + 1)}</td>
+                    <td className="px-4 py-3 text-center text-rope-400 text-xs font-mono">{r.passNumber ?? '—'}</td>
                     <td className="px-4 py-3 font-semibold text-rope-800 max-w-[160px] truncate">{r.duoLabel}</td>
                     <td className="px-4 py-3 text-center"><GroupBadge group={r.group} size="md" /></td>
                     <td className="px-4 py-3 text-center">

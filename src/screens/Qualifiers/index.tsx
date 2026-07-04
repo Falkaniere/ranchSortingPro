@@ -20,7 +20,7 @@ import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
 import { Modal } from '../../components/ui/Modal';
 
-type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean; calledCattle?: number };
+type PartialRow = DuoScore & { duoLabel: string; passNumber: number; isSAT?: boolean; calledCattle?: number };
 
 interface RankingTableProps {
   rows: PartialRow[];
@@ -53,6 +53,7 @@ const RankingTable = React.memo(function RankingTable({
           <thead className="bg-dust-50 border-b border-dust-200">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">#</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Passada</th>
               <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">Dupla</th>
               <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
               <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
@@ -64,6 +65,7 @@ const RankingTable = React.memo(function RankingTable({
             {rows.map((p, idx) => (
               <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
                 <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
+                <td className="px-3 py-2 text-center text-rope-400 text-xs font-mono">{p.passNumber}</td>
                 <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
                 {editingId === p.duoId && !isFinished ? (
                   <>
@@ -150,6 +152,7 @@ export default function Qualifiers() {
       return {
         duoId: r.duoId,
         duoLabel: duo?.label ?? r.duoId,
+        passNumber: duo?.number ?? 0,
         group: (duo?.group ?? '1D') as DuoGroup,
         cattleCount: n.cattleCount,
         timeSeconds: n.timeSeconds,
@@ -214,6 +217,7 @@ export default function Qualifiers() {
 
   const QUAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
+    { header: 'PASSADA', width: 56, align: 'center' as const },
     { header: 'DUPLA', width: 200, align: 'left' as const },
     { header: 'GRP', width: 44, align: 'center' as const },
     { header: 'B.CANT', width: 56, align: 'center' as const },
@@ -225,6 +229,7 @@ export default function Qualifiers() {
     return rows.map((p, idx) => ({
       cells: [
         String(startPos + idx),
+        String(p.passNumber),
         p.duoLabel,
         p.group,
         p.calledCattle != null ? String(p.calledCattle) : '—',
@@ -287,6 +292,7 @@ export default function Qualifiers() {
                       exportToExcel(
                         partials.map((p, idx) => ({
                           '#': idx + 1,
+                          Passada: p.passNumber,
                           Dupla: p.duoLabel,
                           Grupo: p.group,
                           'Boi Cantado': p.calledCattle ?? '',

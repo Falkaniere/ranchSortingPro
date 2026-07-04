@@ -88,6 +88,7 @@ export default function Finals() {
         return {
           duoId: r.duoId,
           label: duo.label,
+          passNumber: duo.passNumber,
           group: duo.group,
           bracket: r.bracket ?? duo.group,
           qualiCattle: quali.cattleCount,
@@ -143,6 +144,7 @@ export default function Finals() {
 
   const FINAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
+    { header: 'PASSADA', width: 56, align: 'center' as const },
     { header: 'DUPLA', width: 170, align: 'left' as const },
     { header: 'GRP', width: 44, align: 'center' as const },
     { header: 'B.C', width: 44, align: 'center' as const },
@@ -161,6 +163,7 @@ export default function Finals() {
     const rows = sorted.map((p, idx) => ({
       cells: [
         idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : String(idx + 1),
+        p?.passNumber != null ? String(p.passNumber) : '—',
         p?.label ?? '',
         p?.group ?? '',
         p?.calledCattle != null ? String(p.calledCattle) : '—',
@@ -200,6 +203,7 @@ export default function Finals() {
                       exportToExcel(
                         partialsFiltered.map((p, idx) => ({
                           '#': idx + 1,
+                          Passada: p?.passNumber ?? '',
                           Dupla: p?.label,
                           Grupo: p?.group,
                           'Boi Cantado': p?.calledCattle ?? '',
@@ -358,6 +362,7 @@ export default function Finals() {
                 <thead className="bg-dust-50 border-b border-dust-200">
                   <tr>
                     <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">#</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">Passada</th>
                     <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">Dupla</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">B.C</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Q.B</th>
@@ -379,6 +384,7 @@ export default function Finals() {
                         <td className="px-3 py-2.5 text-rope-400 text-xs font-semibold">
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </td>
+                        <td className="px-3 py-2.5 text-center text-rope-400 text-xs font-mono">{p?.passNumber ?? '—'}</td>
                         <td className="px-3 py-2.5 font-medium text-rope-800 text-xs max-w-[120px] truncate">{p?.label}</td>
                         <td className="px-3 py-2.5 text-center text-rope-500 text-xs">{p?.calledCattle ?? '—'}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.qualiCattle}</td>
