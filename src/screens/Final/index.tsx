@@ -76,7 +76,6 @@ export default function Finals() {
   const pendingActive = activeTab === '1D' ? pending1D : pending2D;
   const currentDuo = pendingActive[0] ?? null;
   const currentForm = forms[activeTab];
-  const is2DComplete = pending2D.length === 0 && finalists.finalists2D.length > 0;
 
   const partials = useMemo(() => {
     return finalResults
@@ -236,33 +235,25 @@ export default function Finals() {
         }
       />
 
-      {/* Tabs — 2D primeiro, 1D bloqueada até 2D encerrar */}
+      {/* Tabs — 2D primeiro, mas 1D livre para consulta a qualquer momento */}
       <div className="flex gap-0 mb-5 bg-white rounded-xl border border-dust-300 p-1 w-fit">
-        {(['2D', '1D'] as const).map((tab) => {
-          const isBlocked = tab === '1D' && !is2DComplete && finalists.finalists2D.length > 0;
-          return (
-            <button
-              key={tab}
-              onClick={() => !isBlocked && handleTabChange(tab)}
-              disabled={isBlocked}
-              title={isBlocked ? 'Aguarde o encerramento da categoria 2D' : undefined}
-              className={[
-                'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
-                activeTab === tab
-                  ? 'bg-saddle-600 text-white shadow-sm'
-                  : isBlocked
-                  ? 'text-rope-300 cursor-not-allowed'
-                  : 'text-rope-500 hover:text-rope-800',
-              ].join(' ')}
-            >
-              Categoria {tab}
-              <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
-                {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
-              </span>
-              {isBlocked && <span className="ml-1 text-xs">🔒</span>}
-            </button>
-          );
-        })}
+        {(['2D', '1D'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab)}
+            className={[
+              'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
+              activeTab === tab
+                ? 'bg-saddle-600 text-white shadow-sm'
+                : 'text-rope-500 hover:text-rope-800',
+            ].join(' ')}
+          >
+            Categoria {tab}
+            <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
+              {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
+            </span>
+          </button>
+        ))}
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
