@@ -67,6 +67,19 @@ describe('selectFinalists', () => {
     expect(finalists1D.map((f) => f.duoId)).toEqual(['pp']);
     expect(finalists2D.map((f) => f.duoId)).toEqual(['c2d']);
   });
+
+  it('normaliza um topN inválido (decimal, zero, negativo ou NaN) para um inteiro >= 1', () => {
+    const scores = new Map([
+      ['a', score('a', '1D', 10, 20)],
+      ['b', score('b', '1D', 9, 20)],
+      ['c', score('c', '1D', 8, 20)],
+    ]);
+
+    expect(selectFinalists(scores, 1.9).finalists1D.map((f) => f.duoId)).toEqual(['a']);
+    expect(selectFinalists(scores, 0).finalists1D.map((f) => f.duoId)).toEqual(['a']);
+    expect(selectFinalists(scores, -5).finalists1D.map((f) => f.duoId)).toEqual(['a']);
+    expect(selectFinalists(scores, NaN).finalists1D).toHaveLength(3);
+  });
 });
 
 describe('aggregateFinals', () => {

@@ -254,8 +254,9 @@ export default function DashboardScreen() {
               type="number"
               min={1}
               max={100}
+              step={1}
               value={newFinalsCutoff}
-              onChange={(e) => { const v = Number(e.target.value); setNewFinalsCutoff(isNaN(v) ? DEFAULT_FINALS_CUTOFF : Math.max(1, Math.min(100, v))); }}
+              onChange={(e) => { const v = Math.trunc(Number(e.target.value)); setNewFinalsCutoff(isNaN(v) ? DEFAULT_FINALS_CUTOFF : Math.max(1, Math.min(100, v))); }}
               className="w-full px-3 py-2 rounded-lg border border-dust-300 hover:border-saddle-400 focus:outline-none focus:ring-2 focus:ring-hay-400 focus:border-hay-400 text-sm text-rope-800"
             />
             <p className="text-xs text-rope-400 mt-1">

@@ -43,8 +43,8 @@ export default function Announcer() {
     return getFinalists(competition?.finalsCutoff);
   }, [status, results, competition?.finalsCutoff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Uma dupla 2D que também está no top geral corre nas duas finais —
-  // por isso a fila é de (dupla, bracket), não só de duplas.
+  // Uma dupla 2D que também entra no top geral corre a final 1D em vez da
+  // 2D (nunca as duas) — por isso a fila é de (dupla, bracket), não só de duplas.
   const orderedEntries = useMemo(() => {
     if (status === 'final' && finalists) {
       // Exibe 2D primeiro, depois 1D — reverso (pior entra primeiro)
@@ -55,13 +55,20 @@ export default function Announcer() {
     return allDuos.map((d) => ({ duoId: d.id, bracket: undefined as DuoGroup | undefined }));
   }, [status, finalists, allDuos]);
 
+  const groupByDuoId = useMemo(
+    () => new Map(allDuos.map((d) => [d.id, d.group])),
+    [allDuos]
+  );
+
   const registeredKeys = useMemo(
     () => new Set(
       activeResults
         .filter((r: PassResult) => r.stage === stage)
-        .map((r) => (stage === 'Final' ? `${r.duoId}:${r.bracket}` : r.duoId))
+        .map((r) =>
+          stage === 'Final' ? `${r.duoId}:${r.bracket ?? groupByDuoId.get(r.duoId) ?? '1D'}` : r.duoId
+        )
     ),
-    [activeResults, stage]
+    [activeResults, stage, groupByDuoId]
   );
 
   const pendingEntries = orderedEntries.filter(

@@ -25,14 +25,15 @@ export function selectFinalists(
   qualifierBestScores: Map<string, DuoScore>,
   topN: number = DEFAULT_FINALS_CUTOFF
 ): FinalsSelection {
+  const cutoff = Number.isFinite(topN) ? Math.max(1, Math.trunc(topN)) : DEFAULT_FINALS_CUTOFF;
   const overall = standingsFromScores(qualifierBestScores);
 
-  const finalists1D = overall.slice(0, topN);
+  const finalists1D = overall.slice(0, cutoff);
   const finalists1DIds = new Set(finalists1D.map((e) => e.duoId));
 
   const finalists2D = overall
     .filter((e) => (e.group === '2D' || e.doublePrincipiante) && !finalists1DIds.has(e.duoId))
-    .slice(0, topN);
+    .slice(0, cutoff);
 
   return {
     finalists1D,
@@ -46,7 +47,7 @@ export interface FinalAggregationEntry {
   duoId: string;
   /** Categoria real da dupla (1D ou 2D). */
   group: DuoGroup;
-  /** Qual final este total pertence — pode diferir de `group` para duplas 2D que também correm na final 1D. */
+  /** Qual final este total pertence — pode diferir de `group` quando uma dupla 2D corre a final 1D em vez da 2D. */
   bracket: DuoGroup;
   totalCattle: number;
   totalTimeSeconds: number;

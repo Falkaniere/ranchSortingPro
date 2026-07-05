@@ -57,7 +57,8 @@ export default function FinalResults() {
   });
 
   // Posição calculada dentro de cada final (bracket), não globalmente —
-  // uma dupla 2D pode aparecer nas duas classificações com posições diferentes.
+  // uma dupla 2D pode aparecer na classificação 1D em vez da 2D, mas nunca
+  // nas duas ao mesmo tempo.
   const rows1D = rows.filter((r) => r.bracket === '1D').map((r, idx) => ({ ...r, position: idx + 1 }));
   const rows2D = rows.filter((r) => r.bracket === '2D').map((r, idx) => ({ ...r, position: idx + 1 }));
 

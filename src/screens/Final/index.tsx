@@ -66,7 +66,8 @@ export default function Finals() {
       : [...finalists.finalists2D].reverse();
     return toPendingEntries(sorted).filter(
       (entry) => !finalResults.some(
-        (r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final' && r.bracket === bracket
+        (r: PassResult) =>
+          r.duoId === entry.duoId && r.stage === 'Final' && (r.bracket ?? entry.group) === bracket
       )
     );
   }
