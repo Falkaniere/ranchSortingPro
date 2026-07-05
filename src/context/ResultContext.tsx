@@ -44,9 +44,15 @@ interface ResultsContextValue {
     calledCattle?: number
   ) => void;
 
-  /** Adiciona resultado da final */
+  /**
+   * Adiciona resultado da final.
+   * `bracket` indica qual final ('1D' ou '2D') esta passada pertence — uma
+   * dupla 2D que também está no top geral corre a final 1D em vez da 2D,
+   * nunca as duas.
+   */
   addFinalResult: (
     duoId: string,
+    bracket: DuoGroup,
     cattleCount: number,
     timeSeconds: number,
     isSAT?: boolean,
@@ -57,7 +63,7 @@ interface ResultsContextValue {
   getBestQualifierScores: () => Map<string, DuoScore>;
 
   /** Seleção de finalistas conforme regras (core/logic/finals) */
-  getFinalists: () => FinalsSelection;
+  getFinalists: (topN?: number) => FinalsSelection;
 
   /** Agregados finais (qualificatória + final), com totais */
   getFinalAggregates: () => FinalAggregationEntry[];
@@ -131,6 +137,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
 
   function addFinalResult(
     duoId: string,
+    bracket: DuoGroup,
     cattleCount: number,
     timeSeconds: number,
     isSAT = false,
@@ -140,6 +147,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       id: crypto.randomUUID(),
       duoId,
       stage: 'Final',
+      bracket,
       cattleCount: isSAT ? 0 : cattleCount,
       timeSeconds: isSAT ? SAT_TIME_SECONDS : timeSeconds,
       isSAT,
@@ -153,18 +161,18 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   //  BEST QUALIFIER SCORES
   // -----------------------------
   const getBestQualifierScores = useCallback((): Map<string, DuoScore> => {
-    const duoGroupById: Map<string, DuoGroup> = new Map(
-      duosMeta.map((d) => [d.id, d.group])
+    const duoMetaById = new Map(
+      duosMeta.map((d) => [d.id, { group: d.group, doublePrincipiante: d.doublePrincipiante }])
     );
-    return buildBestQualifierScorePerDuo(results, duoGroupById);
+    return buildBestQualifierScorePerDuo(results, duoMetaById);
   }, [results, duosMeta]);
 
   // -----------------------------
   //  FINALISTS (core/logic/finals)
   // -----------------------------
-  const getFinalists = useCallback((): FinalsSelection => {
+  const getFinalists = useCallback((topN?: number): FinalsSelection => {
     const best = getBestQualifierScores();
-    return selectFinalists(best);
+    return selectFinalists(best, topN);
   }, [getBestQualifierScores]);
 
   // -----------------------------

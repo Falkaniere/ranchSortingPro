@@ -22,11 +22,14 @@ export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[]
   { label: 'Aberta', value: 'Aberta', hint: 'Combina com Amador 19, Light ou Principiante' },
   { label: 'Amador 19', value: '19', hint: 'Combina com Aberta, Amador 19 ou Light' },
   { label: 'Light', value: 'Light', hint: 'Combina com Aberta, Amador 19 ou Light' },
-  { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D' },
+  { label: 'Principiante', value: 'Principiante', hint: 'Grupo 2D (Principiante+Principiante conta como 1D)' },
 ];
 
 /** Tempo máximo permitido por passada (segundos). */
 export const MAX_PASS_TIME_SECONDS = 90;
+
+/** Quantidade padrão de duplas classificadas para a final (top X). */
+export const DEFAULT_FINALS_CUTOFF = 10;
 
 /** Limites de uso por plano de assinatura. */
 export const PLAN_LIMITS = {

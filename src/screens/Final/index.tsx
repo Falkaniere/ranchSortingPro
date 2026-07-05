@@ -17,7 +17,6 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
-import { Modal } from '../../components/ui/Modal';
 
 type PendingEntry = {
   duoId: string;
@@ -40,16 +39,13 @@ export default function Finals() {
   const { competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
-  const finalists = useMemo(() => getFinalists(), [getFinalists]);
+  const finalists = useMemo(() => getFinalists(competition?.finalsCutoff), [getFinalists, competition?.finalsCutoff]);
   const bestScores = useMemo(() => getBestQualifierScores(), [getBestQualifierScores]);
 
   // Default: 2D vai primeiro
   const [activeTab, setActiveTab] = useState<'1D' | '2D'>('2D');
   const [forms, setForms] = useState<Record<'1D' | '2D', FormState>>({ '1D': emptyForm(), '2D': emptyForm() });
   const [timeError, setTimeError] = useState('');
-  const [satModalOpen, setSatModalOpen] = useState(false);
-  const [satReason, setSatReason] = useState('');
-  const [satReasonError, setSatReasonError] = useState('');
 
   function toPendingEntries(entries: Array<{ duoId: string; cattleCount: number; timeSeconds: number }>): PendingEntry[] {
     return entries.map((e) => {
@@ -64,12 +60,15 @@ export default function Finals() {
     });
   }
 
-  function getPendingList(category: '1D' | '2D'): PendingEntry[] {
-    const sorted = category === '1D'
+  function getPendingList(bracket: '1D' | '2D'): PendingEntry[] {
+    const sorted = bracket === '1D'
       ? [...finalists.finalists1D].reverse()
       : [...finalists.finalists2D].reverse();
     return toPendingEntries(sorted).filter(
-      (entry) => !finalResults.some((r: PassResult) => r.duoId === entry.duoId && r.stage === 'Final')
+      (entry) => !finalResults.some(
+        (r: PassResult) =>
+          r.duoId === entry.duoId && r.stage === 'Final' && (r.bracket ?? entry.group) === bracket
+      )
     );
   }
 
@@ -78,7 +77,6 @@ export default function Finals() {
   const pendingActive = activeTab === '1D' ? pending1D : pending2D;
   const currentDuo = pendingActive[0] ?? null;
   const currentForm = forms[activeTab];
-  const is2DComplete = pending2D.length === 0 && finalists.finalists2D.length > 0;
 
   const partials = useMemo(() => {
     return finalResults
@@ -90,7 +88,9 @@ export default function Finals() {
         return {
           duoId: r.duoId,
           label: duo.label,
+          passNumber: duo.passNumber,
           group: duo.group,
+          bracket: r.bracket ?? duo.group,
           qualiCattle: quali.cattleCount,
           qualiTime: quali.timeSeconds,
           finalCattle: r.cattleCount,
@@ -118,15 +118,15 @@ export default function Finals() {
     return true;
   }
 
-  function saveFinalResult(isSAT = false, reason = '') {
+  function saveFinalResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
     const c = isSAT ? 0 : currentForm.cattle!;
     const t = isSAT ? SAT_TIME_SECONDS : Number(currentForm.time);
-    addFinalResult(currentDuo.duoId, c, t, isSAT, currentForm.calledCattle ?? undefined);
+    addFinalResult(currentDuo.duoId, activeTab, c, t, isSAT, currentForm.calledCattle ?? undefined);
     setForms({ ...forms, [activeTab]: emptyForm() });
     setTimeError('');
-    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
   function handleTabChange(tab: '1D' | '2D') {
@@ -140,10 +140,11 @@ export default function Finals() {
     if (field === 'time') setTimeError('');
   }
 
-  const partialsFiltered = partials.filter((p) => p?.group === activeTab);
+  const partialsFiltered = partials.filter((p) => p?.bracket === activeTab);
 
   const FINAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
+    { header: 'PASSADA', width: 56, align: 'center' as const },
     { header: 'DUPLA', width: 170, align: 'left' as const },
     { header: 'GRP', width: 44, align: 'center' as const },
     { header: 'B.C', width: 44, align: 'center' as const },
@@ -162,6 +163,7 @@ export default function Finals() {
     const rows = sorted.map((p, idx) => ({
       cells: [
         idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : String(idx + 1),
+        p?.passNumber != null ? String(p.passNumber) : '—',
         p?.label ?? '',
         p?.group ?? '',
         p?.calledCattle != null ? String(p.calledCattle) : '—',
@@ -201,6 +203,7 @@ export default function Finals() {
                       exportToExcel(
                         partialsFiltered.map((p, idx) => ({
                           '#': idx + 1,
+                          Passada: p?.passNumber ?? '',
                           Dupla: p?.label,
                           Grupo: p?.group,
                           'Boi Cantado': p?.calledCattle ?? '',
@@ -233,33 +236,25 @@ export default function Finals() {
         }
       />
 
-      {/* Tabs — 2D primeiro, 1D bloqueada até 2D encerrar */}
+      {/* Tabs — 2D primeiro, mas 1D livre para consulta a qualquer momento */}
       <div className="flex gap-0 mb-5 bg-white rounded-xl border border-dust-300 p-1 w-fit">
-        {(['2D', '1D'] as const).map((tab) => {
-          const isBlocked = tab === '1D' && !is2DComplete && finalists.finalists2D.length > 0;
-          return (
-            <button
-              key={tab}
-              onClick={() => !isBlocked && handleTabChange(tab)}
-              disabled={isBlocked}
-              title={isBlocked ? 'Aguarde o encerramento da categoria 2D' : undefined}
-              className={[
-                'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
-                activeTab === tab
-                  ? 'bg-saddle-600 text-white shadow-sm'
-                  : isBlocked
-                  ? 'text-rope-300 cursor-not-allowed'
-                  : 'text-rope-500 hover:text-rope-800',
-              ].join(' ')}
-            >
-              Categoria {tab}
-              <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
-                {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
-              </span>
-              {isBlocked && <span className="ml-1 text-xs">🔒</span>}
-            </button>
-          );
-        })}
+        {(['2D', '1D'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => handleTabChange(tab)}
+            className={[
+              'px-5 py-2 rounded-lg text-sm font-semibold transition-all',
+              activeTab === tab
+                ? 'bg-saddle-600 text-white shadow-sm'
+                : 'text-rope-500 hover:text-rope-800',
+            ].join(' ')}
+          >
+            Categoria {tab}
+            <span className={`ml-1.5 text-xs rounded-full px-1.5 py-0.5 ${activeTab === tab ? 'bg-saddle-500 text-white' : 'bg-dust-200 text-rope-400'}`}>
+              {tab === '1D' ? finalists.finalists1D.length : finalists.finalists2D.length}
+            </span>
+          </button>
+        ))}
       </div>
 
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-5">
@@ -310,7 +305,7 @@ export default function Finals() {
 
                 <div className="flex gap-2">
                   <Button onClick={() => saveFinalResult(false)} fullWidth>Salvar</Button>
-                  <Button onClick={() => { setSatModalOpen(true); setSatReasonError(''); }} variant="danger" title="SAT">SAT</Button>
+                  <Button onClick={() => saveFinalResult(true)} variant="danger" title="SAT">SAT</Button>
                 </div>
               </div>
             </Card>
@@ -349,49 +344,6 @@ export default function Finals() {
           )}
         </div>}
 
-        {/* SAT Confirmation Modal */}
-        <Modal
-          isOpen={satModalOpen}
-          onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
-          title="Confirmar SAT"
-          size="sm"
-          footer={
-            <>
-              <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
-                Cancelar
-              </Button>
-              <Button variant="danger" onClick={() => {
-                if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
-                saveFinalResult(true, satReason);
-                setSatModalOpen(false);
-                setSatReason('');
-                setSatReasonError('');
-              }}>
-                Confirmar SAT
-              </Button>
-            </>
-          }
-        >
-          <div className="flex flex-col gap-3">
-            <p className="text-sm text-rope-600">
-              Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
-              <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
-            </p>
-            <div>
-              <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
-              <input
-                type="text"
-                value={satReason}
-                onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
-                placeholder="Ex: boi saiu do curral, tempo esgotado..."
-                className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
-                autoFocus
-              />
-              {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
-            </div>
-          </div>
-        </Modal>
-
         {/* Results table */}
         <Card className={isFinished ? 'md:col-span-2 lg:col-span-5' : 'md:col-span-1 lg:col-span-3'} title={`Parciais ${activeTab} (${partialsFiltered.length})`} noPadding>
           {partialsFiltered.length === 0 ? (
@@ -402,6 +354,7 @@ export default function Finals() {
                 <thead className="bg-dust-50 border-b border-dust-200">
                   <tr>
                     <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">#</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">Passada</th>
                     <th className="px-3 py-2.5 text-left text-xs font-semibold text-rope-500 uppercase">Dupla</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">B.C</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Q.B</th>
@@ -423,6 +376,7 @@ export default function Finals() {
                         <td className="px-3 py-2.5 text-rope-400 text-xs font-semibold">
                           {idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : idx + 1}
                         </td>
+                        <td className="px-3 py-2.5 text-center text-rope-400 text-xs font-mono">{p?.passNumber ?? '—'}</td>
                         <td className="px-3 py-2.5 font-medium text-rope-800 text-xs max-w-[120px] truncate">{p?.label}</td>
                         <td className="px-3 py-2.5 text-center text-rope-500 text-xs">{p?.calledCattle ?? '—'}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.qualiCattle}</td>

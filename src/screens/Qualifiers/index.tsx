@@ -20,7 +20,7 @@ import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
 import { Modal } from '../../components/ui/Modal';
 
-type PartialRow = DuoScore & { duoLabel: string; isSAT?: boolean; calledCattle?: number };
+type PartialRow = DuoScore & { duoLabel: string; passNumber: number; isSAT?: boolean; calledCattle?: number };
 
 interface RankingTableProps {
   rows: PartialRow[];
@@ -53,6 +53,7 @@ const RankingTable = React.memo(function RankingTable({
           <thead className="bg-dust-50 border-b border-dust-200">
             <tr>
               <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">#</th>
+              <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Passada</th>
               <th className="px-3 py-2 text-left text-xs font-semibold text-rope-500">Dupla</th>
               <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">B.Cant.</th>
               <th className="px-3 py-2 text-center text-xs font-semibold text-rope-500">Bois</th>
@@ -64,6 +65,7 @@ const RankingTable = React.memo(function RankingTable({
             {rows.map((p, idx) => (
               <tr key={p.duoId} className="hover:bg-dust-50 transition-colors">
                 <td className="px-3 py-2 text-rope-400 text-xs">{idx + 1}</td>
+                <td className="px-3 py-2 text-center text-rope-400 text-xs font-mono">{p.passNumber}</td>
                 <td className="px-3 py-2 font-medium text-rope-800 text-xs max-w-[140px] truncate">{p.duoLabel}</td>
                 {editingId === p.duoId && !isFinished ? (
                   <>
@@ -129,9 +131,6 @@ export default function Qualifiers() {
 
   const [selectDuoOpen, setSelectDuoOpen] = useState(false);
   const [overrideDuoId, setOverrideDuoId] = useState<string | null>(null);
-  const [satModalOpen, setSatModalOpen] = useState(false);
-  const [satReason, setSatReason] = useState('');
-  const [satReasonError, setSatReasonError] = useState('');
 
   const metaDuos = duosMeta.length > 0 ? duosMeta : compDuos;
   const duos = metaDuos.map((d, index) => ({ ...d, number: d.passNumber ?? index + 1 }));
@@ -153,6 +152,7 @@ export default function Qualifiers() {
       return {
         duoId: r.duoId,
         duoLabel: duo?.label ?? r.duoId,
+        passNumber: duo?.number ?? 0,
         group: (duo?.group ?? '1D') as DuoGroup,
         cattleCount: n.cattleCount,
         timeSeconds: n.timeSeconds,
@@ -181,7 +181,7 @@ export default function Qualifiers() {
     return true;
   }
 
-  function saveQualifierResult(isSAT = false, reason = '') {
+  function saveQualifierResult(isSAT = false) {
     if (!currentDuo) return;
     if (!isSAT && !validateForm()) return;
 
@@ -194,7 +194,7 @@ export default function Qualifiers() {
     setTimeSeconds('');
     setTimeError('');
     setOverrideDuoId(null);
-    toast(isSAT ? `SAT — ${currentDuo.label}${reason ? ` (${reason})` : ''}` : 'Resultado salvo!', 'success');
+    toast(isSAT ? `SAT — ${currentDuo.label}` : 'Resultado salvo!', 'success');
   }
 
   function startEdit(row: PartialRow) {
@@ -217,6 +217,7 @@ export default function Qualifiers() {
 
   const QUAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
+    { header: 'PASSADA', width: 56, align: 'center' as const },
     { header: 'DUPLA', width: 200, align: 'left' as const },
     { header: 'GRP', width: 44, align: 'center' as const },
     { header: 'B.CANT', width: 56, align: 'center' as const },
@@ -228,6 +229,7 @@ export default function Qualifiers() {
     return rows.map((p, idx) => ({
       cells: [
         String(startPos + idx),
+        String(p.passNumber),
         p.duoLabel,
         p.group,
         p.calledCattle != null ? String(p.calledCattle) : '—',
@@ -290,6 +292,7 @@ export default function Qualifiers() {
                       exportToExcel(
                         partials.map((p, idx) => ({
                           '#': idx + 1,
+                          Passada: p.passNumber,
                           Dupla: p.duoLabel,
                           Grupo: p.group,
                           'Boi Cantado': p.calledCattle ?? '',
@@ -395,7 +398,7 @@ export default function Qualifiers() {
                       Salvar
                     </Button>
                     <Button
-                      onClick={() => setSatModalOpen(true)}
+                      onClick={() => saveQualifierResult(true)}
                       variant="danger"
                       title="Sem Aproveitamento Técnico"
                     >
@@ -468,49 +471,6 @@ export default function Qualifiers() {
                   </li>
                 ))}
               </ul>
-            </div>
-          </Modal>
-
-          {/* SAT Confirmation Modal */}
-          <Modal
-            isOpen={satModalOpen}
-            onClose={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}
-            title="Confirmar SAT"
-            size="sm"
-            footer={
-              <>
-                <Button variant="ghost" onClick={() => { setSatModalOpen(false); setSatReason(''); setSatReasonError(''); }}>
-                  Cancelar
-                </Button>
-                <Button variant="danger" onClick={() => {
-                  if (!satReason.trim()) { setSatReasonError('O motivo é obrigatório'); return; }
-                  saveQualifierResult(true, satReason);
-                  setSatModalOpen(false);
-                  setSatReason('');
-                  setSatReasonError('');
-                }}>
-                  Confirmar SAT
-                </Button>
-              </>
-            }
-          >
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-rope-600">
-                Registrar <span className="font-semibold">Sem Aproveitamento Técnico</span> para{' '}
-                <span className="font-semibold text-rope-800">{currentDuo?.label}</span>?
-              </p>
-              <div>
-                <label className="text-xs font-medium text-rope-500 block mb-1">Motivo (obrigatório)</label>
-                <input
-                  type="text"
-                  value={satReason}
-                  onChange={(e) => { setSatReason(e.target.value); setSatReasonError(''); }}
-                  placeholder="Ex: boi saiu do curral, tempo esgotado..."
-                  className={`w-full px-3 py-2 rounded-lg border focus:outline-none focus:ring-2 focus:ring-hay-400 text-sm ${satReasonError ? 'border-brand-500' : 'border-dust-300'}`}
-                  autoFocus
-                />
-                {satReasonError && <p className="text-xs text-brand-500 mt-0.5">{satReasonError}</p>}
-              </div>
             </div>
           </Modal>
 

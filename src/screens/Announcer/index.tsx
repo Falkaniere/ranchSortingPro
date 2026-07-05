@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { useResults } from 'context/ResultContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { PassResult } from 'core/models/PassResult';
+import { DuoGroup } from 'core/models/Duo';
 import { GroupBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
 import { formatTime } from '../../utils/formatTime';
@@ -36,33 +37,52 @@ export default function Announcer() {
   const activeResults = status === 'final' ? finalResults : results;
   const stage = status === 'final' ? 'Final' : 'Qualifier';
 
-  const registeredIds = useMemo(
-    () => new Set(activeResults.filter((r: PassResult) => r.stage === stage).map((r) => r.duoId)),
-    [activeResults, stage]
-  );
-
   // Para a final, precisamos da lista ordenada de finalistas
   const finalists = useMemo(() => {
     if (status !== 'final') return null;
-    return getFinalists();
-  }, [status, results]); // eslint-disable-line react-hooks/exhaustive-deps
+    return getFinalists(competition?.finalsCutoff);
+  }, [status, results, competition?.finalsCutoff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const orderedDuos = useMemo(() => {
+  // Uma dupla 2D que também entra no top geral corre a final 1D em vez da
+  // 2D (nunca as duas) — por isso a fila é de (dupla, bracket), não só de duplas.
+  const orderedEntries = useMemo(() => {
     if (status === 'final' && finalists) {
       // Exibe 2D primeiro, depois 1D — reverso (pior entra primeiro)
-      const all2D = [...finalists.finalists2D].reverse();
-      const all1D = [...finalists.finalists1D].reverse();
-      const combined = [...all2D, ...all1D];
-      return combined
-        .map((entry) => allDuos.find((d) => d.id === entry.duoId))
-        .filter(Boolean) as typeof allDuos;
+      const all2D = [...finalists.finalists2D].reverse().map((e) => ({ duoId: e.duoId, bracket: '2D' as DuoGroup }));
+      const all1D = [...finalists.finalists1D].reverse().map((e) => ({ duoId: e.duoId, bracket: '1D' as DuoGroup }));
+      return [...all2D, ...all1D];
     }
-    return allDuos;
+    return allDuos.map((d) => ({ duoId: d.id, bracket: undefined as DuoGroup | undefined }));
   }, [status, finalists, allDuos]);
 
-  const pendingDuos = orderedDuos.filter((d) => !registeredIds.has(d.id));
-  const currentDuo = pendingDuos[0] ?? null;
-  const nextDuo = pendingDuos[1] ?? null;
+  const groupByDuoId = useMemo(
+    () => new Map(allDuos.map((d) => [d.id, d.group])),
+    [allDuos]
+  );
+
+  const registeredKeys = useMemo(
+    () => new Set(
+      activeResults
+        .filter((r: PassResult) => r.stage === stage)
+        .map((r) =>
+          stage === 'Final' ? `${r.duoId}:${r.bracket ?? groupByDuoId.get(r.duoId) ?? '1D'}` : r.duoId
+        )
+    ),
+    [activeResults, stage, groupByDuoId]
+  );
+
+  const pendingEntries = orderedEntries.filter(
+    (e) => !registeredKeys.has(stage === 'Final' ? `${e.duoId}:${e.bracket}` : e.duoId)
+  );
+
+  function entryToDuo(entry: { duoId: string; bracket?: DuoGroup } | undefined) {
+    if (!entry) return null;
+    const duo = allDuos.find((d) => d.id === entry.duoId);
+    return duo ? { ...duo, bracket: entry.bracket } : null;
+  }
+
+  const currentDuo = entryToDuo(pendingEntries[0]);
+  const nextDuo = entryToDuo(pendingEntries[1]);
 
   // Última passada registrada
   const lastResult = useMemo(() => {
@@ -72,8 +92,8 @@ export default function Announcer() {
 
   const lastDuo = lastResult ? allDuos.find((d) => d.id === lastResult.duoId) : null;
 
-  const total = orderedDuos.length;
-  const done = registeredIds.size;
+  const total = orderedEntries.length;
+  const done = registeredKeys.size;
   const remaining = total - done;
 
   const stageLabel = status === 'final' ? 'Final' : 'Qualificatória';
@@ -101,7 +121,12 @@ export default function Announcer() {
                 #{currentDuo.passNumber ?? '—'}
               </p>
               <p className="text-lg sm:text-2xl font-semibold leading-tight mb-3 line-clamp-2 overflow-hidden">{currentDuo.label}</p>
-              <GroupBadge group={currentDuo.group} size="md" />
+              <div className="flex items-center gap-2">
+                <GroupBadge group={currentDuo.group} size="md" />
+                {currentDuo.bracket && currentDuo.bracket !== currentDuo.group && (
+                  <span className="text-xs text-saddle-200">correndo na Final {currentDuo.bracket}</span>
+                )}
+              </div>
             </>
           ) : (
             <p className="text-xl sm:text-2xl text-saddle-300 font-semibold mt-2">
@@ -119,7 +144,12 @@ export default function Announcer() {
                 #{nextDuo.passNumber ?? '—'}
               </p>
               <p className="text-base sm:text-xl font-semibold text-rope-800 leading-tight mb-3 line-clamp-2 overflow-hidden">{nextDuo.label}</p>
-              <GroupBadge group={nextDuo.group} size="md" />
+              <div className="flex items-center gap-2">
+                <GroupBadge group={nextDuo.group} size="md" />
+                {nextDuo.bracket && nextDuo.bracket !== nextDuo.group && (
+                  <span className="text-xs text-rope-400">correndo na Final {nextDuo.bracket}</span>
+                )}
+              </div>
             </>
           ) : (
             <p className="text-rope-300 text-lg mt-2">—</p>

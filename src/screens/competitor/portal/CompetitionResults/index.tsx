@@ -58,12 +58,14 @@ export default function CompetitionResults() {
     );
   }
 
-  const duoGroupById = new Map(competition.duos.map((d) => [d.id, d.group]));
-  const bestQual = buildBestQualifierScorePerDuo(competition.qualifierResults, duoGroupById);
+  const duoMetaById = new Map(
+    competition.duos.map((d) => [d.id, { group: d.group, doublePrincipiante: d.doublePrincipiante }])
+  );
+  const bestQual = buildBestQualifierScorePerDuo(competition.qualifierResults, duoMetaById);
   const aggregates = aggregateFinals(bestQual, competition.finalResults);
 
-  const results1D = aggregates.filter((a) => a.group === '1D');
-  const results2D = aggregates.filter((a) => a.group === '2D');
+  const results1D = aggregates.filter((a) => a.bracket === '1D');
+  const results2D = aggregates.filter((a) => a.bracket === '2D');
 
   function getDuoLabel(duoId: string) {
     const duo = competition!.duos.find((d) => d.id === duoId);
