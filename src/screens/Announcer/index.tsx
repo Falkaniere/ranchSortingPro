@@ -5,6 +5,8 @@ import { PassResult } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { GroupBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
+import { computeTimeToBeat } from '../../core/logic/finals';
 import { formatTime } from '../../utils/formatTime';
 
 function StatCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
@@ -27,7 +29,7 @@ function requestFullscreen() {
 }
 
 export default function Announcer() {
-  const { results, finalResults, duosMeta, getFinalists } = useResults();
+  const { results, finalResults, duosMeta, getFinalists, getBestQualifierScores, getFinalAggregates } = useResults();
   const { competition, duos: compDuos } = useCompetition();
 
   const status = competition?.status ?? 'qualifier';
@@ -83,6 +85,26 @@ export default function Announcer() {
 
   const currentDuo = entryToDuo(pendingEntries[0]);
   const nextDuo = entryToDuo(pendingEntries[1]);
+
+  // "Tempo a bater" da próxima dupla da final: líder atual do bracket dela
+  // (agregado qualificatória + final) vs. a nota fixa de qualificatória dela.
+  const currentBracket = currentDuo?.bracket ?? currentDuo?.group;
+  const timeToBeat = useMemo(() => {
+    if (status !== 'final' || !currentDuo || !currentBracket) return null;
+    const quali = getBestQualifierScores().get(currentDuo.id);
+    if (!quali) return null;
+    const leader = getFinalAggregates().find((e) => e.bracket === currentBracket) ?? null;
+    return computeTimeToBeat(
+      { cattleCount: quali.cattleCount, timeSeconds: quali.timeSeconds },
+      leader
+    );
+  }, [status, currentDuo, currentBracket, getBestQualifierScores, getFinalAggregates]);
+
+  const leaderLabel = useMemo(() => {
+    if (status !== 'final' || !currentBracket) return undefined;
+    const leader = getFinalAggregates().find((e) => e.bracket === currentBracket);
+    return leader ? allDuos.find((d) => d.id === leader.duoId)?.label : undefined;
+  }, [status, currentBracket, getFinalAggregates, allDuos]);
 
   // Última passada registrada
   const lastResult = useMemo(() => {
@@ -156,6 +178,16 @@ export default function Announcer() {
           )}
         </div>
       </div>
+
+      {/* Tempo a bater — só na final, com uma dupla na fila */}
+      {status === 'final' && currentDuo && (
+        <TimeToBeatCard
+          bracket={currentBracket ?? currentDuo.group}
+          timeToBeat={timeToBeat}
+          leaderLabel={leaderLabel}
+          variant="hero"
+        />
+      )}
 
       {/* Última passada */}
       {lastResult && lastDuo && (

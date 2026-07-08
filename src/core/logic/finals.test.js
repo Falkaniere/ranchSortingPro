@@ -1,4 +1,4 @@
-import { selectFinalists, aggregateFinals } from './finals';
+import { selectFinalists, aggregateFinals, computeTimeToBeat } from './finals';
 
 function score(duoId, group, cattleCount, timeSeconds, doublePrincipiante) {
   return { duoId, group, cattleCount, timeSeconds, doublePrincipiante };
@@ -94,5 +94,43 @@ describe('aggregateFinals', () => {
     const aggregates = aggregateFinals(base, finalResults);
     expect(aggregates).toHaveLength(1);
     expect(aggregates[0]).toMatchObject({ group: '2D', bracket: '2D', totalCattle: 19, totalTimeSeconds: 43 });
+  });
+});
+
+describe('computeTimeToBeat', () => {
+  it('retorna null quando ainda não há líder no bracket', () => {
+    expect(computeTimeToBeat({ cattleCount: 8, timeSeconds: 30 }, null)).toBeNull();
+  });
+
+  it('calcula bois a empatar e o tempo-alvo da final para ultrapassar o líder', () => {
+    // Líder: 19 bois / 43s no total. Dupla atual fez 8 bois / 20s na qualif.
+    const ttb = computeTimeToBeat(
+      { cattleCount: 8, timeSeconds: 20 },
+      { totalCattle: 19, totalTimeSeconds: 43 }
+    );
+    // Precisa pegar 19 - 8 = 11 bois no total... na verdade 11 na final para empatar.
+    expect(ttb.cattleToTie).toBe(11);
+    // E fazer a final em menos de 43 - 20 = 23s.
+    expect(ttb.targetFinalTimeSeconds).toBe(23);
+    expect(ttb.leaderTotalCattle).toBe(19);
+    expect(ttb.leaderTotalTimeSeconds).toBe(43);
+  });
+
+  it('sinaliza (tempo-alvo <= 0) quando empatar os bois não basta — precisa de mais bois', () => {
+    // Dupla tem qualif. muito lenta: mesmo empatando os bois, o tempo já estourou.
+    const ttb = computeTimeToBeat(
+      { cattleCount: 5, timeSeconds: 60 },
+      { totalCattle: 10, totalTimeSeconds: 50 }
+    );
+    expect(ttb.cattleToTie).toBe(5);
+    expect(ttb.targetFinalTimeSeconds).toBeLessThanOrEqual(0);
+  });
+
+  it('sinaliza (bois a empatar <= 0) quando a qualif. já supera o líder em bois', () => {
+    const ttb = computeTimeToBeat(
+      { cattleCount: 12, timeSeconds: 30 },
+      { totalCattle: 10, totalTimeSeconds: 40 }
+    );
+    expect(ttb.cattleToTie).toBeLessThanOrEqual(0);
   });
 });

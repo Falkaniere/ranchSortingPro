@@ -17,6 +17,8 @@ import { EmptyState } from '../../components/ui/EmptyState';
 import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
+import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
+import { computeTimeToBeat } from '../../core/logic/finals';
 
 type PendingEntry = {
   duoId: string;
@@ -141,6 +143,26 @@ export default function Finals() {
   }
 
   const partialsFiltered = partials.filter((p) => p?.bracket === activeTab);
+
+  // Líder atual do bracket (mesma regra de classificação da final: mais bois no
+  // total, depois menor tempo somado) e o tempo que a dupla atual precisa bater.
+  const bracketLeader = useMemo(() => {
+    const ranked = partialsFiltered
+      .map((p) => ({
+        label: p!.label,
+        totalCattle: p!.qualiCattle + p!.finalCattle,
+        totalTimeSeconds: p!.qualiTime + p!.finalTime,
+      }))
+      .sort((a, b) => b.totalCattle - a.totalCattle || a.totalTimeSeconds - b.totalTimeSeconds);
+    return ranked[0] ?? null;
+  }, [partialsFiltered]);
+
+  const timeToBeat = currentDuo
+    ? computeTimeToBeat(
+        { cattleCount: currentDuo.cattleCount, timeSeconds: currentDuo.timeSeconds },
+        bracketLeader
+      )
+    : null;
 
   const FINAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
@@ -271,6 +293,10 @@ export default function Finals() {
                     Qualif.: {currentDuo.cattleCount} bois / {formatTime(currentDuo.timeSeconds, currentDuo.timeSeconds >= SAT_TIME_SECONDS)}
                   </span>
                 </div>
+              </div>
+
+              <div className="mb-4">
+                <TimeToBeatCard bracket={activeTab} timeToBeat={timeToBeat} leaderLabel={bracketLeader?.label} />
               </div>
 
               <div className="flex flex-col gap-4">
