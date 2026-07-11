@@ -12,13 +12,13 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { Competitor, normalizeCategory } from '../../core/models/Competidor';
-import { Duo } from '../../core/models/Duo';
-import { PassResult } from '../../core/models/PassResult';
-import { DEFAULT_FINALS_CUTOFF } from '../../core/constants';
+import { Competitor, normalizeCategory } from 'core/models/Competidor';
+import { Duo } from 'core/models/Duo';
+import { PassResult } from 'core/models/PassResult';
+import { DEFAULT_FINALS_CUTOFF } from 'core/constants';
 import { timestampToISO } from './firestoreHelpers';
 
-import type { CompetitionStatus } from '../../core/models/CompetitionStatus';
+import type { CompetitionStatus } from 'core/models/CompetitionStatus';
 export type { CompetitionStatus };
 
 export interface Competition {

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { signUp } from '../../services/firebase/auth';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { useToast } from '../../components/ui/Toast';
+import { signUp } from 'services/firebase/auth';
+import { Button } from 'components/ui/Button';
+import { Input } from 'components/ui/Input';
+import { useToast } from 'components/ui/Toast';
 
 export default function RegisterScreen() {
   const navigate = useNavigate();

@@ -2,18 +2,19 @@ import React, {
   createContext,
   useCallback,
   useContext,
+  useMemo,
   useState,
 } from 'react';
-import { Competitor } from '../core/models/Competidor';
-import { Duo } from '../core/models/Duo';
-import { PassResult } from '../core/models/PassResult';
-import { DEFAULT_FINALS_CUTOFF } from '../core/constants';
+import { Competitor } from 'core/models/Competidor';
+import { Duo } from 'core/models/Duo';
+import { PassResult } from 'core/models/PassResult';
+import { DEFAULT_FINALS_CUTOFF } from 'core/constants';
 import {
   Competition,
   CompetitionStatus,
   updateCompetition,
-} from '../services/firebase/competitions';
-import { useDebouncedFirestoreSave } from '../hooks/useDebouncedFirestoreSave';
+} from 'services/firebase/competitions';
+import { useDebouncedFirestoreSave } from 'hooks/useDebouncedFirestoreSave';
 
 interface CompetitionContextValue {
   competition: Competition | null;
@@ -100,24 +101,41 @@ export function CompetitionProvider({ children }: { children: React.ReactNode })
     save({ finalResults: results });
   }, [save]);
 
+  const value = useMemo(
+    () => ({
+      competition,
+      competitors,
+      duos,
+      numRounds,
+      finalsCutoff,
+      isSaving,
+      loadCompetition,
+      clearCompetition,
+      setCompetitors,
+      setDuos,
+      advanceStatus,
+      persistQualifierResults,
+      persistFinalResults,
+    }),
+    [
+      competition,
+      competitors,
+      duos,
+      numRounds,
+      finalsCutoff,
+      isSaving,
+      loadCompetition,
+      clearCompetition,
+      setCompetitors,
+      setDuos,
+      advanceStatus,
+      persistQualifierResults,
+      persistFinalResults,
+    ]
+  );
+
   return (
-    <CompetitionContext.Provider
-      value={{
-        competition,
-        competitors,
-        duos,
-        numRounds,
-        finalsCutoff,
-        isSaving,
-        loadCompetition,
-        clearCompetition,
-        setCompetitors,
-        setDuos,
-        advanceStatus,
-        persistQualifierResults,
-        persistFinalResults,
-      }}
-    >
+    <CompetitionContext.Provider value={value}>
       {children}
     </CompetitionContext.Provider>
   );

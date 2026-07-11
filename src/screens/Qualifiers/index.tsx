@@ -1,24 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
-import { useToast } from '../../components/ui/Toast';
-import { useSubscription } from '../../hooks/useSubscription';
+import { useCompetition } from 'context/CompetitionContext';
+import { useToast } from 'components/ui/Toast';
+import { useSubscription } from 'hooks/useSubscription';
 import { PassResult, DuoScore, normalizeSAT, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { compareByScore } from 'core/logic/scoring';
-import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
+import { MAX_PASS_TIME_SECONDS } from 'core/constants';
 import { exportToExcel } from 'utils/exportExcel';
 import { exportResultsToPng } from 'utils/exportPng';
 import { formatTime } from 'utils/formatTime';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
-import { QuickSelect } from '../../components/ui/QuickSelect';
-import { Modal } from '../../components/ui/Modal';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { PageHeader } from 'components/ui/PageHeader';
+import { UpgradeBadge, UpgradeModal } from 'components/ui/UpgradePrompt';
+import { QuickSelect } from 'components/ui/QuickSelect';
+import { Modal } from 'components/ui/Modal';
 
 type PartialRow = DuoScore & { duoLabel: string; passNumber: number; isSAT?: boolean; calledCattle?: number };
 

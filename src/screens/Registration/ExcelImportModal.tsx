@@ -1,16 +1,16 @@
 import React, { useRef, useState } from 'react';
 import { Competitor } from 'core/models/Competidor';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../components/ui/Toast';
-import { Button } from '../../components/ui/Button';
-import { CategoryBadge } from '../../components/ui/Badge';
-import { Modal } from '../../components/ui/Modal';
-import { saveAthlete, listAthletes } from '../../services/firebase/athletes';
-import { tryAutoLinkCompetitor } from '../../services/competitorLinking';
+import { useAuth } from 'context/AuthContext';
+import { useToast } from 'components/ui/Toast';
+import { Button } from 'components/ui/Button';
+import { CategoryBadge } from 'components/ui/Badge';
+import { Modal } from 'components/ui/Modal';
+import { saveAthlete, listAthletes } from 'services/firebase/athletes';
+import { tryAutoLinkCompetitor } from 'services/competitorLinking';
 import {
   importCompetitorsFromExcel,
   ImportedCompetitorRow,
-} from '../../utils/importExcel';
+} from 'utils/importExcel';
 
 interface ExcelImportModalProps {
   isOpen: boolean;

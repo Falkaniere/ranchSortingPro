@@ -1,15 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Competitor } from 'core/models/Competidor';
 import { Duo, DuoGroup } from 'core/models/Duo';
-import { useToast } from '../../components/ui/Toast';
-import { Button } from '../../components/ui/Button';
-import { GroupBadge } from '../../components/ui/Badge';
-import { Modal } from '../../components/ui/Modal';
+import { useToast } from 'components/ui/Toast';
+import { Button } from 'components/ui/Button';
+import { GroupBadge } from 'components/ui/Badge';
+import { Modal } from 'components/ui/Modal';
 import {
   parseDuoPairsFromPdf,
   buildDuosFromParsedPairs,
   ParsedPdfPair,
-} from '../../utils/importPdf';
+} from 'utils/importPdf';
 
 interface PdfImportModalProps {
   isOpen: boolean;

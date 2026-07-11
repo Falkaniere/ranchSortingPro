@@ -66,7 +66,7 @@ export async function importDuosFromExcel(
       const rows: any[] = XLSX.utils.sheet_to_json(sheet);
 
       const newCompetitors: Competitor[] = [];
-      const importedDuos: Duo[] = rows.map((row) => {
+      const importedDuos: Duo[] = rows.map((row): Duo | null => {
         const raw = String(row.Dupla || '');
         // Aceita tanto " & " (novo) quanto " 🤝 " / "🤝" (legado)
         const duoNames = raw.includes(' & ')
@@ -74,10 +74,17 @@ export async function importDuosFromExcel(
           : raw.split('🤝').map((s) => s.trim());
         const riderOneName = duoNames[0];
         const riderTwoName = duoNames[1];
-        const group = String(row.Categoria || '1D') as Duo['group'];
+        // A planilha pode trazer a categoria em qualquer caixa/formato ("2d",
+        // "1D", "Aberta"...). Só '2D' é 2ª divisão; qualquer outra coisa é 1D.
+        const group: Duo['group'] =
+          String(row.Categoria ?? '').trim().toUpperCase() === '2D' ? '2D' : '1D';
         // Principiante+Principiante and Light+Light are both valid pairs, unlike Aberta+Aberta —
         // pick a default that can never form an invalid combo when both riders are auto-created.
         const fallbackCategory: RiderCategory = group === '2D' ? 'Principiante' : 'Light';
+
+        // Ignora linhas malformadas (sem os dois nomes) em vez de derrubar a
+        // importação inteira com um erro de referência nula em riderTwo!.id.
+        if (!riderOneName || !riderTwoName) return null;
 
         let riderOne =
           competitors.find(
@@ -122,7 +129,10 @@ export async function importDuosFromExcel(
           label: `${riderOneName} & ${riderTwoName}`,
           group,
         };
-      });
+      }).filter((d): d is Duo => d !== null)
+        // Numera as passadas na ordem em que aparecem na planilha, para que a
+        // tela de Duplas e as exportações não caiam no fallback por índice.
+        .map((d, i) => ({ ...d, passNumber: i + 1 }));
 
       if (newCompetitors.length > 0) {
         setCompetitors((prev) => [...prev, ...newCompetitors]);

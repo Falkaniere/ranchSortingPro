@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { CompetitorProfile } from '../../../core/models/CompetitorProfile';
-import { getCompetitorProfile } from '../../../services/firebase/competitorProfiles';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
+import { getCompetitorProfile } from 'services/firebase/competitorProfiles';
 import {
   getCompetitorHistory,
   CompetitionHistoryEntry,
-} from '../../../services/firebase/competitorHistory';
-import { Button } from '../../../components/ui/Button';
-import { Card } from '../../../components/ui/Card';
-import { Spinner } from '../../../components/ui/Spinner';
-import { EmptyState } from '../../../components/ui/EmptyState';
+} from 'services/firebase/competitorHistory';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { Spinner } from 'components/ui/Spinner';
+import { EmptyState } from 'components/ui/EmptyState';
 
 export default function CompetitorPublicProfile() {
   const { profileId } = useParams<{ profileId: string }>();

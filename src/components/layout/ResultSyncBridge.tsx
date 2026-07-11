@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useResults } from '../../context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
+import { useResults } from 'context/ResultContext';
+import { useCompetition } from 'context/CompetitionContext';
 
 export function ResultSyncBridge() {
   const { results, finalResults } = useResults();

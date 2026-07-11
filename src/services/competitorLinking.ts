@@ -1,4 +1,4 @@
-import { Competitor } from '../core/models/Competidor';
+import { Competitor } from 'core/models/Competidor';
 import {
   searchProfilesByNormalizedName,
   createCompetitorProfile,

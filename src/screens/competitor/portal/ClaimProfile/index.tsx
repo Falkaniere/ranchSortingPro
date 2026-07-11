@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { CompetitorProfile } from '../../../../core/models/CompetitorProfile';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
 import {
   searchProfilesForUser,
   getCompetitorProfile,
   claimCompetitorProfile,
   createCompetitorProfile,
-} from '../../../../services/firebase/competitorProfiles';
-import { useAuth } from '../../../../context/AuthContext';
-import { useToast } from '../../../../components/ui/Toast';
-import { Button } from '../../../../components/ui/Button';
-import { Input } from '../../../../components/ui/Input';
-import { Card } from '../../../../components/ui/Card';
-import { Spinner } from '../../../../components/ui/Spinner';
+} from 'services/firebase/competitorProfiles';
+import { useAuth } from 'context/AuthContext';
+import { useToast } from 'components/ui/Toast';
+import { Button } from 'components/ui/Button';
+import { Input } from 'components/ui/Input';
+import { Card } from 'components/ui/Card';
+import { Spinner } from 'components/ui/Spinner';
 
 export default function ClaimProfile() {
   const { user, competitorProfileId, refreshUserDoc } = useAuth();

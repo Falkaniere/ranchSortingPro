@@ -1,20 +1,20 @@
 import React, { useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
-import { useToast } from '../../components/ui/Toast';
-import { useSubscription } from '../../hooks/useSubscription';
+import { useCompetition } from 'context/CompetitionContext';
+import { useToast } from 'components/ui/Toast';
+import { useSubscription } from 'hooks/useSubscription';
 import { exportToExcel } from 'utils/exportExcel';
 import { exportDuosToPng } from 'utils/exportPng';
 import { importDuosFromExcel } from 'utils/importExcel';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { Modal } from '../../components/ui/Modal';
-import { UpgradeModal } from '../../components/ui/UpgradePrompt';
-import { Competitor } from '../../core/models/Competidor';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Modal } from 'components/ui/Modal';
+import { UpgradeModal } from 'components/ui/UpgradePrompt';
+import { Competitor } from 'core/models/Competidor';
 import { PdfImportModal } from './PdfImportModal';
 
 export default function Duos() {

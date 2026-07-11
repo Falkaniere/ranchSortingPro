@@ -11,8 +11,8 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { CompetitorProfile } from '../../core/models/CompetitorProfile';
-import { normalizeName, nameSimilarity } from '../../utils/nameNormalization';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
+import { normalizeName, nameSimilarity } from 'utils/nameNormalization';
 import { timestampToISO, timestampToISOOrUndefined } from './firestoreHelpers';
 
 function toProfile(id: string, data: any): CompetitorProfile {

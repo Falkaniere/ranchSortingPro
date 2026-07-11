@@ -17,14 +17,6 @@
     "web-vitals": "^2.1.4",
     "xlsx": "^0.18.5"
   },
-  "compilerOptions": {
-    "baseUrl": "src",
-    "paths": {
-      "@screens/*": [
-        "src/screens/*"
-      ]
-    }
-  },
   "scripts": {
     "postinstall": "node scripts/copy-pdf-worker.js",
     "start": "react-app-rewired start",

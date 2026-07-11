@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCompetition, Competition } from '../../../../services/firebase/competitions';
-import { buildBestQualifierScorePerDuo } from '../../../../core/logic/scoring';
-import { aggregateFinals } from '../../../../core/logic/finals';
-import { Card } from '../../../../components/ui/Card';
-import { GroupBadge } from '../../../../components/ui/Badge';
-import { Spinner } from '../../../../components/ui/Spinner';
-import { EmptyState } from '../../../../components/ui/EmptyState';
-import { Button } from '../../../../components/ui/Button';
+import { getCompetition, Competition } from 'services/firebase/competitions';
+import { buildBestQualifierScorePerDuo } from 'core/logic/scoring';
+import { aggregateFinals } from 'core/logic/finals';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { Spinner } from 'components/ui/Spinner';
+import { EmptyState } from 'components/ui/EmptyState';
+import { Button } from 'components/ui/Button';
 
 export default function CompetitionResults() {
   const { competitionId } = useParams<{ competitionId: string }>();

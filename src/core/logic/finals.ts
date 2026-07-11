@@ -1,6 +1,6 @@
-import { DuoScore, PassResult, normalizeSAT } from '../models/PassResult';
-import { DuoGroup } from '../models/Duo';
-import { DEFAULT_FINALS_CUTOFF } from '../constants';
+import { DuoScore, PassResult, normalizeSAT } from 'core/models/PassResult';
+import { DuoGroup } from 'core/models/Duo';
+import { DEFAULT_FINALS_CUTOFF } from 'core/constants';
 import { standingsFromScores } from './scoring';
 
 export interface FinalsSelection {

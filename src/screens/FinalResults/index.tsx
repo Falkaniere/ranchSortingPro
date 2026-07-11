@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
+import { useCompetition } from 'context/CompetitionContext';
 import { FinalAggregationEntry } from 'core/logic/finals';
-import { useToast } from '../../components/ui/Toast';
+import { useToast } from 'components/ui/Toast';
 import { exportToExcel } from 'utils/exportExcel';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { Spinner } from '../../components/ui/Spinner';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { PageHeader } from 'components/ui/PageHeader';
+import { Spinner } from 'components/ui/Spinner';
 
 export default function FinalResults() {
   const { id } = useParams<{ id: string }>();

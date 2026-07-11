@@ -1,11 +1,11 @@
 import React, { useState, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CompetitorProfile } from '../../../core/models/CompetitorProfile';
-import { searchProfilesForUser } from '../../../services/firebase/competitorProfiles';
-import { Button } from '../../../components/ui/Button';
-import { Input } from '../../../components/ui/Input';
-import { Card } from '../../../components/ui/Card';
-import { Spinner } from '../../../components/ui/Spinner';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
+import { searchProfilesForUser } from 'services/firebase/competitorProfiles';
+import { Button } from 'components/ui/Button';
+import { Input } from 'components/ui/Input';
+import { Card } from 'components/ui/Card';
+import { Spinner } from 'components/ui/Spinner';
 
 export default function CompetitorSearch() {
   const navigate = useNavigate();

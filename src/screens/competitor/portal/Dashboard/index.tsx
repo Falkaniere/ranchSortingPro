@@ -1,17 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet, useLocation, NavLink } from 'react-router-dom';
-import { CompetitorProfile } from '../../../../core/models/CompetitorProfile';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
 import {
   getCompetitorProfile,
-} from '../../../../services/firebase/competitorProfiles';
+} from 'services/firebase/competitorProfiles';
 import {
   getCompetitorHistory,
   CompetitionHistoryEntry,
-} from '../../../../services/firebase/competitorHistory';
-import { useAuth } from '../../../../context/AuthContext';
-import { signOut } from '../../../../services/firebase/auth';
-import { Button } from '../../../../components/ui/Button';
-import { Spinner } from '../../../../components/ui/Spinner';
+} from 'services/firebase/competitorHistory';
+import { useAuth } from 'context/AuthContext';
+import { signOut } from 'services/firebase/auth';
+import { Button } from 'components/ui/Button';
+import { Spinner } from 'components/ui/Spinner';
 
 const NAV_ITEMS = [
   { to: '/portal', label: 'Minhas Competições', icon: '🏟️', end: true },

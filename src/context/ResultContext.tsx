@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useState } from 'react';
+import React, { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import { PassResult, DuoScore, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { buildBestQualifierScorePerDuo } from 'core/logic/scoring';
@@ -81,26 +81,26 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
   // -----------------------------
   //  INITIALIZE FROM COMPETITION
   // -----------------------------
-  function initializeFromCompetition(
+  const initializeFromCompetition = useCallback((
     qualifierResults: PassResult[],
     finals: PassResult[],
     duos: Duo[]
-  ) {
+  ) => {
     setResults(qualifierResults);
     setFinalResults(finals);
     setDuosMeta(duos);
-  }
+  }, []);
 
   // -----------------------------
   //  ADD RESULTS
   // -----------------------------
-  function addQualifierResult(
+  const addQualifierResult = useCallback((
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
     isSAT = false,
     calledCattle?: number
-  ) {
+  ) => {
     const newResult: PassResult = {
       id: crypto.randomUUID(),
       duoId,
@@ -112,14 +112,14 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       createdAtISO: new Date().toISOString(),
     };
     setResults((prev) => [...prev, newResult]);
-  }
+  }, []);
 
-  function updateQualifierResult(
+  const updateQualifierResult = useCallback((
     duoId: string,
     cattleCount: number,
     timeSeconds: number,
     calledCattle?: number
-  ) {
+  ) => {
     setResults((prev) =>
       prev.map((r) =>
         r.duoId === duoId && r.stage === 'Qualifier'
@@ -133,16 +133,16 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
           : r
       )
     );
-  }
+  }, []);
 
-  function addFinalResult(
+  const addFinalResult = useCallback((
     duoId: string,
     bracket: DuoGroup,
     cattleCount: number,
     timeSeconds: number,
     isSAT = false,
     calledCattle?: number
-  ) {
+  ) => {
     const newResult: PassResult = {
       id: crypto.randomUUID(),
       duoId,
@@ -155,7 +155,7 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
       createdAtISO: new Date().toISOString(),
     };
     setFinalResults((prev) => [...prev, newResult]);
-  }
+  }, []);
 
   // -----------------------------
   //  BEST QUALIFIER SCORES
@@ -183,19 +183,33 @@ export function ResultsProvider({ children }: { children: React.ReactNode }) {
     return aggregateFinals(best, finalResults);
   }, [getBestQualifierScores, finalResults]);
 
-  const value: ResultsContextValue = {
-    results,
-    finalResults,
-    duosMeta,
-    setDuosMeta,
-    initializeFromCompetition,
-    addQualifierResult,
-    updateQualifierResult,
-    addFinalResult,
-    getBestQualifierScores,
-    getFinalists,
-    getFinalAggregates,
-  };
+  const value: ResultsContextValue = useMemo(
+    () => ({
+      results,
+      finalResults,
+      duosMeta,
+      setDuosMeta,
+      initializeFromCompetition,
+      addQualifierResult,
+      updateQualifierResult,
+      addFinalResult,
+      getBestQualifierScores,
+      getFinalists,
+      getFinalAggregates,
+    }),
+    [
+      results,
+      finalResults,
+      duosMeta,
+      initializeFromCompetition,
+      addQualifierResult,
+      updateQualifierResult,
+      addFinalResult,
+      getBestQualifierScores,
+      getFinalists,
+      getFinalAggregates,
+    ]
+  );
 
   return (
     <ResultsContext.Provider value={value}>{children}</ResultsContext.Provider>

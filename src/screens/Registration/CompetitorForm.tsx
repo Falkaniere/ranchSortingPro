@@ -1,15 +1,15 @@
 import React, { useRef, useState } from 'react';
 import { Competitor, RiderCategory } from 'core/models/Competidor';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../components/ui/Toast';
-import { useSubscription } from '../../hooks/useSubscription';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Card } from '../../components/ui/Card';
-import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
-import { saveAthlete } from '../../services/firebase/athletes';
-import { tryAutoLinkCompetitor } from '../../services/competitorLinking';
-import { CATEGORIES } from '../../core/constants';
+import { useAuth } from 'context/AuthContext';
+import { useToast } from 'components/ui/Toast';
+import { useSubscription } from 'hooks/useSubscription';
+import { Button } from 'components/ui/Button';
+import { Input } from 'components/ui/Input';
+import { Card } from 'components/ui/Card';
+import { UpgradeBadge, UpgradeModal } from 'components/ui/UpgradePrompt';
+import { saveAthlete } from 'services/firebase/athletes';
+import { tryAutoLinkCompetitor } from 'services/competitorLinking';
+import { CATEGORIES } from 'core/constants';
 
 interface CompetitorFormProps {
   competitors: Competitor[];

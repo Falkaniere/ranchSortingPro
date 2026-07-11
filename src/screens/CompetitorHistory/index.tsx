@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
-import { Card } from '../../components/ui/Card';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { Button } from '../../components/ui/Button';
-import { formatTime } from '../../utils/formatTime';
+import { useCompetition } from 'context/CompetitionContext';
+import { Card } from 'components/ui/Card';
+import { PageHeader } from 'components/ui/PageHeader';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { Button } from 'components/ui/Button';
+import { formatTime } from 'utils/formatTime';
 
 export default function CompetitorHistory() {
   const { competitorId } = useParams<{ competitorId: string }>();

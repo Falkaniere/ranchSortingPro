@@ -1,9 +1,9 @@
 import React from 'react';
-import { CompetitionHistoryEntry } from '../../../../services/firebase/competitorHistory';
-import { Card } from '../../../../components/ui/Card';
-import { EmptyState } from '../../../../components/ui/EmptyState';
-import { GroupBadge } from '../../../../components/ui/Badge';
-import { formatTime } from '../../../../utils/formatTime';
+import { CompetitionHistoryEntry } from 'services/firebase/competitorHistory';
+import { Card } from 'components/ui/Card';
+import { EmptyState } from 'components/ui/EmptyState';
+import { GroupBadge } from 'components/ui/Badge';
+import { formatTime } from 'utils/formatTime';
 
 interface Props {
   history: CompetitionHistoryEntry[];

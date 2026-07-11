@@ -8,7 +8,7 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { CompetitorLink } from '../../core/models/CompetitorProfile';
+import { CompetitorLink } from 'core/models/CompetitorProfile';
 import { timestampToISO } from './firestoreHelpers';
 
 function toLink(id: string, data: any): CompetitorLink {

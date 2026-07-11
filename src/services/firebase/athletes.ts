@@ -7,8 +7,8 @@ import {
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { RiderCategory, normalizeCategory } from '../../core/models/Competidor';
-import { Competitor } from '../../core/models/Competidor';
+import { RiderCategory, normalizeCategory } from 'core/models/Competidor';
+import { Competitor } from 'core/models/Competidor';
 import { timestampToISO } from './firestoreHelpers';
 
 export interface AthleteProfile {

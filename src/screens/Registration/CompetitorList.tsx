@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor, RiderCategory } from 'core/models/Competidor';
-import { useToast } from '../../components/ui/Toast';
-import { Button } from '../../components/ui/Button';
-import { CategoryBadge } from '../../components/ui/Badge';
-import { Card } from '../../components/ui/Card';
-import { ConfirmModal } from '../../components/ui/Modal';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { CATEGORIES } from '../../core/constants';
+import { useToast } from 'components/ui/Toast';
+import { Button } from 'components/ui/Button';
+import { CategoryBadge } from 'components/ui/Badge';
+import { Card } from 'components/ui/Card';
+import { ConfirmModal } from 'components/ui/Modal';
+import { EmptyState } from 'components/ui/EmptyState';
+import { CATEGORIES } from 'core/constants';
 
 interface CompetitorListProps {
   competitors: Competitor[];

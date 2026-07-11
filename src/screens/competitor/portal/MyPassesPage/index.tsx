@@ -1,8 +1,8 @@
 import React from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { CompetitionHistoryEntry } from '../../../../services/firebase/competitorHistory';
-import { CompetitorProfile } from '../../../../core/models/CompetitorProfile';
-import MyPasses from '../MyPasses';
+import { CompetitionHistoryEntry } from 'services/firebase/competitorHistory';
+import { CompetitorProfile } from 'core/models/CompetitorProfile';
+import MyPasses from 'screens/competitor/portal/MyPasses';
 
 interface OutletCtx {
   history: CompetitionHistoryEntry[];

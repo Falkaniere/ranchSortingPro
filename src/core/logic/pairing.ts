@@ -1,5 +1,5 @@
-import { Competitor } from '../models/Competidor';
-import { Duo, computeDuoGroup, canPair, isDoublePrincipiante } from '../models/Duo';
+import { Competitor } from 'core/models/Competidor';
+import { Duo, computeDuoGroup, canPair, isDoublePrincipiante } from 'core/models/Duo';
 
 export interface PairingOutput {
   duos: Duo[];

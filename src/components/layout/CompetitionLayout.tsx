@@ -1,10 +1,10 @@
 import React, { useEffect } from 'react';
 import { Outlet, useNavigate, useParams, NavLink } from 'react-router-dom';
-import { useCompetition } from '../../context/CompetitionContext';
-import { useResults } from '../../context/ResultContext';
-import { getCompetition, getCompetitionFromServer } from '../../services/firebase/competitions';
-import { Spinner } from '../ui/Spinner';
-import { useAuth } from '../../context/AuthContext';
+import { useCompetition } from 'context/CompetitionContext';
+import { useResults } from 'context/ResultContext';
+import { getCompetition, getCompetitionFromServer } from 'services/firebase/competitions';
+import { Spinner } from 'components/ui/Spinner';
+import { useAuth } from 'context/AuthContext';
 import { ResultSyncBridge } from './ResultSyncBridge';
 
 const steps = [

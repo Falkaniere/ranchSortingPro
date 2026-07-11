@@ -1,12 +1,12 @@
 import React from 'react';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
+import { useCompetition } from 'context/CompetitionContext';
 import { PassResult } from 'core/models/PassResult';
-import { Card } from '../../components/ui/Card';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { formatTime } from '../../utils/formatTime';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { PageHeader } from 'components/ui/PageHeader';
+import { formatTime } from 'utils/formatTime';
 
 export default function RoundsOverview() {
   const { results, duosMeta } = useResults();

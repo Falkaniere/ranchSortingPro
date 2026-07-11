@@ -1,26 +1,26 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
-import { useCompetition } from '../../context/CompetitionContext';
-import { useSubscription } from '../../hooks/useSubscription';
-import { STATUS_ROUTES, DEFAULT_FINALS_CUTOFF } from '../../core/constants';
-import { signOut } from '../../services/firebase/auth';
+import { useAuth } from 'context/AuthContext';
+import { useCompetition } from 'context/CompetitionContext';
+import { useSubscription } from 'hooks/useSubscription';
+import { STATUS_ROUTES, DEFAULT_FINALS_CUTOFF } from 'core/constants';
+import { signOut } from 'services/firebase/auth';
 import {
   Competition,
   createCompetition,
   deleteCompetition,
   listCompetitions,
-} from '../../services/firebase/competitions';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { StatusBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
-import { Modal } from '../../components/ui/Modal';
-import { ConfirmModal } from '../../components/ui/Modal';
-import { Input } from '../../components/ui/Input';
-import { Spinner } from '../../components/ui/Spinner';
-import { useToast } from '../../components/ui/Toast';
+} from 'services/firebase/competitions';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { StatusBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { UpgradeBadge, UpgradeModal } from 'components/ui/UpgradePrompt';
+import { Modal } from 'components/ui/Modal';
+import { ConfirmModal } from 'components/ui/Modal';
+import { Input } from 'components/ui/Input';
+import { Spinner } from 'components/ui/Spinner';
+import { useToast } from 'components/ui/Toast';
 
 export default function DashboardScreen() {
   const { user } = useAuth();

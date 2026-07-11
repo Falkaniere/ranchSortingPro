@@ -1,4 +1,13 @@
-# Getting Started with Create React App
+# Ranch Sorting Pro
+
+Aplicação web (React + Firebase) para organização e apuração de provas de
+**Ranch Sorting**: cadastro de competidores, sorteio de duplas, registro das
+qualificatórias/finais, classificação, relatórios e um portal do competidor.
+
+📖 **Documentação de arquitetura, pastas, APIs e fluxos:**
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md)
+
+## Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 

@@ -20,6 +20,8 @@
       "context/*": ["context/*"],
       "components/*": ["components/*"],
       "screens/*": ["screens/*"],
+      "hooks/*": ["hooks/*"],
+      "services/*": ["services/*"],
       "utils/*": ["utils/*"]
     }
   },

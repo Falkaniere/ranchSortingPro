@@ -1,23 +1,23 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
-import { useToast } from '../../components/ui/Toast';
-import { useSubscription } from '../../hooks/useSubscription';
+import { useCompetition } from 'context/CompetitionContext';
+import { useToast } from 'components/ui/Toast';
+import { useSubscription } from 'hooks/useSubscription';
 import { PassResult, SAT_TIME_SECONDS } from 'core/models/PassResult';
 import { formatTime } from 'utils/formatTime';
 import { Duo, DuoGroup } from 'core/models/Duo';
 import { exportToExcel } from 'utils/exportExcel';
-import { MAX_PASS_TIME_SECONDS } from '../../core/constants';
+import { MAX_PASS_TIME_SECONDS } from 'core/constants';
 import { exportResultsToPng } from 'utils/exportPng';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { GroupBadge } from '../../components/ui/Badge';
-import { EmptyState } from '../../components/ui/EmptyState';
-import { PageHeader } from '../../components/ui/PageHeader';
-import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
-import { QuickSelect } from '../../components/ui/QuickSelect';
-import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
+import { Button } from 'components/ui/Button';
+import { Card } from 'components/ui/Card';
+import { GroupBadge } from 'components/ui/Badge';
+import { EmptyState } from 'components/ui/EmptyState';
+import { PageHeader } from 'components/ui/PageHeader';
+import { UpgradeBadge, UpgradeModal } from 'components/ui/UpgradePrompt';
+import { QuickSelect } from 'components/ui/QuickSelect';
+import { TimeToBeatCard } from 'components/ui/TimeToBeatCard';
 import { computeTimeToBeat } from 'core/logic/finals';
 
 type PendingEntry = {

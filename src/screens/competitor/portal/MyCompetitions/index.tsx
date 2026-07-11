@@ -1,9 +1,9 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CompetitionHistoryEntry } from '../../../../services/firebase/competitorHistory';
-import { Card } from '../../../../components/ui/Card';
-import { EmptyState } from '../../../../components/ui/EmptyState';
-import { STATUS_LABELS } from '../../../../core/constants';
+import { CompetitionHistoryEntry } from 'services/firebase/competitorHistory';
+import { Card } from 'components/ui/Card';
+import { EmptyState } from 'components/ui/EmptyState';
+import { STATUS_LABELS } from 'core/constants';
 
 const STATUS_COLOR: Record<string, string> = {
   draft: 'bg-dust-200 text-rope-500',

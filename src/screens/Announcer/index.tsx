@@ -1,13 +1,13 @@
 import React, { useMemo } from 'react';
 import { useResults } from 'context/ResultContext';
-import { useCompetition } from '../../context/CompetitionContext';
+import { useCompetition } from 'context/CompetitionContext';
 import { PassResult } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
-import { GroupBadge } from '../../components/ui/Badge';
-import { Button } from '../../components/ui/Button';
-import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
+import { GroupBadge } from 'components/ui/Badge';
+import { Button } from 'components/ui/Button';
+import { TimeToBeatCard } from 'components/ui/TimeToBeatCard';
 import { computeTimeToBeat } from 'core/logic/finals';
-import { formatTime } from '../../utils/formatTime';
+import { formatTime } from 'utils/formatTime';
 
 function StatCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
   return (

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Competitor } from 'core/models/Competidor';
-import { useAuth } from '../../context/AuthContext';
-import { useToast } from '../../components/ui/Toast';
-import { Button } from '../../components/ui/Button';
-import { CategoryBadge } from '../../components/ui/Badge';
-import { Modal } from '../../components/ui/Modal';
+import { useAuth } from 'context/AuthContext';
+import { useToast } from 'components/ui/Toast';
+import { Button } from 'components/ui/Button';
+import { CategoryBadge } from 'components/ui/Badge';
+import { Modal } from 'components/ui/Modal';
 import {
   AthleteProfile,
   listAthletes,
   importProfilesAsCompetitors,
-} from '../../services/firebase/athletes';
-import { tryAutoLinkCompetitor } from '../../services/competitorLinking';
+} from 'services/firebase/athletes';
+import { tryAutoLinkCompetitor } from 'services/competitorLinking';
 
 interface AthletePickerModalProps {
   isOpen: boolean;

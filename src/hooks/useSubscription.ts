@@ -1,5 +1,5 @@
-import { useAuth } from '../context/AuthContext';
-import { PLAN_LIMITS } from '../core/constants';
+import { useAuth } from 'context/AuthContext';
+import { PLAN_LIMITS } from 'core/constants';
 
 export function useSubscription() {
   const { role } = useAuth();

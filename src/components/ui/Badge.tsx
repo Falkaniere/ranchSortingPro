@@ -1,7 +1,7 @@
 import React from 'react';
-import { RiderCategory } from '../../core/models/Competidor';
-import { CompetitionStatus } from '../../services/firebase/competitions';
-import { STATUS_LABELS } from '../../core/constants';
+import { RiderCategory } from 'core/models/Competidor';
+import { CompetitionStatus } from 'services/firebase/competitions';
+import { STATUS_LABELS } from 'core/constants';
 
 type DuoGroup = '1D' | '2D';
 
