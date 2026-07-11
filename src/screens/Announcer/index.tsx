@@ -88,23 +88,29 @@ export default function Announcer() {
 
   // "Tempo a bater" da próxima dupla da final: líder atual do bracket dela
   // (agregado qualificatória + final) vs. a nota fixa de qualificatória dela.
+  // O agregado é reconstruído do zero (best scores + aggregate + sort), então
+  // é memoizado uma vez e reaproveitado para o líder e para o tempo a bater.
   const currentBracket = currentDuo?.bracket ?? currentDuo?.group;
+
+  const bracketLeaderEntry = useMemo(() => {
+    if (status !== 'final' || !currentBracket) return null;
+    return getFinalAggregates().find((e) => e.bracket === currentBracket) ?? null;
+  }, [status, currentBracket, getFinalAggregates]);
+
   const timeToBeat = useMemo(() => {
-    if (status !== 'final' || !currentDuo || !currentBracket) return null;
+    if (status !== 'final' || !currentDuo) return null;
     const quali = getBestQualifierScores().get(currentDuo.id);
     if (!quali) return null;
-    const leader = getFinalAggregates().find((e) => e.bracket === currentBracket) ?? null;
     return computeTimeToBeat(
       { cattleCount: quali.cattleCount, timeSeconds: quali.timeSeconds },
-      leader
+      bracketLeaderEntry
     );
-  }, [status, currentDuo, currentBracket, getBestQualifierScores, getFinalAggregates]);
+  }, [status, currentDuo, getBestQualifierScores, bracketLeaderEntry]);
 
   const leaderLabel = useMemo(() => {
-    if (status !== 'final' || !currentBracket) return undefined;
-    const leader = getFinalAggregates().find((e) => e.bracket === currentBracket);
-    return leader ? allDuos.find((d) => d.id === leader.duoId)?.label : undefined;
-  }, [status, currentBracket, getFinalAggregates, allDuos]);
+    if (!bracketLeaderEntry) return undefined;
+    return allDuos.find((d) => d.id === bracketLeaderEntry.duoId)?.label;
+  }, [bracketLeaderEntry, allDuos]);
 
   // Última passada registrada
   const lastResult = useMemo(() => {
