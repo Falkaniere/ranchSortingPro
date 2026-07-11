@@ -76,3 +76,62 @@ export function aggregateFinals(
     return a.totalTimeSeconds - b.totalTimeSeconds;
   });
 }
+
+/** Score da qualificatória de uma dupla — base fixa para o cálculo do total na final. */
+export interface QualiScore {
+  cattleCount: number;
+  timeSeconds: number;
+}
+
+/** Total (qualificatória + final) de um concorrente já classificado no bracket. */
+export interface FinalTotal {
+  totalCattle: number;
+  totalTimeSeconds: number;
+}
+
+/**
+ * "Tempo a ser batido": o que a dupla prestes a correr precisa fazer na final
+ * para assumir a liderança do bracket.
+ *
+ * A classificação da final é pelo total acumulado (qualificatória + final):
+ * mais bois primeiro, depois menor tempo somado (ver `aggregateFinals`). Como
+ * a nota da qualificatória da dupla é fixa e conhecida, dá para dizer de
+ * antemão o que ela precisa na passada da final.
+ */
+export interface TimeToBeat {
+  /** Total de bois do líder atual (referência a superar/empatar). */
+  leaderTotalCattle: number;
+  /** Tempo somado do líder atual. */
+  leaderTotalTimeSeconds: number;
+  /**
+   * Bois que a dupla precisa pegar na final para EMPATAR o total de bois do
+   * líder. Pode ser <= 0 quando a qualificatória da dupla, sozinha, já empata
+   * (0) ou supera (< 0) o total de bois do líder — nesse caso a ponta em bois
+   * independe da passada da final.
+   */
+  cattleToTie: number;
+  /**
+   * Tempo máximo na final (exclusivo) para superar o líder, assumindo que a
+   * dupla empate o total de bois. Se <= 0, empatar os bois não basta: é
+   * preciso pegar mais bois que o líder.
+   */
+  targetFinalTimeSeconds: number;
+}
+
+/**
+ * Calcula o tempo a ser batido pela `currentQuali` diante do `leader` atual do
+ * bracket. Retorna `null` quando ainda não há líder (ninguém correu a final) —
+ * nesse caso a dupla assume a ponta apenas completando a passada.
+ */
+export function computeTimeToBeat(
+  currentQuali: QualiScore,
+  leader: FinalTotal | null
+): TimeToBeat | null {
+  if (!leader) return null;
+  return {
+    leaderTotalCattle: leader.totalCattle,
+    leaderTotalTimeSeconds: leader.totalTimeSeconds,
+    cattleToTie: leader.totalCattle - currentQuali.cattleCount,
+    targetFinalTimeSeconds: leader.totalTimeSeconds - currentQuali.timeSeconds,
+  };
+}

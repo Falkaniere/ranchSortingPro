@@ -5,6 +5,8 @@ import { PassResult } from 'core/models/PassResult';
 import { DuoGroup } from 'core/models/Duo';
 import { GroupBadge } from '../../components/ui/Badge';
 import { Button } from '../../components/ui/Button';
+import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
+import { computeTimeToBeat } from 'core/logic/finals';
 import { formatTime } from '../../utils/formatTime';
 
 function StatCard({ label, value, highlight }: { label: string; value: string | number; highlight?: boolean }) {
@@ -27,7 +29,7 @@ function requestFullscreen() {
 }
 
 export default function Announcer() {
-  const { results, finalResults, duosMeta, getFinalists } = useResults();
+  const { results, finalResults, duosMeta, getFinalists, getBestQualifierScores, getFinalAggregates } = useResults();
   const { competition, duos: compDuos } = useCompetition();
 
   const status = competition?.status ?? 'qualifier';
@@ -83,6 +85,35 @@ export default function Announcer() {
 
   const currentDuo = entryToDuo(pendingEntries[0]);
   const nextDuo = entryToDuo(pendingEntries[1]);
+
+  // "Tempo a bater" da próxima dupla da final: líder atual do bracket dela
+  // (agregado qualificatória + final) vs. a nota fixa de qualificatória dela.
+  // O agregado é reconstruído do zero (best scores + aggregate + sort), então
+  // é memoizado uma vez e reaproveitado para o líder e para o tempo a bater.
+  // Depende de id/bracket (primitivos estáveis) e não do objeto currentDuo, que
+  // é recriado por spread em entryToDuo a cada render e invalidaria os memos.
+  const currentDuoId = currentDuo?.id;
+  const currentBracket = currentDuo?.bracket ?? currentDuo?.group;
+
+  const bracketLeaderEntry = useMemo(() => {
+    if (status !== 'final' || !currentBracket) return null;
+    return getFinalAggregates().find((e) => e.bracket === currentBracket) ?? null;
+  }, [status, currentBracket, getFinalAggregates]);
+
+  const timeToBeat = useMemo(() => {
+    if (status !== 'final' || !currentDuoId) return null;
+    const quali = getBestQualifierScores().get(currentDuoId);
+    if (!quali) return null;
+    return computeTimeToBeat(
+      { cattleCount: quali.cattleCount, timeSeconds: quali.timeSeconds },
+      bracketLeaderEntry
+    );
+  }, [status, currentDuoId, getBestQualifierScores, bracketLeaderEntry]);
+
+  const leaderLabel = useMemo(() => {
+    if (!bracketLeaderEntry) return undefined;
+    return allDuos.find((d) => d.id === bracketLeaderEntry.duoId)?.label;
+  }, [bracketLeaderEntry, allDuos]);
 
   // Última passada registrada
   const lastResult = useMemo(() => {
@@ -156,6 +187,16 @@ export default function Announcer() {
           )}
         </div>
       </div>
+
+      {/* Tempo a bater — só na final, com uma dupla na fila */}
+      {status === 'final' && currentDuo && (
+        <TimeToBeatCard
+          bracket={currentBracket ?? currentDuo.group}
+          timeToBeat={timeToBeat}
+          leaderLabel={leaderLabel}
+          variant="hero"
+        />
+      )}
 
       {/* Última passada */}
       {lastResult && lastDuo && (
