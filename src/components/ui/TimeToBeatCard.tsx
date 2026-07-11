@@ -78,10 +78,15 @@ export function TimeToBeatCard({ bracket, timeToBeat, leaderLabel, variant = 'co
     );
   }
 
+  // O alvo é um limite estrito ("< X"). Trunca para baixo no centésimo em vez
+  // de deixar o toFixed(2) arredondar para cima — arredondar exibiria um tempo
+  // que na verdade empata/perde por centésimos (ex.: 22.995s viraria "< 23.00s").
+  const targetDisplay = Math.floor(targetFinalTimeSeconds * 100) / 100;
+
   return (
     <div className={wrapper}>
       <p className={label}>Tempo a bater — Final {bracket}</p>
-      <p className={bigValue}>&lt; {formatTime(targetFinalTimeSeconds)}</p>
+      <p className={bigValue}>&lt; {formatTime(targetDisplay)}</p>
       <p className={note}>
         Pegando {cattleToTie} {cattleToTie === 1 ? 'boi' : 'bois'} para ultrapassar
         {leaderLabel ? ` ${leaderLabel}` : ' o líder'} (

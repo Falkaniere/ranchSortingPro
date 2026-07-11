@@ -90,6 +90,9 @@ export default function Announcer() {
   // (agregado qualificatória + final) vs. a nota fixa de qualificatória dela.
   // O agregado é reconstruído do zero (best scores + aggregate + sort), então
   // é memoizado uma vez e reaproveitado para o líder e para o tempo a bater.
+  // Depende de id/bracket (primitivos estáveis) e não do objeto currentDuo, que
+  // é recriado por spread em entryToDuo a cada render e invalidaria os memos.
+  const currentDuoId = currentDuo?.id;
   const currentBracket = currentDuo?.bracket ?? currentDuo?.group;
 
   const bracketLeaderEntry = useMemo(() => {
@@ -98,14 +101,14 @@ export default function Announcer() {
   }, [status, currentBracket, getFinalAggregates]);
 
   const timeToBeat = useMemo(() => {
-    if (status !== 'final' || !currentDuo) return null;
-    const quali = getBestQualifierScores().get(currentDuo.id);
+    if (status !== 'final' || !currentDuoId) return null;
+    const quali = getBestQualifierScores().get(currentDuoId);
     if (!quali) return null;
     return computeTimeToBeat(
       { cattleCount: quali.cattleCount, timeSeconds: quali.timeSeconds },
       bracketLeaderEntry
     );
-  }, [status, currentDuo, getBestQualifierScores, bracketLeaderEntry]);
+  }, [status, currentDuoId, getBestQualifierScores, bracketLeaderEntry]);
 
   const leaderLabel = useMemo(() => {
     if (!bracketLeaderEntry) return undefined;

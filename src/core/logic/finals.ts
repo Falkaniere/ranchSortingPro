@@ -103,7 +103,12 @@ export interface TimeToBeat {
   leaderTotalCattle: number;
   /** Tempo somado do líder atual. */
   leaderTotalTimeSeconds: number;
-  /** Bois que a dupla precisa pegar na final para EMPATAR o total de bois do líder. */
+  /**
+   * Bois que a dupla precisa pegar na final para EMPATAR o total de bois do
+   * líder. Pode ser <= 0 quando a qualificatória da dupla, sozinha, já empata
+   * (0) ou supera (< 0) o total de bois do líder — nesse caso a ponta em bois
+   * independe da passada da final.
+   */
   cattleToTie: number;
   /**
    * Tempo máximo na final (exclusivo) para superar o líder, assumindo que a
