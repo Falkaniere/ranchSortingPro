@@ -18,7 +18,7 @@ import { PageHeader } from '../../components/ui/PageHeader';
 import { UpgradeBadge, UpgradeModal } from '../../components/ui/UpgradePrompt';
 import { QuickSelect } from '../../components/ui/QuickSelect';
 import { TimeToBeatCard } from '../../components/ui/TimeToBeatCard';
-import { computeTimeToBeat } from '../../core/logic/finals';
+import { computeTimeToBeat } from 'core/logic/finals';
 
 type PendingEntry = {
   duoId: string;
@@ -37,7 +37,7 @@ export default function Finals() {
   const toast = useToast();
   const { isPro } = useSubscription();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { getFinalists, getBestQualifierScores, addFinalResult, finalResults, duosMeta } = useResults();
+  const { getFinalists, getBestQualifierScores, getFinalAggregates, addFinalResult, finalResults, duosMeta } = useResults();
   const { competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
@@ -144,18 +144,19 @@ export default function Finals() {
 
   const partialsFiltered = partials.filter((p) => p?.bracket === activeTab);
 
-  // Líder atual do bracket (mesma regra de classificação da final: mais bois no
-  // total, depois menor tempo somado) e o tempo que a dupla atual precisa bater.
+  // Líder atual do bracket e o tempo que a dupla atual precisa bater. Usa o
+  // mesmo agregado oficial da final (getFinalAggregates → aggregateFinals), que
+  // já ordena por total (mais bois, depois menor tempo) e normaliza passadas SAT.
   const bracketLeader = useMemo(() => {
-    const ranked = partialsFiltered
-      .map((p) => ({
-        label: p!.label,
-        totalCattle: p!.qualiCattle + p!.finalCattle,
-        totalTimeSeconds: p!.qualiTime + p!.finalTime,
-      }))
-      .sort((a, b) => b.totalCattle - a.totalCattle || a.totalTimeSeconds - b.totalTimeSeconds);
-    return ranked[0] ?? null;
-  }, [partialsFiltered]);
+    const leader = getFinalAggregates().find((e) => e.bracket === activeTab);
+    if (!leader) return null;
+    const duo = duosMeta.find((d: Duo) => d.id === leader.duoId);
+    return {
+      label: duo?.label ?? leader.duoId,
+      totalCattle: leader.totalCattle,
+      totalTimeSeconds: leader.totalTimeSeconds,
+    };
+  }, [getFinalAggregates, activeTab, duosMeta]);
 
   const timeToBeat = currentDuo
     ? computeTimeToBeat(

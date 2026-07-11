@@ -126,7 +126,18 @@ describe('computeTimeToBeat', () => {
     expect(ttb.targetFinalTimeSeconds).toBeLessThanOrEqual(0);
   });
 
-  it('sinaliza (bois a empatar <= 0) quando a qualif. já supera o líder em bois', () => {
+  it('cattleToTie === 0 quando a qualif. empata o total de bois do líder — decisão fica no tempo', () => {
+    // Dupla com 10 bois na qualif. vs. líder com 10 bois no total: pegar 0 na
+    // final empata os bois; ainda dá para liderar fazendo a final em < 15s.
+    const ttb = computeTimeToBeat(
+      { cattleCount: 10, timeSeconds: 25 },
+      { totalCattle: 10, totalTimeSeconds: 40 }
+    );
+    expect(ttb.cattleToTie).toBe(0);
+    expect(ttb.targetFinalTimeSeconds).toBe(15);
+  });
+
+  it('sinaliza (bois a empatar < 0) quando a qualif. já supera o líder em bois', () => {
     const ttb = computeTimeToBeat(
       { cattleCount: 12, timeSeconds: 30 },
       { totalCattle: 10, totalTimeSeconds: 40 }

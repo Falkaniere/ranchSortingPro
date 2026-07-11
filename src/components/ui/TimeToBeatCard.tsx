@@ -1,6 +1,6 @@
 import React from 'react';
-import { TimeToBeat } from '../../core/logic/finals';
-import { formatTime } from '../../utils/formatTime';
+import { TimeToBeat } from 'core/logic/finals';
+import { formatTime } from 'utils/formatTime';
 
 type Props = {
   /** Bracket da final (1D/2D), apenas rótulo. */
@@ -50,7 +50,9 @@ export function TimeToBeatCard({ bracket, timeToBeat, leaderLabel, variant = 'co
   const { cattleToTie, targetFinalTimeSeconds, leaderTotalCattle, leaderTotalTimeSeconds } = timeToBeat;
 
   // A nota de qualificatória já garante a ponta em bois, independente da final.
-  if (cattleToTie <= 0) {
+  // (Apenas quando SUPERA — `cattleToTie === 0` significa empatar os bois e
+  //  ainda decidir no tempo, então esse caso segue para o tempo-alvo abaixo.)
+  if (cattleToTie < 0) {
     return (
       <div className={wrapper}>
         <p className={label}>Tempo a bater — Final {bracket}</p>
@@ -69,8 +71,8 @@ export function TimeToBeatCard({ bracket, timeToBeat, leaderLabel, variant = 'co
         <p className={label}>Tempo a bater — Final {bracket}</p>
         <p className={bigValue}>+ bois</p>
         <p className={note}>
-          Empatar {cattleToTie} bois não basta — é preciso pegar mais bois que o líder
-          {leaderLabel ? ` (${leaderLabel})` : ''}.
+          Empatar {cattleToTie} {cattleToTie === 1 ? 'boi' : 'bois'} não basta — é preciso
+          pegar mais bois que o líder{leaderLabel ? ` (${leaderLabel})` : ''}.
         </p>
       </div>
     );
