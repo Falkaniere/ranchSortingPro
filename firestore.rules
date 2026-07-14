@@ -55,17 +55,28 @@ service cloud.firestore {
           && !('confirmedAt' in d)
           && !('confirmedBy' in d);
       }
-      // update: apenas transição de status pending -> confirmed/rejected;
-      // os dados da dupla são imutáveis.
+      // update: apenas transição de status pending -> confirmed/rejected.
+      // Dados da dupla imutáveis, nenhum campo extra, e confirmação coerente
+      // (confirmedBy == quem confirma; confirmedAt timestamp). Recusa não grava
+      // campos de confirmação.
       function onlyStatusTransition() {
         let d = request.resource.data;
-        return d.competitionId == resource.data.competitionId
-          && d.createdBy == resource.data.createdBy
-          && d.competitorOne == resource.data.competitorOne
-          && d.competitorTwo == resource.data.competitorTwo
-          && d.group == resource.data.group
-          && resource.data.status == 'pending'
-          && d.status in ['confirmed', 'rejected'];
+        let cur = resource.data;
+        return d.keys().hasOnly(['competitionId', 'createdBy', 'competitorOne',
+            'competitorTwo', 'group', 'status', 'createdAt', 'confirmedAt', 'confirmedBy'])
+          && d.competitionId == cur.competitionId
+          && d.createdBy == cur.createdBy
+          && d.competitorOne == cur.competitorOne
+          && d.competitorTwo == cur.competitorTwo
+          && d.group == cur.group
+          && d.createdAt == cur.createdAt
+          && cur.status == 'pending'
+          && (
+            (d.status == 'rejected'
+              && !('confirmedAt' in d) && !('confirmedBy' in d))
+            || (d.status == 'confirmed'
+              && d.confirmedBy == request.auth.uid && d.confirmedAt is timestamp)
+          );
       }
       allow create: if request.auth != null && validNewRegistration();
       allow read: if request.auth != null && (

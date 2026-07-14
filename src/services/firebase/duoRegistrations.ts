@@ -53,6 +53,13 @@ export async function createDuoRegistration(
   competitorOne: RegistrationRider,
   competitorTwo: RegistrationRider
 ): Promise<DuoRegistration> {
+  // Evita inscrições duplicadas do mesmo usuário na mesma prova (double-submit,
+  // múltiplas abas/dispositivos). Uma inscrição recusada pode ser refeita.
+  const existing = await getUserRegistration(createdBy, competitionId);
+  if (existing && existing.status !== 'rejected') {
+    throw new Error('Você já tem uma inscrição nesta prova.');
+  }
+
   const group = computeDuoGroup(competitorOne.category, competitorTwo.category);
   const payload = {
     competitionId,
@@ -118,7 +125,12 @@ function resolveCompetitorId(
   numRounds: number
 ): { competitor: Competitor; isNew: boolean } {
   const normalized = normalizeName(rider.name);
-  const match = existing.find((c) => normalizeName(c.name) === normalized);
+  // Casa por nome E categoria: um mesmo nome com categoria diferente é tratado
+  // como outra entrada, para não descartar silenciosamente a categoria inscrita
+  // (o que mudaria o grupo 1D/2D da dupla).
+  const match = existing.find(
+    (c) => normalizeName(c.name) === normalized && c.category === rider.category
+  );
   if (match) return { competitor: match, isNew: false };
   return {
     competitor: {
