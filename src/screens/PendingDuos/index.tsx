@@ -79,7 +79,7 @@ export default function PendingDuos() {
     <div>
       <PageHeader
         title="Duplas pendentes"
-        subtitle={`${pending.length} inscrição${pending.length !== 1 ? 'ões' : ''} aguardando confirmação`}
+        subtitle={`${pending.length} ${pending.length !== 1 ? 'inscrições' : 'inscrição'} aguardando confirmação`}
       />
 
       <div className="mb-5 p-3 rounded-lg bg-hay-50 border border-hay-200 text-xs text-hay-800">

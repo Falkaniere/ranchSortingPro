@@ -62,7 +62,7 @@ export default function RegisterScreen() {
 
         <div className="bg-white rounded-2xl border border-dust-300 shadow-sm p-8">
           <h2 className="font-serif font-semibold text-rope-800 text-xl mb-1">Criar conta</h2>
-          <p className="text-rope-400 text-sm mb-6">Cadastre-se para começar a gerenciar competições</p>
+          <p className="text-rope-400 text-sm mb-6">Cadastre-se para competir ou gerenciar provas</p>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>

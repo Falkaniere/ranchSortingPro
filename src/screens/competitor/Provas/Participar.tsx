@@ -12,6 +12,7 @@ import {
 import { RiderCategory } from '../../../core/models/Competidor';
 import { canPair, computeDuoGroup } from '../../../core/models/Duo';
 import { CATEGORIES, REGISTRATION_STATUS_LABELS } from '../../../core/constants';
+import { normalizeName } from '../../../utils/nameNormalization';
 import { DuoRegistration } from '../../../core/models/DuoRegistration';
 import { Button } from '../../../components/ui/Button';
 import { Input } from '../../../components/ui/Input';
@@ -87,6 +88,9 @@ export default function CompetitorParticipar() {
     const e: Record<string, string> = {};
     if (!name1.trim()) e.name1 = 'Seu nome não está disponível. Atualize seu perfil.';
     if (!name2.trim()) e.name2 = 'Informe o nome do parceiro';
+    else if (name1.trim() && normalizeName(name2) === normalizeName(name1)) {
+      e.name2 = 'O parceiro deve ser diferente de você.';
+    }
     if (!canPair(cat1, cat2)) {
       e.pair = 'Dupla Aberta + Aberta não é permitida. Ajuste uma das categorias.';
     }

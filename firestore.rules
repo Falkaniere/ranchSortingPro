@@ -36,7 +36,10 @@ service cloud.firestore {
         return get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
       }
       allow create: if request.auth != null
-        && request.resource.data.createdBy == request.auth.uid;
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && !('confirmedAt' in request.resource.data)
+        && !('confirmedBy' in request.resource.data);
       allow read: if request.auth != null && (
         resource.data.createdBy == request.auth.uid || isCompetitionOwner()
       );

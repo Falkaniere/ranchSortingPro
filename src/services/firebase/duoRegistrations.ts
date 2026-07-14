@@ -156,6 +156,11 @@ export async function confirmDuoRegistration(
     const one = resolveCompetitorId(competitors, reg.competitorOne, numRounds);
     if (one.isNew) competitors.push(one.competitor);
     const two = resolveCompetitorId(competitors, reg.competitorTwo, numRounds);
+    // Nomes que normalizam igual resolveriam para o mesmo competidor, gerando uma
+    // dupla inválida (riderOneId === riderTwoId). Bloqueia a confirmação nesse caso.
+    if (one.competitor.id === two.competitor.id) {
+      throw new Error('Os dois competidores da dupla não podem ser a mesma pessoa.');
+    }
     if (two.isNew) competitors.push(two.competitor);
 
     const duos: Duo[] = [...(comp.duos ?? [])];
