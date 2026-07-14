@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { signIn, signInWithGoogle } from '../../services/firebase/auth';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -7,7 +7,9 @@ import { useToast } from '../../components/ui/Toast';
 
 export default function LoginScreen() {
   const navigate = useNavigate();
+  const location = useLocation();
   const toast = useToast();
+  const fromPath = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,8 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
-      navigate('/');
+      // '/' resolves to the persona home via HomeRedirect; fromPath returns to a deep link.
+      navigate(fromPath || '/', { replace: true });
     } catch (err: any) {
       const msg =
         err.code === 'auth/invalid-credential'
@@ -45,7 +48,7 @@ export default function LoginScreen() {
     setGoogleLoading(true);
     try {
       await signInWithGoogle();
-      navigate('/');
+      navigate(fromPath || '/', { replace: true });
     } catch {
       toast('Erro ao entrar com Google.', 'error');
     } finally {

@@ -1,13 +1,14 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
-import { AuthProvider } from './context/AuthContext';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import { CompetitionProvider } from './context/CompetitionContext';
 import { ResultsProvider } from './context/ResultContext';
 import { ToastProvider } from './components/ui/Toast';
 
 import { PrivateRoute } from './components/layout/PrivateRoute';
 import { CompetitionLayout } from './components/layout/CompetitionLayout';
+import { PageSpinner } from './components/ui/Spinner';
 
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
@@ -34,6 +35,21 @@ import MyPassesPage from './screens/competitor/portal/MyPassesPage';
 import CompetitionResults from './screens/competitor/portal/CompetitionResults';
 import ClaimProfile from './screens/competitor/portal/ClaimProfile';
 
+// Competitor — prova registration (self-service)
+import CompetitorProvas from './screens/competitor/Provas';
+import CompetitorParticipar from './screens/competitor/Provas/Participar';
+
+// Organizer — pending duo registrations tab
+import PendingDuos from './screens/PendingDuos';
+
+// Routes the logged-in user to their persona home.
+function HomeRedirect() {
+  const { userType, isLoading } = useAuth();
+  if (isLoading) return <PageSpinner />;
+  if (userType === 'competitor') return <Navigate to="/competitor/provas" replace />;
+  return <DashboardScreen />;
+}
+
 export default function App() {
   return (
     <AuthProvider>
@@ -59,15 +75,20 @@ export default function App() {
                     <Route path="claim" element={<ClaimProfile />} />
                     <Route path="results/:competitionId" element={<CompetitionResults />} />
                   </Route>
+
+                  {/* Competitor — inscrição em provas (self-service, mobile) */}
+                  <Route path="/competitor/provas" element={<CompetitorProvas />} />
+                  <Route path="/competitor/provas/:competitionId/participar" element={<CompetitorParticipar />} />
                 </Route>
 
                 {/* Organizer protected routes */}
                 <Route element={<PrivateRoute />}>
-                  <Route path="/" element={<DashboardScreen />} />
+                  <Route path="/" element={<HomeRedirect />} />
 
                   <Route path="/competition/:id" element={<CompetitionLayout />}>
                     <Route path="registration" element={<Registration />} />
                     <Route path="duos" element={<Duos />} />
+                    <Route path="pending" element={<PendingDuos />} />
                     <Route path="record" element={<Qualifiers />} />
                     <Route path="final" element={<Finals />} />
                     <Route path="final-results" element={<FinalResults />} />

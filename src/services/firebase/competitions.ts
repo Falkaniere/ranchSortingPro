@@ -33,6 +33,10 @@ export interface Competition {
   numRounds: number;
   /** Quantas duplas (top X) se classificam para a final. Padrão: 10. */
   finalsCutoff: number;
+  /** Valor da inscrição em reais (BRL). Opcional. */
+  entryFee?: number;
+  /** Chave PIX para pagamento da inscrição. Opcional. */
+  pixKey?: string;
   competitors: Competitor[];
   duos: Duo[];
   qualifierResults: PassResult[];
@@ -72,6 +76,8 @@ function toCompetition(id: string, data: any): Competition {
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
     finalsCutoff: data.finalsCutoff ?? DEFAULT_FINALS_CUTOFF,
+    entryFee: data.entryFee ?? 0,
+    pixKey: data.pixKey ?? '',
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
       category: normalizeCategory(c.category ?? 'Aberta'),
@@ -89,7 +95,9 @@ export async function createCompetition(
   location?: string,
   eventDate?: string,
   numRounds = 1,
-  finalsCutoff = DEFAULT_FINALS_CUTOFF
+  finalsCutoff = DEFAULT_FINALS_CUTOFF,
+  entryFee = 0,
+  pixKey = ''
 ): Promise<Competition> {
   const payload = {
     ownerId,
@@ -101,6 +109,8 @@ export async function createCompetition(
     status: 'draft' as CompetitionStatus,
     numRounds,
     finalsCutoff,
+    entryFee,
+    pixKey,
     competitors: [],
     duos: [],
     qualifierResults: [],
@@ -129,6 +139,22 @@ export async function listCompetitions(ownerId: string): Promise<Competition[]> 
   const q = query(
     collection(db, 'competitions'),
     where('ownerId', '==', ownerId)
+  );
+  const snap = await getDocs(q);
+  const results = snap.docs.map((d) => toCompetition(d.id, d.data()));
+  return results.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
+
+/**
+ * Lista as provas abertas para inscrição (status 'draft'), de qualquer organizador.
+ * As regras do Firestore permitem leitura por qualquer usuário autenticado.
+ */
+export async function listOpenCompetitions(): Promise<Competition[]> {
+  const q = query(
+    collection(db, 'competitions'),
+    where('status', '==', 'draft')
   );
   const snap = await getDocs(q);
   const results = snap.docs.map((d) => toCompetition(d.id, d.data()));

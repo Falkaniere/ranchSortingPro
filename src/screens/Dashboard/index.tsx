@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCompetition } from '../../context/CompetitionContext';
 import { useSubscription } from '../../hooks/useSubscription';
-import { STATUS_ROUTES, DEFAULT_FINALS_CUTOFF } from '../../core/constants';
+import { STATUS_ROUTES, DEFAULT_FINALS_CUTOFF, competitionTab, COMPETITION_TAB_LABELS, CompetitionTab } from '../../core/constants';
 import { signOut } from '../../services/firebase/auth';
 import {
   Competition,
@@ -31,6 +31,7 @@ export default function DashboardScreen() {
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const [competitions, setCompetitions] = useState<Competition[]>([]);
+  const [activeTab, setActiveTab] = useState<CompetitionTab>('open');
   const [isLoading, setIsLoading] = useState(true);
   const [createOpen, setCreateOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Competition | null>(null);
@@ -42,6 +43,8 @@ export default function DashboardScreen() {
   const [newDate, setNewDate] = useState('');
   const [newNumRounds, setNewNumRounds] = useState(1);
   const [newFinalsCutoff, setNewFinalsCutoff] = useState(DEFAULT_FINALS_CUTOFF);
+  const [newEntryFee, setNewEntryFee] = useState('');
+  const [newPixKey, setNewPixKey] = useState('');
   const [nameError, setNameError] = useState('');
 
   useEffect(() => {
@@ -58,10 +61,11 @@ export default function DashboardScreen() {
     if (!user) return;
     setCreating(true);
     try {
-      const c = await createCompetition(user.uid, newName.trim(), newLocation.trim(), newDate, newNumRounds, newFinalsCutoff);
+      const feeValue = Math.max(0, Number(newEntryFee.replace(',', '.')) || 0);
+      const c = await createCompetition(user.uid, newName.trim(), newLocation.trim(), newDate, newNumRounds, newFinalsCutoff, feeValue, newPixKey.trim());
       setCompetitions((prev) => [c, ...prev]);
       setCreateOpen(false);
-      setNewName(''); setNewLocation(''); setNewDate(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF);
+      setNewName(''); setNewLocation(''); setNewDate(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF); setNewEntryFee(''); setNewPixKey('');
       toast('Competição criada!', 'success');
       loadCompetition(c);
       navigate(`/competition/${c.id}/registration`);
@@ -90,6 +94,20 @@ export default function DashboardScreen() {
   function handleOpen(competition: Competition) {
     loadCompetition(competition);
     navigate(`/competition/${competition.id}/${STATUS_ROUTES[competition.status] ?? 'registration'}`);
+  }
+
+  async function handleShare(competition: Competition) {
+    const url = `${window.location.origin}/competitor/provas/${competition.id}/participar`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: competition.name, text: 'Inscreva-se na prova', url });
+      } else {
+        await navigator.clipboard.writeText(url);
+        toast('Link de inscrição copiado!', 'success');
+      }
+    } catch {
+      // Usuário cancelou o compartilhamento nativo — silencioso.
+    }
   }
 
   async function handleLogout() {
@@ -178,25 +196,64 @@ export default function DashboardScreen() {
             }
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[...competitions].sort((a, b) =>
-              (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99)
-            ).map((c) => (
-              <CompetitionCard
-                key={c.id}
-                competition={c}
-                onOpen={() => handleOpen(c)}
-                onDelete={() => setDeleteTarget(c)}
-              />
-            ))}
-          </div>
+          <>
+            {/* Abas por estágio */}
+            <div className="flex gap-1 mb-5 border-b border-dust-300 overflow-x-auto scrollbar-none">
+              {(['open', 'ongoing', 'finished'] as CompetitionTab[]).map((t) => {
+                const count = competitions.filter((c) => competitionTab(c.status) === t).length;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setActiveTab(t)}
+                    className={[
+                      'px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-colors',
+                      activeTab === t
+                        ? 'border-saddle-600 text-saddle-700'
+                        : 'border-transparent text-rope-400 hover:text-rope-700',
+                    ].join(' ')}
+                  >
+                    {COMPETITION_TAB_LABELS[t]}
+                    <span className="ml-1.5 text-xs text-rope-400">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(() => {
+              const filtered = [...competitions]
+                .filter((c) => competitionTab(c.status) === activeTab)
+                .sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
+              if (filtered.length === 0) {
+                return (
+                  <EmptyState
+                    icon="📭"
+                    title={`Nenhuma prova ${COMPETITION_TAB_LABELS[activeTab].toLowerCase()}`}
+                    description="Não há provas neste estágio no momento."
+                  />
+                );
+              }
+              return (
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filtered.map((c) => (
+                    <CompetitionCard
+                      key={c.id}
+                      competition={c}
+                      onOpen={() => handleOpen(c)}
+                      onDelete={() => setDeleteTarget(c)}
+                      onShare={() => handleShare(c)}
+                    />
+                  ))}
+                </div>
+              );
+            })()}
+          </>
         )}
       </main>
 
       {/* Create Modal */}
       <Modal
         isOpen={createOpen}
-        onClose={() => { setCreateOpen(false); setNewName(''); setNameError(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF); }}
+        onClose={() => { setCreateOpen(false); setNewName(''); setNameError(''); setNewNumRounds(1); setNewFinalsCutoff(DEFAULT_FINALS_CUTOFF); setNewEntryFee(''); setNewPixKey(''); }}
         title="Nova Competição"
         footer={
           <>
@@ -263,6 +320,26 @@ export default function DashboardScreen() {
               Na final 1D entram as top {newFinalsCutoff} duplas gerais. Na final 2D entram as top {newFinalsCutoff} duplas da categoria 2D.
             </p>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Valor da inscrição (R$)"
+              type="text"
+              inputMode="decimal"
+              placeholder="Ex: 150"
+              value={newEntryFee}
+              onChange={(e) => setNewEntryFee(e.target.value.replace(/[^0-9.,]/g, ''))}
+            />
+            <Input
+              label="Chave PIX"
+              type="text"
+              placeholder="CPF, e-mail, telefone…"
+              value={newPixKey}
+              onChange={(e) => setNewPixKey(e.target.value)}
+            />
+          </div>
+          <p className="text-xs text-rope-400 -mt-1">
+            Valor e chave PIX ficam visíveis aos competidores na inscrição da prova.
+          </p>
         </div>
       </Modal>
 
@@ -284,10 +361,12 @@ function CompetitionCard({
   competition: c,
   onOpen,
   onDelete,
+  onShare,
 }: {
   competition: Competition;
   onOpen: () => void;
   onDelete: () => void;
+  onShare: () => void;
 }) {
   const date = c.eventDate
     ? new Date(c.eventDate + 'T12:00').toLocaleDateString('pt-BR', {
@@ -319,18 +398,29 @@ function CompetitionCard({
           <span>🤝 {c.duos.length} duplas</span>
         </div>
       </div>
-      <div className="px-5 py-3 border-t border-dust-200 bg-dust-50 rounded-b-xl flex justify-between">
+      <div className="px-5 py-3 border-t border-dust-200 bg-dust-50 rounded-b-xl flex items-center justify-between gap-2">
         <Button variant="primary" size="sm" onClick={(e) => { e.stopPropagation(); onOpen(); }}>
           Abrir
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="text-brand-500 hover:bg-brand-500/10"
-        >
-          Excluir
-        </Button>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onShare(); }}
+            className="text-saddle-600 hover:bg-saddle-600/10"
+            title="Compartilhar link de inscrição"
+          >
+            🔗 Compartilhar
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="text-brand-500 hover:bg-brand-500/10"
+          >
+            Excluir
+          </Button>
+        </div>
       </div>
     </Card>
   );

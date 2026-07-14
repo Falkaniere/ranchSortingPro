@@ -17,6 +17,30 @@ export const STATUS_LABELS: Record<CompetitionStatus, string> = {
   finished: 'Encerrada',
 };
 
+/** Abas usadas no painel do gerente e na visão do competidor. */
+export type CompetitionTab = 'open' | 'ongoing' | 'finished';
+
+/** Rótulos das abas por estágio da prova. */
+export const COMPETITION_TAB_LABELS: Record<CompetitionTab, string> = {
+  open: 'Aberta',
+  ongoing: 'Em andamento',
+  finished: 'Finalizada',
+};
+
+/** Mapeia o status de fluxo da prova para a aba correspondente. */
+export function competitionTab(status: CompetitionStatus): CompetitionTab {
+  if (status === 'finished') return 'finished';
+  if (status === 'qualifier' || status === 'final') return 'ongoing';
+  return 'open'; // draft = inscrições abertas
+}
+
+/** Rótulos de status de uma inscrição de dupla (visão do competidor). */
+export const REGISTRATION_STATUS_LABELS: Record<string, string> = {
+  pending: 'Aguardando confirmação',
+  confirmed: 'Dupla confirmada',
+  rejected: 'Inscrição recusada',
+};
+
 /** Categorias de competidor disponíveis no formulário de inscrição. */
 export const CATEGORIES: { label: string; value: RiderCategory; hint: string }[] = [
   { label: 'Aberta', value: 'Aberta', hint: 'Combina com Amador 19, Light ou Principiante' },

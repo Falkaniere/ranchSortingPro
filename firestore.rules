@@ -27,6 +27,22 @@ service cloud.firestore {
       allow read, create: if request.auth != null;
     }
 
+    // Duo registrations: a competitor pre-registers a pair for a competition.
+    // create: any authed user, only as themselves (createdBy == uid)
+    // read/update: the creator, or the owner of the referenced competition
+    //   (update — confirm/reject — is restricted to the competition owner)
+    match /duoRegistrations/{regId} {
+      function isCompetitionOwner() {
+        return get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
+      }
+      allow create: if request.auth != null
+        && request.resource.data.createdBy == request.auth.uid;
+      allow read: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid || isCompetitionOwner()
+      );
+      allow update: if request.auth != null && isCompetitionOwner();
+    }
+
     // User document: each user manages their own data and subcollections
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;

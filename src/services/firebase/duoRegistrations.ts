@@ -1,0 +1,194 @@
+import {
+  collection,
+  doc,
+  addDoc,
+  getDocs,
+  query,
+  where,
+  limit,
+  runTransaction,
+  serverTimestamp,
+} from 'firebase/firestore';
+import { db } from '../../firebase';
+import {
+  DuoRegistration,
+  RegistrationRider,
+} from '../../core/models/DuoRegistration';
+import { Competitor } from '../../core/models/Competidor';
+import {
+  Duo,
+  computeDuoGroup,
+  duoKeyFromRiders,
+  isDoublePrincipiante,
+} from '../../core/models/Duo';
+import { normalizeName } from '../../utils/nameNormalization';
+import { timestampToISO, timestampToISOOrUndefined } from './firestoreHelpers';
+
+const COLLECTION = 'duoRegistrations';
+
+function toRegistration(id: string, data: any): DuoRegistration {
+  return {
+    id,
+    competitionId: data.competitionId,
+    createdBy: data.createdBy,
+    competitorOne: data.competitorOne,
+    competitorTwo: data.competitorTwo,
+    group: data.group ?? computeDuoGroup(
+      data.competitorOne?.category ?? 'Aberta',
+      data.competitorTwo?.category ?? 'Aberta'
+    ),
+    status: data.status ?? 'pending',
+    createdAt: timestampToISO(data.createdAt),
+    confirmedAt: timestampToISOOrUndefined(data.confirmedAt),
+    confirmedBy: data.confirmedBy ?? undefined,
+  };
+}
+
+export async function createDuoRegistration(
+  competitionId: string,
+  createdBy: string,
+  competitorOne: RegistrationRider,
+  competitorTwo: RegistrationRider
+): Promise<DuoRegistration> {
+  const group = computeDuoGroup(competitorOne.category, competitorTwo.category);
+  const payload = {
+    competitionId,
+    createdBy,
+    competitorOne,
+    competitorTwo,
+    group,
+    status: 'pending' as const,
+    createdAt: serverTimestamp(),
+  };
+  const ref = await addDoc(collection(db, COLLECTION), payload);
+  return toRegistration(ref.id, { ...payload, createdAt: new Date().toISOString() });
+}
+
+/** Inscrições de uma prova — visão do gerente (aba "Duplas pendentes"). */
+export async function listRegistrationsByCompetition(
+  competitionId: string
+): Promise<DuoRegistration[]> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('competitionId', '==', competitionId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => toRegistration(d.id, d.data()))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+}
+
+/** Inscrições feitas pelo usuário logado — visão do competidor (aba "Inscrito"). */
+export async function listRegistrationsByUser(
+  userId: string
+): Promise<DuoRegistration[]> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('createdBy', '==', userId)
+  );
+  const snap = await getDocs(q);
+  return snap.docs
+    .map((d) => toRegistration(d.id, d.data()))
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+}
+
+/** Inscrição do usuário numa prova específica (para evitar duplicidade). */
+export async function getUserRegistration(
+  userId: string,
+  competitionId: string
+): Promise<DuoRegistration | null> {
+  const q = query(
+    collection(db, COLLECTION),
+    where('createdBy', '==', userId),
+    where('competitionId', '==', competitionId),
+    limit(1)
+  );
+  const snap = await getDocs(q);
+  if (snap.empty) return null;
+  return toRegistration(snap.docs[0].id, snap.docs[0].data());
+}
+
+// Reutiliza um competidor existente na prova (por nome normalizado) ou cria um novo.
+function resolveCompetitorId(
+  existing: Competitor[],
+  rider: RegistrationRider,
+  numRounds: number
+): { competitor: Competitor; isNew: boolean } {
+  const normalized = normalizeName(rider.name);
+  const match = existing.find((c) => normalizeName(c.name) === normalized);
+  if (match) return { competitor: match, isNew: false };
+  return {
+    competitor: {
+      id: crypto.randomUUID(),
+      name: rider.name.trim(),
+      category: rider.category,
+      passes: numRounds,
+    },
+    isNew: true,
+  };
+}
+
+/**
+ * Confirma uma inscrição: injeta os dois competidores em competitors[] e cria
+ * a dupla em duos[] da prova, e marca a inscrição como 'confirmed'.
+ * Feito numa transação para manter prova e inscrição consistentes.
+ */
+export async function confirmDuoRegistration(
+  registrationId: string,
+  confirmedBy: string
+): Promise<void> {
+  const regRef = doc(db, COLLECTION, registrationId);
+
+  await runTransaction(db, async (tx) => {
+    const regSnap = await tx.get(regRef);
+    if (!regSnap.exists()) throw new Error('Inscrição não encontrada.');
+    const reg = regSnap.data();
+    if (reg.status === 'confirmed') return; // idempotente
+
+    const compRef = doc(db, 'competitions', reg.competitionId);
+    const compSnap = await tx.get(compRef);
+    if (!compSnap.exists()) throw new Error('Prova não encontrada.');
+    const comp = compSnap.data();
+
+    const numRounds = comp.numRounds ?? 1;
+    const competitors: Competitor[] = [...(comp.competitors ?? [])];
+
+    const one = resolveCompetitorId(competitors, reg.competitorOne, numRounds);
+    if (one.isNew) competitors.push(one.competitor);
+    const two = resolveCompetitorId(competitors, reg.competitorTwo, numRounds);
+    if (two.isNew) competitors.push(two.competitor);
+
+    const duos: Duo[] = [...(comp.duos ?? [])];
+    const duoId = duoKeyFromRiders(one.competitor.id, two.competitor.id);
+    if (!duos.some((d) => d.id === duoId)) {
+      const group = computeDuoGroup(one.competitor.category, two.competitor.category);
+      duos.push({
+        id: duoId,
+        riderOneId: one.competitor.id,
+        riderTwoId: two.competitor.id,
+        group,
+        doublePrincipiante: isDoublePrincipiante(
+          one.competitor.category,
+          two.competitor.category
+        ),
+        label: `${one.competitor.name} & ${two.competitor.name}`,
+      });
+    }
+
+    tx.update(compRef, { competitors, duos, updatedAt: serverTimestamp() });
+    tx.update(regRef, {
+      status: 'confirmed',
+      confirmedAt: serverTimestamp(),
+      confirmedBy,
+    });
+  });
+}
+
+export async function rejectDuoRegistration(registrationId: string): Promise<void> {
+  const regRef = doc(db, COLLECTION, registrationId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(regRef);
+    if (!snap.exists()) return;
+    tx.update(regRef, { status: 'rejected' });
+  });
+}
