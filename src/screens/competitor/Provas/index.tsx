@@ -5,7 +5,7 @@ import { signOut } from '../../../services/firebase/auth';
 import {
   Competition,
   listOpenCompetitions,
-  getCompetition,
+  getCompetitionsByIds,
 } from '../../../services/firebase/competitions';
 import {
   DuoRegistration,
@@ -66,8 +66,7 @@ export default function CompetitorProvas() {
           new Set(regs.map((r) => r.competitionId).filter((cid) => !known.has(cid)))
         );
         const extra = missingIds.length
-          ? (await Promise.all(missingIds.map((cid) => getCompetition(cid).catch(() => null))))
-              .filter((c): c is Competition => c !== null)
+          ? await getCompetitionsByIds(missingIds).catch(() => [] as Competition[])
           : [];
         if (!cancelled) setCompetitions([...open, ...extra]);
       })

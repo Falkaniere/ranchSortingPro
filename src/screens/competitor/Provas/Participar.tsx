@@ -112,8 +112,8 @@ export default function CompetitorParticipar() {
         { name: name2.trim(), category: cat2 }
       );
       setDone(true);
-    } catch {
-      toast('Erro ao enviar inscrição. Tente novamente.', 'error');
+    } catch (err: any) {
+      toast(err?.message ?? 'Erro ao enviar inscrição. Tente novamente.', 'error');
     } finally {
       setSubmitting(false);
     }

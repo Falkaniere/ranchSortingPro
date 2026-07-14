@@ -163,9 +163,20 @@ export async function confirmDuoRegistration(
       // Ex.: 'rejected' — não pode ser confirmada, para não deixar o estado ambíguo.
       throw new Error('Só é possível confirmar inscrições pendentes.');
     }
+    // Valida o shape antes de usar (protege contra docs legados/adulterados que
+    // fariam resolveCompetitorId quebrar ao acessar .name).
+    const r1 = reg.competitorOne;
+    const r2 = reg.competitorTwo;
+    if (
+      !r1 || !r2 ||
+      typeof r1.name !== 'string' || !r1.name.trim() || !r1.category ||
+      typeof r2.name !== 'string' || !r2.name.trim() || !r2.category
+    ) {
+      throw new Error('Inscrição com dados incompletos. Não é possível confirmar.');
+    }
     // Defesa contra docs adulterados: nunca injetar uma dupla com combinação
     // inválida de categorias (ex.: Aberta+Aberta), mesmo que a UI já valide.
-    if (!canPair(reg.competitorOne?.category, reg.competitorTwo?.category)) {
+    if (!canPair(r1.category, r2.category)) {
       throw new Error('Combinação de categorias inválida para esta dupla.');
     }
 

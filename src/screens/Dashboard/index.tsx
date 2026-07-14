@@ -22,6 +22,16 @@ import { Input } from '../../components/ui/Input';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
 
+// Converte um valor digitado em pt-BR (aceita "150", "150,50", "1.000,50") em número.
+// Quando há vírgula decimal, os pontos são tratados como separador de milhar.
+function parseBRLInput(raw: string): number {
+  const s = raw.trim();
+  if (!s) return 0;
+  const normalized = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s;
+  const n = Number(normalized);
+  return isNaN(n) ? 0 : Math.max(0, n);
+}
+
 export default function DashboardScreen() {
   const { user } = useAuth();
   const { isPro, limits } = useSubscription();
@@ -61,7 +71,7 @@ export default function DashboardScreen() {
     if (!user) return;
     setCreating(true);
     try {
-      const feeValue = Math.max(0, Number(newEntryFee.replace(',', '.')) || 0);
+      const feeValue = parseBRLInput(newEntryFee);
       const c = await createCompetition(user.uid, newName.trim(), newLocation.trim(), newDate, newNumRounds, newFinalsCutoff, feeValue, newPixKey.trim());
       setCompetitions((prev) => [c, ...prev]);
       setCreateOpen(false);

@@ -9,6 +9,7 @@ import {
   getDocFromServer,
   query,
   where,
+  documentId,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -76,8 +77,8 @@ function toCompetition(id: string, data: any): Competition {
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
     finalsCutoff: data.finalsCutoff ?? DEFAULT_FINALS_CUTOFF,
-    entryFee: data.entryFee ?? 0,
-    pixKey: data.pixKey ?? '',
+    entryFee: data.entryFee ?? undefined,
+    pixKey: data.pixKey ?? undefined,
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
       category: normalizeCategory(c.category ?? 'Aberta'),
@@ -167,6 +168,20 @@ export async function getCompetition(id: string): Promise<Competition | null> {
   const snap = await getDoc(doc(db, 'competitions', id));
   if (!snap.exists()) return null;
   return toCompetition(snap.id, snap.data());
+}
+
+/** Busca várias provas por id em lote (chunks de 10, limite do operador `in`). */
+export async function getCompetitionsByIds(ids: string[]): Promise<Competition[]> {
+  const unique = Array.from(new Set(ids));
+  if (unique.length === 0) return [];
+  const results: Competition[] = [];
+  for (let i = 0; i < unique.length; i += 10) {
+    const chunk = unique.slice(i, i + 10);
+    const q = query(collection(db, 'competitions'), where(documentId(), 'in', chunk));
+    const snap = await getDocs(q);
+    snap.docs.forEach((d) => results.push(toCompetition(d.id, d.data())));
+  }
+  return results;
 }
 
 /** Always fetches directly from Firestore server, bypassing local cache. */
