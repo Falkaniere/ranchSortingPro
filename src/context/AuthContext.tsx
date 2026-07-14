@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { onAuthChange } from '../services/firebase/auth';
+import { onAuthChange, UserType } from '../services/firebase/auth';
 import { db } from '../firebase';
 
 export type UserRole = 'basic' | 'pro';
-export type UserType = 'competitor' | 'organizer';
+// Reexporta o tipo definido no serviço de auth (fonte única da verdade).
+export type { UserType };
 
 interface AuthContextValue {
   user: User | null;

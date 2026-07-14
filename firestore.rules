@@ -43,7 +43,9 @@ service cloud.firestore {
       allow read: if request.auth != null && (
         resource.data.createdBy == request.auth.uid || isCompetitionOwner()
       );
-      allow update: if request.auth != null && isCompetitionOwner();
+      allow update: if request.auth != null && isCompetitionOwner()
+        && request.resource.data.competitionId == resource.data.competitionId
+        && request.resource.data.createdBy == resource.data.createdBy;
     }
 
     // User document: each user manages their own data and subcollections

@@ -144,6 +144,10 @@ export async function confirmDuoRegistration(
     if (!regSnap.exists()) throw new Error('Inscrição não encontrada.');
     const reg = regSnap.data();
     if (reg.status === 'confirmed') return; // idempotente
+    if (reg.status !== 'pending') {
+      // Ex.: 'rejected' — não pode ser confirmada, para não deixar o estado ambíguo.
+      throw new Error('Só é possível confirmar inscrições pendentes.');
+    }
 
     const compRef = doc(db, 'competitions', reg.competitionId);
     const compSnap = await tx.get(compRef);
@@ -194,6 +198,10 @@ export async function rejectDuoRegistration(registrationId: string): Promise<voi
   await runTransaction(db, async (tx) => {
     const snap = await tx.get(regRef);
     if (!snap.exists()) return;
+    // Só inscrições pendentes podem ser recusadas. Uma dupla já confirmada foi
+    // injetada em competitors[]/duos[] — recusá-la deixaria a prova inconsistente.
+    // Recusas repetidas são no-op (idempotente).
+    if (snap.data().status !== 'pending') return;
     tx.update(regRef, { status: 'rejected' });
   });
 }

@@ -73,6 +73,7 @@ export default function RegisterScreen() {
                     key={p.value}
                     type="button"
                     onClick={() => setUserType(p.value)}
+                    aria-pressed={userType === p.value}
                     title={p.hint}
                     className={[
                       'flex flex-col items-center gap-1 px-3 py-3 rounded-lg border text-center transition-all',

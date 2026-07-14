@@ -5,6 +5,7 @@ import { signOut } from '../../../services/firebase/auth';
 import {
   Competition,
   listOpenCompetitions,
+  getCompetition,
 } from '../../../services/firebase/competitions';
 import {
   DuoRegistration,
@@ -43,14 +44,36 @@ export default function CompetitorProvas() {
 
   useEffect(() => {
     if (!user) return;
+    let cancelled = false;
     setIsLoading(true);
-    Promise.all([listOpenCompetitions(), listRegistrationsByUser(user.uid)])
-      .then(([comps, regs]) => {
-        setCompetitions(comps);
+
+    // Queries desacopladas: uma falhar (ex.: regras de duoRegistrations ainda não
+    // publicadas) não pode zerar a outra. As provas disponíveis carregam sempre.
+    const openP = listOpenCompetitions().catch(() => {
+      toast('Erro ao carregar provas disponíveis.', 'error');
+      return [] as Competition[];
+    });
+    const regsP = listRegistrationsByUser(user.uid).catch(() => [] as DuoRegistration[]);
+
+    Promise.all([openP, regsP])
+      .then(async ([open, regs]) => {
+        if (cancelled) return;
         setRegistrations(regs);
+        // Provas de inscrições que já saíram do "draft" (em andamento/finalizadas)
+        // não vêm em listOpenCompetitions — busca-as para exibir nome/data no card.
+        const known = new Set(open.map((c) => c.id));
+        const missingIds = Array.from(
+          new Set(regs.map((r) => r.competitionId).filter((cid) => !known.has(cid)))
+        );
+        const extra = missingIds.length
+          ? (await Promise.all(missingIds.map((cid) => getCompetition(cid).catch(() => null))))
+              .filter((c): c is Competition => c !== null)
+          : [];
+        if (!cancelled) setCompetitions([...open, ...extra]);
       })
-      .catch(() => toast('Erro ao carregar provas.', 'error'))
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+
+    return () => { cancelled = true; };
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Provas em que o usuário já se inscreveu (não mostrar em "Disponíveis").

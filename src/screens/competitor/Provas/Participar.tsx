@@ -73,14 +73,17 @@ export default function CompetitorParticipar() {
     if (!competitionId || !user) return;
     setIsLoading(true);
     Promise.all([
-      getCompetition(competitionId),
-      getUserRegistration(user.uid, competitionId),
+      getCompetition(competitionId).catch(() => {
+        toast('Erro ao carregar a prova.', 'error');
+        return null;
+      }),
+      // Falha aqui (ex.: regras ainda não publicadas) não deve travar o formulário.
+      getUserRegistration(user.uid, competitionId).catch(() => null),
     ])
       .then(([comp, reg]) => {
         setCompetition(comp);
         setExisting(reg);
       })
-      .catch(() => toast('Erro ao carregar a prova.', 'error'))
       .finally(() => setIsLoading(false));
   }, [competitionId, user]); // eslint-disable-line react-hooks/exhaustive-deps
 
