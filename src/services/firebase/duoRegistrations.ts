@@ -5,7 +5,6 @@ import {
   getDocs,
   query,
   where,
-  limit,
   runTransaction,
   serverTimestamp,
 } from 'firebase/firestore';
@@ -60,6 +59,15 @@ export async function createDuoRegistration(
     throw new Error('Você já tem uma inscrição nesta prova.');
   }
 
+  // Defesa em profundidade (espelha a validação da tela Participar): não criar
+  // inscrições que a confirmação depois recusaria e que ficariam presas.
+  if (!canPair(competitorOne.category, competitorTwo.category)) {
+    throw new Error('Combinação de categorias inválida para esta dupla.');
+  }
+  if (normalizeName(competitorOne.name) === normalizeName(competitorTwo.name)) {
+    throw new Error('O parceiro deve ser diferente de você.');
+  }
+
   const group = computeDuoGroup(competitorOne.category, competitorTwo.category);
   const payload = {
     competitionId,
@@ -110,12 +118,17 @@ export async function getUserRegistration(
   const q = query(
     collection(db, COLLECTION),
     where('createdBy', '==', userId),
-    where('competitionId', '==', competitionId),
-    limit(1)
+    where('competitionId', '==', competitionId)
   );
   const snap = await getDocs(q);
   if (snap.empty) return null;
-  return toRegistration(snap.docs[0].id, snap.docs[0].data());
+  const regs = snap.docs.map((d) => toRegistration(d.id, d.data()));
+  // Havendo duplicatas (double-submit em abas/dispositivos), retorna a mais
+  // relevante — confirmed > pending > rejected — para o guard de duplicidade
+  // não liberar nova inscrição por causa de um doc recusado.
+  const priority: Record<string, number> = { confirmed: 0, pending: 1, rejected: 2 };
+  regs.sort((a, b) => (priority[a.status] ?? 3) - (priority[b.status] ?? 3));
+  return regs[0];
 }
 
 // Reutiliza um competidor existente na prova (por nome normalizado) ou cria um novo.

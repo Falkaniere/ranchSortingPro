@@ -46,12 +46,15 @@ service cloud.firestore {
         let d = request.resource.data;
         return d.createdBy == request.auth.uid
           && d.competitionId is string
-          && exists(/databases/$(database)/documents/competitions/$(d.competitionId))
+          // Prova precisa existir E estar aberta a inscrições (status 'draft').
+          && get(/databases/$(database)/documents/competitions/$(d.competitionId)).data.status == 'draft'
           && d.status == 'pending'
           && d.group in ['1D', '2D']
           && d.createdAt is timestamp
           && validRider(d.competitorOne)
           && validRider(d.competitorTwo)
+          // Aberta+Aberta é combinação inválida (não pareável).
+          && !(d.competitorOne.category == 'Aberta' && d.competitorTwo.category == 'Aberta')
           && !('confirmedAt' in d)
           && !('confirmedBy' in d);
       }
