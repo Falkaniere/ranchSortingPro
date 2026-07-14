@@ -35,17 +35,43 @@ service cloud.firestore {
       function isCompetitionOwner() {
         return get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
       }
-      allow create: if request.auth != null
-        && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.status == 'pending'
-        && !('confirmedAt' in request.resource.data)
-        && !('confirmedBy' in request.resource.data);
+      function validRider(r) {
+        return r is map
+          && r.name is string && r.name.size() > 0 && r.name.size() <= 100
+          && r.category in ['Aberta', '19', 'Light', 'Principiante'];
+      }
+      // create: valida shape/enums, exige status 'pending', proíbe campos de
+      // confirmação e garante que a prova referenciada exista.
+      function validNewRegistration() {
+        let d = request.resource.data;
+        return d.createdBy == request.auth.uid
+          && d.competitionId is string
+          && exists(/databases/$(database)/documents/competitions/$(d.competitionId))
+          && d.status == 'pending'
+          && d.group in ['1D', '2D']
+          && d.createdAt is timestamp
+          && validRider(d.competitorOne)
+          && validRider(d.competitorTwo)
+          && !('confirmedAt' in d)
+          && !('confirmedBy' in d);
+      }
+      // update: apenas transição de status pending -> confirmed/rejected;
+      // os dados da dupla são imutáveis.
+      function onlyStatusTransition() {
+        let d = request.resource.data;
+        return d.competitionId == resource.data.competitionId
+          && d.createdBy == resource.data.createdBy
+          && d.competitorOne == resource.data.competitorOne
+          && d.competitorTwo == resource.data.competitorTwo
+          && d.group == resource.data.group
+          && resource.data.status == 'pending'
+          && d.status in ['confirmed', 'rejected'];
+      }
+      allow create: if request.auth != null && validNewRegistration();
       allow read: if request.auth != null && (
         resource.data.createdBy == request.auth.uid || isCompetitionOwner()
       );
-      allow update: if request.auth != null && isCompetitionOwner()
-        && request.resource.data.competitionId == resource.data.competitionId
-        && request.resource.data.createdBy == resource.data.createdBy;
+      allow update: if request.auth != null && isCompetitionOwner() && onlyStatusTransition();
     }
 
     // User document: each user manages their own data and subcollections

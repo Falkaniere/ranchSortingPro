@@ -9,7 +9,8 @@ export default function LoginScreen() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const fromPath = (location.state as { from?: { pathname: string } } | null)?.from?.pathname;
+  const from = (location.state as { from?: { pathname: string; search?: string; hash?: string } } | null)?.from;
+  const fromPath = from ? `${from.pathname}${from.search ?? ''}${from.hash ?? ''}` : undefined;
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);

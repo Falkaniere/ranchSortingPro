@@ -17,6 +17,7 @@ import {
 import { Competitor } from '../../core/models/Competidor';
 import {
   Duo,
+  canPair,
   computeDuoGroup,
   duoKeyFromRiders,
   isDoublePrincipiante,
@@ -33,7 +34,9 @@ function toRegistration(id: string, data: any): DuoRegistration {
     createdBy: data.createdBy,
     competitorOne: data.competitorOne,
     competitorTwo: data.competitorTwo,
-    group: data.group ?? computeDuoGroup(
+    // Sempre derivado das categorias — nunca confiar no `group` gravado (pode
+    // estar inconsistente se o doc foi criado por um cliente adulterado).
+    group: computeDuoGroup(
       data.competitorOne?.category ?? 'Aberta',
       data.competitorTwo?.category ?? 'Aberta'
     ),
@@ -147,6 +150,11 @@ export async function confirmDuoRegistration(
     if (reg.status !== 'pending') {
       // Ex.: 'rejected' — não pode ser confirmada, para não deixar o estado ambíguo.
       throw new Error('Só é possível confirmar inscrições pendentes.');
+    }
+    // Defesa contra docs adulterados: nunca injetar uma dupla com combinação
+    // inválida de categorias (ex.: Aberta+Aberta), mesmo que a UI já valide.
+    if (!canPair(reg.competitorOne?.category, reg.competitorTwo?.category)) {
+      throw new Error('Combinação de categorias inválida para esta dupla.');
     }
 
     const compRef = doc(db, 'competitions', reg.competitionId);

@@ -98,15 +98,20 @@ export default function DashboardScreen() {
 
   async function handleShare(competition: Competition) {
     const url = `${window.location.origin}/competitor/provas/${competition.id}/participar`;
-    try {
-      if (navigator.share) {
+    if (navigator.share) {
+      try {
         await navigator.share({ title: competition.name, text: 'Inscreva-se na prova', url });
-      } else {
-        await navigator.clipboard.writeText(url);
-        toast('Link de inscrição copiado!', 'success');
+      } catch {
+        // Compartilhamento nativo cancelado pelo usuário — silencioso.
       }
+      return;
+    }
+    // Caminho do clipboard: erro aqui precisa de feedback (link não foi copiado).
+    try {
+      await navigator.clipboard.writeText(url);
+      toast('Link de inscrição copiado!', 'success');
     } catch {
-      // Usuário cancelou o compartilhamento nativo — silencioso.
+      toast('Não foi possível copiar o link. Copie manualmente.', 'error');
     }
   }
 
