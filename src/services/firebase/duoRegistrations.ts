@@ -11,6 +11,7 @@ import {
 import { db } from '../../firebase';
 import {
   DuoRegistration,
+  DuoRegistrationStatus,
   RegistrationRider,
 } from '../../core/models/DuoRegistration';
 import { Competitor, normalizeCategory } from '../../core/models/Competidor';
@@ -27,19 +28,28 @@ import { timestampToISO, timestampToISOOrUndefined } from './firestoreHelpers';
 const COLLECTION = 'duoRegistrations';
 
 function toRegistration(id: string, data: any): DuoRegistration {
+  // Normaliza na borda do serviço: docs legados/adulterados podem ter categorias
+  // fora do enum, o que quebraria componentes como CategoryBadge em runtime.
+  const one: RegistrationRider = {
+    name: data.competitorOne?.name ?? '',
+    category: normalizeCategory(data.competitorOne?.category ?? 'Aberta'),
+  };
+  const two: RegistrationRider = {
+    name: data.competitorTwo?.name ?? '',
+    category: normalizeCategory(data.competitorTwo?.category ?? 'Aberta'),
+  };
+  const status: DuoRegistrationStatus =
+    data.status === 'confirmed' || data.status === 'rejected' ? data.status : 'pending';
   return {
     id,
     competitionId: data.competitionId,
     createdBy: data.createdBy,
-    competitorOne: data.competitorOne,
-    competitorTwo: data.competitorTwo,
-    // Sempre derivado das categorias — nunca confiar no `group` gravado (pode
-    // estar inconsistente se o doc foi criado por um cliente adulterado).
-    group: computeDuoGroup(
-      data.competitorOne?.category ?? 'Aberta',
-      data.competitorTwo?.category ?? 'Aberta'
-    ),
-    status: data.status ?? 'pending',
+    competitorOne: one,
+    competitorTwo: two,
+    // Sempre derivado das categorias (já normalizadas) — nunca confiar no `group`
+    // gravado (pode estar inconsistente se o doc foi criado por um cliente adulterado).
+    group: computeDuoGroup(one.category, two.category),
+    status,
     createdAt: timestampToISO(data.createdAt),
     confirmedAt: timestampToISOOrUndefined(data.confirmedAt),
     confirmedBy: data.confirmedBy ?? undefined,
