@@ -265,8 +265,16 @@ export async function confirmDuoRegistration(
     }
 
     tx.update(compRef, { competitors, duos, updatedAt: serverTimestamp() });
-    tx.update(regRef, {
+    // Reescreve só com as chaves permitidas (como o reject) — evita que campos
+    // legados/extras no doc façam o hasOnly da regra de update falhar.
+    tx.set(regRef, {
+      competitionId: reg.competitionId,
+      createdBy: reg.createdBy,
+      competitorOne: reg.competitorOne,
+      competitorTwo: reg.competitorTwo,
+      group: reg.group,
       status: 'confirmed',
+      createdAt: reg.createdAt,
       confirmedAt: serverTimestamp(),
       confirmedBy,
     });

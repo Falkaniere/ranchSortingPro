@@ -33,7 +33,10 @@ service cloud.firestore {
     //   (update — confirm/reject — is restricted to the competition owner)
     match /duoRegistrations/{regId} {
       function isCompetitionOwner() {
-        return get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
+        // Type guard: doc legado/malformado sem competitionId string faria o get()
+        // dar erro e negar tudo (inclusive para o dono). Falha fechado sem erro.
+        return resource.data.competitionId is string
+          && get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
       }
       function validRider(r) {
         return r is map

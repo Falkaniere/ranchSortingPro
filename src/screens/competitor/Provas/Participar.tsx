@@ -166,6 +166,18 @@ export default function CompetitorParticipar() {
             status={done ? 'pending' : (existing?.status ?? 'pending')}
             onBack={() => navigate('/competitor/provas')}
           />
+        ) : competition.status !== 'draft' ? (
+          // Prova já iniciada/encerrada — inscrições fechadas (o envio falharia nas regras).
+          <Card>
+            <p className="text-rope-500 text-sm text-center py-4">
+              As inscrições para <strong>{competition.name}</strong> estão encerradas.
+            </p>
+            <div className="text-center">
+              <Button variant="outline" onClick={() => navigate('/competitor/provas')}>
+                Voltar às provas
+              </Button>
+            </div>
+          </Card>
         ) : (
           <div className="flex flex-col gap-4">
             <div>

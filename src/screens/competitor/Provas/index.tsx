@@ -83,8 +83,11 @@ export default function CompetitorProvas() {
     ),
     [registrations]
   );
+  // Só provas abertas (draft) entram em "Disponíveis" — as vindas de inscrições
+  // (getCompetitionsByIds) podem já estar em andamento/finalizadas e a inscrição
+  // falharia nas regras.
   const available = useMemo(
-    () => competitions.filter((c) => !registeredIds.has(c.id)),
+    () => competitions.filter((c) => c.status === 'draft' && !registeredIds.has(c.id)),
     [competitions, registeredIds]
   );
   // Índice por id para lookup O(1) na aba "Inscrito" (evita find() dentro do map).
