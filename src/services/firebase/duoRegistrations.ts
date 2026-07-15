@@ -192,6 +192,11 @@ export async function confirmDuoRegistration(
     if (!canPair(r1.category, r2.category)) {
       throw new Error('Combinação de categorias inválida para esta dupla.');
     }
+    // Doc legado/adulterado sem competitionId geraria um erro de path pouco claro
+    // ao montar a referência — devolve um erro de domínio claro antes disso.
+    if (typeof reg.competitionId !== 'string' || !reg.competitionId) {
+      throw new Error('Inscrição sem prova associada. Não é possível confirmar.');
+    }
 
     const compRef = doc(db, 'competitions', reg.competitionId);
     const compSnap = await tx.get(compRef);

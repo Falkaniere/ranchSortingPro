@@ -22,12 +22,15 @@ import { Input } from '../../components/ui/Input';
 import { Spinner } from '../../components/ui/Spinner';
 import { useToast } from '../../components/ui/Toast';
 
-// Converte um valor digitado em pt-BR (aceita "150", "150,50", "1.000,50") em número.
-// Quando há vírgula decimal, os pontos são tratados como separador de milhar.
+// Converte um valor digitado em pt-BR em número. No padrão pt-BR o ponto é
+// separador de MILHAR e a vírgula é o decimal — então "1.500" = 1500 e
+// "1.500,50" = 1500.50. Sem vírgula, os pontos são sempre milhar.
 function parseBRLInput(raw: string): number {
   const s = raw.trim();
   if (!s) return 0;
-  const normalized = s.includes(',') ? s.replace(/\./g, '').replace(',', '.') : s;
+  const normalized = s.includes(',')
+    ? s.replace(/\./g, '').replace(',', '.')
+    : s.replace(/\./g, '');
   const n = Number(normalized);
   return isNaN(n) ? 0 : Math.max(0, n);
 }
