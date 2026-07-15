@@ -13,7 +13,7 @@ import {
   DuoRegistration,
   RegistrationRider,
 } from '../../core/models/DuoRegistration';
-import { Competitor } from '../../core/models/Competidor';
+import { Competitor, normalizeCategory } from '../../core/models/Competidor';
 import {
   Duo,
   canPair,
@@ -189,9 +189,13 @@ export async function confirmDuoRegistration(
     ) {
       throw new Error('Inscrição com dados incompletos. Não é possível confirmar.');
     }
+    // Normaliza categorias (docs legados podem ter "Amador", "Amador 19" etc.) —
+    // garante dedupe correto de competidores e grupo 1D/2D coerente.
+    const rider1: RegistrationRider = { name: r1.name.trim(), category: normalizeCategory(r1.category) };
+    const rider2: RegistrationRider = { name: r2.name.trim(), category: normalizeCategory(r2.category) };
     // Defesa contra docs adulterados: nunca injetar uma dupla com combinação
     // inválida de categorias (ex.: Aberta+Aberta), mesmo que a UI já valide.
-    if (!canPair(r1.category, r2.category)) {
+    if (!canPair(rider1.category, rider2.category)) {
       throw new Error('Combinação de categorias inválida para esta dupla.');
     }
     // Doc legado/adulterado sem competitionId geraria um erro de path pouco claro
@@ -206,11 +210,16 @@ export async function confirmDuoRegistration(
     const comp = compSnap.data();
 
     const numRounds = comp.numRounds ?? 1;
-    const competitors: Competitor[] = [...(comp.competitors ?? [])];
+    // comp.competitors vem cru do Firestore (não passou por toCompetition) —
+    // normaliza categorias legadas antes de dedupar/parear.
+    const competitors: Competitor[] = (comp.competitors ?? []).map((c: any) => ({
+      ...c,
+      category: normalizeCategory(c.category ?? 'Aberta'),
+    }));
 
-    const one = resolveCompetitorId(competitors, reg.competitorOne, numRounds);
+    const one = resolveCompetitorId(competitors, rider1, numRounds);
     if (one.isNew) competitors.push(one.competitor);
-    const two = resolveCompetitorId(competitors, reg.competitorTwo, numRounds);
+    const two = resolveCompetitorId(competitors, rider2, numRounds);
     // Nomes que normalizam igual resolveriam para o mesmo competidor, gerando uma
     // dupla inválida (riderOneId === riderTwoId). Bloqueia a confirmação nesse caso.
     if (one.competitor.id === two.competitor.id) {

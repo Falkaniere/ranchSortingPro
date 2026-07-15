@@ -37,6 +37,7 @@ service cloud.firestore {
       }
       function validRider(r) {
         return r is map
+          && r.keys().hasOnly(['name', 'category'])
           && r.name is string && r.name.size() > 0 && r.name.size() <= 100
           && r.category in ['Aberta', '19', 'Light', 'Principiante'];
       }
@@ -44,7 +45,9 @@ service cloud.firestore {
       // confirmação e garante que a prova referenciada exista.
       function validNewRegistration() {
         let d = request.resource.data;
-        return d.createdBy == request.auth.uid
+        return d.keys().hasOnly(['competitionId', 'createdBy', 'competitorOne',
+            'competitorTwo', 'group', 'status', 'createdAt'])
+          && d.createdBy == request.auth.uid
           && d.competitionId is string
           // Prova precisa existir E estar aberta a inscrições (status 'draft').
           && get(/databases/$(database)/documents/competitions/$(d.competitionId)).data.status == 'draft'
