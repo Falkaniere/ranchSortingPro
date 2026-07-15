@@ -77,8 +77,11 @@ function toCompetition(id: string, data: any): Competition {
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
     finalsCutoff: data.finalsCutoff ?? DEFAULT_FINALS_CUTOFF,
-    entryFee: data.entryFee ?? undefined,
-    pixKey: data.pixKey ?? undefined,
+    // Coerção defensiva: docs antigos/malformados podem ter tipos inesperados.
+    // Consumidores (ex.: entryFee.toLocaleString) sempre recebem number|undefined
+    // e string|undefined.
+    entryFee: typeof data.entryFee === 'number' && isFinite(data.entryFee) ? data.entryFee : undefined,
+    pixKey: typeof data.pixKey === 'string' && data.pixKey.trim() ? data.pixKey : undefined,
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
       category: normalizeCategory(c.category ?? 'Aberta'),
