@@ -158,10 +158,11 @@ export default function CompetitorParticipar() {
               Prova não encontrada ou não está mais disponível.
             </p>
           </Card>
-        ) : done || existing ? (
+        ) : done || (existing && existing.status !== 'rejected') ? (
+          // Inscrição recusada NÃO bloqueia: mostra o formulário para reenviar.
           <ConfirmationState
             competitionName={competition.name}
-            status={existing?.status ?? 'pending'}
+            status={done ? 'pending' : (existing?.status ?? 'pending')}
             onBack={() => navigate('/competitor/provas')}
           />
         ) : (

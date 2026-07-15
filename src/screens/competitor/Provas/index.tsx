@@ -75,9 +75,12 @@ export default function CompetitorProvas() {
     return () => { cancelled = true; };
   }, [user]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Provas em que o usuário já se inscreveu (não mostrar em "Disponíveis").
+  // Provas com inscrição ativa (não mostrar em "Disponíveis"). Inscrições
+  // recusadas NÃO contam — a prova volta a ficar disponível para refazer.
   const registeredIds = useMemo(
-    () => new Set(registrations.map((r) => r.competitionId)),
+    () => new Set(
+      registrations.filter((r) => r.status !== 'rejected').map((r) => r.competitionId)
+    ),
     [registrations]
   );
   const available = useMemo(
@@ -171,7 +174,14 @@ export default function CompetitorProvas() {
           <div className="flex flex-col gap-4">
             {registrations.map((r) => {
               const comp = competitions.find((c) => c.id === r.competitionId);
-              return <RegistrationCard key={r.id} registration={r} competition={comp} />;
+              return (
+                <RegistrationCard
+                  key={r.id}
+                  registration={r}
+                  competition={comp}
+                  onRedo={() => navigate(`/competitor/provas/${r.competitionId}/participar`)}
+                />
+              );
             })}
           </div>
         )}
@@ -217,11 +227,14 @@ const REG_STATUS_STYLE: Record<string, string> = {
 function RegistrationCard({
   registration: r,
   competition: c,
+  onRedo,
 }: {
   registration: DuoRegistration;
   competition?: Competition;
+  onRedo: () => void;
 }) {
   const date = formatDate(c?.eventDate);
+  const isRejected = r.status === 'rejected';
   return (
     <Card noPadding>
       <div className="p-5">
@@ -244,6 +257,13 @@ function RegistrationCard({
           <p className="text-xs text-rope-400 mt-0.5">Grupo {r.group}</p>
         </div>
       </div>
+      {isRejected && (
+        <div className="px-5 py-3 border-t border-dust-200 bg-dust-50 rounded-b-xl">
+          <Button variant="outline" size="sm" fullWidth onClick={onRedo}>
+            Refazer inscrição
+          </Button>
+        </div>
+      )}
     </Card>
   );
 }
