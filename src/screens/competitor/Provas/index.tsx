@@ -87,6 +87,11 @@ export default function CompetitorProvas() {
     () => competitions.filter((c) => !registeredIds.has(c.id)),
     [competitions, registeredIds]
   );
+  // Índice por id para lookup O(1) na aba "Inscrito" (evita find() dentro do map).
+  const competitionById = useMemo(
+    () => new Map(competitions.map((c) => [c.id, c])),
+    [competitions]
+  );
 
   async function handleLogout() {
     await signOut();
@@ -173,7 +178,7 @@ export default function CompetitorProvas() {
         ) : (
           <div className="flex flex-col gap-4">
             {registrations.map((r) => {
-              const comp = competitions.find((c) => c.id === r.competitionId);
+              const comp = competitionById.get(r.competitionId);
               return (
                 <RegistrationCard
                   key={r.id}
