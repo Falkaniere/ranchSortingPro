@@ -32,7 +32,8 @@ function parseBRLInput(raw: string): number {
     ? s.replace(/\./g, '').replace(',', '.')
     : s.replace(/\./g, '');
   const n = Number(normalized);
-  return isNaN(n) ? 0 : Math.max(0, n);
+  // Number.isFinite descarta NaN e Infinity (entradas com dígitos demais).
+  return Number.isFinite(n) ? Math.max(0, n) : 0;
 }
 
 export default function DashboardScreen() {

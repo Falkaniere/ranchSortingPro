@@ -61,21 +61,31 @@ export async function createDuoRegistration(
     throw new Error('Você já tem uma inscrição nesta prova.');
   }
 
+  // Normaliza (trim) e valida nome antes de gravar, para não criar docs que a
+  // confirmação depois recusaria (nomes em branco/longos demais).
+  const one: RegistrationRider = { name: competitorOne.name.trim(), category: competitorOne.category };
+  const two: RegistrationRider = { name: competitorTwo.name.trim(), category: competitorTwo.category };
+  if (!one.name || !two.name) {
+    throw new Error('Informe o nome dos dois competidores.');
+  }
+  if (one.name.length > 100 || two.name.length > 100) {
+    throw new Error('Nome do competidor muito longo (máximo 100 caracteres).');
+  }
   // Defesa em profundidade (espelha a validação da tela Participar): não criar
   // inscrições que a confirmação depois recusaria e que ficariam presas.
-  if (!canPair(competitorOne.category, competitorTwo.category)) {
+  if (!canPair(one.category, two.category)) {
     throw new Error('Combinação de categorias inválida para esta dupla.');
   }
-  if (normalizeName(competitorOne.name) === normalizeName(competitorTwo.name)) {
+  if (normalizeName(one.name) === normalizeName(two.name)) {
     throw new Error('O parceiro deve ser diferente de você.');
   }
 
-  const group = computeDuoGroup(competitorOne.category, competitorTwo.category);
+  const group = computeDuoGroup(one.category, two.category);
   const payload = {
     competitionId,
     createdBy,
-    competitorOne,
-    competitorTwo,
+    competitorOne: one,
+    competitorTwo: two,
     group,
     status: 'pending' as const,
     createdAt: serverTimestamp(),
