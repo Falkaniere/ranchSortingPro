@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCompetition } from '../../context/CompetitionContext';
+import { useResults } from '../../context/ResultContext';
 import { DuoRegistration } from '../../core/models/DuoRegistration';
 import {
   listRegistrationsByCompetition,
@@ -21,6 +22,7 @@ export default function PendingDuos() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
   const { loadCompetition } = useCompetition();
+  const { setDuosMeta } = useResults();
   const toast = useToast();
 
   const [pending, setPending] = useState<DuoRegistration[]>([]);
@@ -37,11 +39,17 @@ export default function PendingDuos() {
   }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Recarrega a prova no contexto para refletir os competidores/duplas recém-adicionados.
+  // Sincroniza também o duosMeta do ResultContext — é a fonte dos labels na
+  // Qualificatória/Final; sem isso, a dupla recém-confirmada não seria encontrada
+  // e as telas mostrariam o duoId no lugar dos nomes (na mesma sessão, sem reload).
   async function refreshCompetition() {
     if (!id) return;
     try {
       const fresh = await getCompetitionFromServer(id);
-      if (fresh) loadCompetition(fresh);
+      if (fresh) {
+        loadCompetition(fresh);
+        setDuosMeta(fresh.duos ?? []);
+      }
     } catch {
       // Best-effort — a próxima navegação recarrega do servidor.
     }
