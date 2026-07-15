@@ -31,8 +31,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const snap = await getDoc(doc(db, 'users', u.uid));
       const data = snap.data();
       setRole((data?.role as UserRole) ?? 'basic');
-      // Existing users without a persona are treated as organizers (backward compatible).
-      setUserType((data?.userType as UserType) ?? 'organizer');
+      // Valida contra os literais permitidos (não confiar em cast) — usuários sem
+      // persona, ou com valor inesperado/adulterado, são tratados como organizers.
+      setUserType(data?.userType === 'competitor' || data?.userType === 'organizer'
+        ? data.userType
+        : 'organizer');
       setCompetitorProfileId(data?.competitorProfileId ?? null);
     } catch {
       setRole('basic');
