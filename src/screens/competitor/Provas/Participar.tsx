@@ -34,6 +34,7 @@ function CategoryPicker({
           key={cat.value}
           type="button"
           onClick={() => onChange(cat.value)}
+          aria-pressed={value === cat.value}
           title={cat.hint}
           className={[
             'px-3 py-2 rounded-lg text-sm font-medium border transition-all text-center',
@@ -198,7 +199,7 @@ export default function CompetitorParticipar() {
                   label="Nome do parceiro"
                   placeholder="Ex: Maria Souza"
                   value={name2}
-                  maxLength={50}
+                  maxLength={100}
                   onChange={(e) => { setName2(e.target.value); setErrors((p) => ({ ...p, name2: '' })); }}
                   error={errors.name2}
                 />

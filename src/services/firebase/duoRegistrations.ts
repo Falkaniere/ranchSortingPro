@@ -281,7 +281,18 @@ export async function rejectDuoRegistration(registrationId: string): Promise<voi
     // Só inscrições pendentes podem ser recusadas. Uma dupla já confirmada foi
     // injetada em competitors[]/duos[] — recusá-la deixaria a prova inconsistente.
     // Recusas repetidas são no-op (idempotente).
-    if (snap.data().status !== 'pending') return;
-    tx.update(regRef, { status: 'rejected' });
+    const d = snap.data();
+    if (d.status !== 'pending') return;
+    // Reescreve só com as chaves permitidas — descarta eventuais confirmedAt/
+    // confirmedBy legados/adulterados que fariam a regra de recusa falhar.
+    tx.set(regRef, {
+      competitionId: d.competitionId,
+      createdBy: d.createdBy,
+      competitorOne: d.competitorOne,
+      competitorTwo: d.competitorTwo,
+      group: d.group,
+      status: 'rejected',
+      createdAt: d.createdAt,
+    });
   });
 }
