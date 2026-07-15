@@ -52,8 +52,10 @@ export async function createDuoRegistration(
   competitorOne: RegistrationRider,
   competitorTwo: RegistrationRider
 ): Promise<DuoRegistration> {
-  // Evita inscrições duplicadas do mesmo usuário na mesma prova (double-submit,
-  // múltiplas abas/dispositivos). Uma inscrição recusada pode ser refeita.
+  // Mitigação (não garantia) contra inscrições duplicadas do mesmo usuário na
+  // mesma prova. É um read-then-write NÃO atômico: submissões concorrentes
+  // (duas abas/dispositivos) ainda podem criar 2 docs — nesse caso raro o gerente
+  // resolve rejeitando a inscrição extra. Uma inscrição recusada pode ser refeita.
   const existing = await getUserRegistration(createdBy, competitionId);
   if (existing && existing.status !== 'rejected') {
     throw new Error('Você já tem uma inscrição nesta prova.');
