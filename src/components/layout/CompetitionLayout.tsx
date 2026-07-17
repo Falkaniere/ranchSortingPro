@@ -9,6 +9,7 @@ import { ResultSyncBridge } from './ResultSyncBridge';
 
 const steps = [
   { key: 'registration', label: 'Inscrições', icon: '👥' },
+  { key: 'pending', label: 'Duplas pendentes', icon: '⏳' },
   { key: 'duos', label: 'Duplas', icon: '🤝' },
   { key: 'record', label: 'Qualificatória', icon: '🐄' },
   { key: 'final', label: 'Final', icon: '🏆' },

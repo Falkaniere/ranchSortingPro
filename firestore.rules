@@ -27,6 +27,73 @@ service cloud.firestore {
       allow read, create: if request.auth != null;
     }
 
+    // Duo registrations: a competitor pre-registers a pair for a competition.
+    // create: any authed user, only as themselves (createdBy == uid)
+    // read/update: the creator, or the owner of the referenced competition
+    //   (update — confirm/reject — is restricted to the competition owner)
+    match /duoRegistrations/{regId} {
+      function isCompetitionOwner() {
+        // Type guard: doc legado/malformado sem competitionId string faria o get()
+        // dar erro e negar tudo (inclusive para o dono). Falha fechado sem erro.
+        return resource.data.competitionId is string
+          && get(/databases/$(database)/documents/competitions/$(resource.data.competitionId)).data.ownerId == request.auth.uid;
+      }
+      function validRider(r) {
+        return r is map
+          && r.keys().hasOnly(['name', 'category'])
+          && r.name is string && r.name.size() > 0 && r.name.size() <= 100
+          && r.category in ['Aberta', '19', 'Light', 'Principiante'];
+      }
+      // create: valida shape/enums, exige status 'pending', proíbe campos de
+      // confirmação e garante que a prova referenciada exista.
+      function validNewRegistration() {
+        let d = request.resource.data;
+        return d.keys().hasOnly(['competitionId', 'createdBy', 'competitorOne',
+            'competitorTwo', 'group', 'status', 'createdAt'])
+          && d.createdBy == request.auth.uid
+          && d.competitionId is string
+          // Prova precisa existir E estar aberta a inscrições (status 'draft').
+          && get(/databases/$(database)/documents/competitions/$(d.competitionId)).data.status == 'draft'
+          && d.status == 'pending'
+          && d.group in ['1D', '2D']
+          && d.createdAt is timestamp
+          && validRider(d.competitorOne)
+          && validRider(d.competitorTwo)
+          // Aberta+Aberta é combinação inválida (não pareável).
+          && !(d.competitorOne.category == 'Aberta' && d.competitorTwo.category == 'Aberta')
+          && !('confirmedAt' in d)
+          && !('confirmedBy' in d);
+      }
+      // update: apenas transição de status pending -> confirmed/rejected.
+      // Dados da dupla imutáveis, nenhum campo extra, e confirmação coerente
+      // (confirmedBy == quem confirma; confirmedAt timestamp). Recusa não grava
+      // campos de confirmação.
+      function onlyStatusTransition() {
+        let d = request.resource.data;
+        let cur = resource.data;
+        return d.keys().hasOnly(['competitionId', 'createdBy', 'competitorOne',
+            'competitorTwo', 'group', 'status', 'createdAt', 'confirmedAt', 'confirmedBy'])
+          && d.competitionId == cur.competitionId
+          && d.createdBy == cur.createdBy
+          && d.competitorOne == cur.competitorOne
+          && d.competitorTwo == cur.competitorTwo
+          && d.group == cur.group
+          && d.createdAt == cur.createdAt
+          && cur.status == 'pending'
+          && (
+            (d.status == 'rejected'
+              && !('confirmedAt' in d) && !('confirmedBy' in d))
+            || (d.status == 'confirmed'
+              && d.confirmedBy == request.auth.uid && d.confirmedAt is timestamp)
+          );
+      }
+      allow create: if request.auth != null && validNewRegistration();
+      allow read: if request.auth != null && (
+        resource.data.createdBy == request.auth.uid || isCompetitionOwner()
+      );
+      allow update: if request.auth != null && isCompetitionOwner() && onlyStatusTransition();
+    }
+
     // User document: each user manages their own data and subcollections
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;

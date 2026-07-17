@@ -9,6 +9,7 @@ import {
   getDocFromServer,
   query,
   where,
+  documentId,
   serverTimestamp,
 } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -33,6 +34,10 @@ export interface Competition {
   numRounds: number;
   /** Quantas duplas (top X) se classificam para a final. Padrão: 10. */
   finalsCutoff: number;
+  /** Valor da inscrição em reais (BRL). Opcional. */
+  entryFee?: number;
+  /** Chave PIX para pagamento da inscrição. Opcional. */
+  pixKey?: string;
   competitors: Competitor[];
   duos: Duo[];
   qualifierResults: PassResult[];
@@ -72,6 +77,11 @@ function toCompetition(id: string, data: any): Competition {
     status: data.status ?? 'draft',
     numRounds: data.numRounds ?? 1,
     finalsCutoff: data.finalsCutoff ?? DEFAULT_FINALS_CUTOFF,
+    // Coerção defensiva: docs antigos/malformados podem ter tipos inesperados.
+    // Consumidores (ex.: entryFee.toLocaleString) sempre recebem number|undefined
+    // e string|undefined.
+    entryFee: typeof data.entryFee === 'number' && isFinite(data.entryFee) ? data.entryFee : undefined,
+    pixKey: typeof data.pixKey === 'string' && data.pixKey.trim() ? data.pixKey : undefined,
     competitors: (data.competitors ?? []).map((c: any) => ({
       ...c,
       category: normalizeCategory(c.category ?? 'Aberta'),
@@ -89,7 +99,9 @@ export async function createCompetition(
   location?: string,
   eventDate?: string,
   numRounds = 1,
-  finalsCutoff = DEFAULT_FINALS_CUTOFF
+  finalsCutoff = DEFAULT_FINALS_CUTOFF,
+  entryFee = 0,
+  pixKey = ''
 ): Promise<Competition> {
   const payload = {
     ownerId,
@@ -101,6 +113,8 @@ export async function createCompetition(
     status: 'draft' as CompetitionStatus,
     numRounds,
     finalsCutoff,
+    entryFee,
+    pixKey,
     competitors: [],
     duos: [],
     qualifierResults: [],
@@ -137,10 +151,40 @@ export async function listCompetitions(ownerId: string): Promise<Competition[]> 
   );
 }
 
+/**
+ * Lista as provas abertas para inscrição (status 'draft'), de qualquer organizador.
+ * As regras do Firestore permitem leitura por qualquer usuário autenticado.
+ */
+export async function listOpenCompetitions(): Promise<Competition[]> {
+  const q = query(
+    collection(db, 'competitions'),
+    where('status', '==', 'draft')
+  );
+  const snap = await getDocs(q);
+  const results = snap.docs.map((d) => toCompetition(d.id, d.data()));
+  return results.sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+}
+
 export async function getCompetition(id: string): Promise<Competition | null> {
   const snap = await getDoc(doc(db, 'competitions', id));
   if (!snap.exists()) return null;
   return toCompetition(snap.id, snap.data());
+}
+
+/** Busca várias provas por id em lote (chunks de 10, limite do operador `in`). */
+export async function getCompetitionsByIds(ids: string[]): Promise<Competition[]> {
+  const unique = Array.from(new Set(ids));
+  if (unique.length === 0) return [];
+  const results: Competition[] = [];
+  for (let i = 0; i < unique.length; i += 10) {
+    const chunk = unique.slice(i, i + 10);
+    const q = query(collection(db, 'competitions'), where(documentId(), 'in', chunk));
+    const snap = await getDocs(q);
+    snap.docs.forEach((d) => results.push(toCompetition(d.id, d.data())));
+  }
+  return results;
 }
 
 /** Always fetches directly from Firestore server, bypassing local cache. */

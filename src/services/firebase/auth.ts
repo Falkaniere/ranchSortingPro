@@ -10,13 +10,21 @@ import {
 import { doc, setDoc, getDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider } from '../../firebase';
 
-export async function signUp(name: string, email: string, password: string): Promise<User> {
+export type UserType = 'competitor' | 'organizer';
+
+export async function signUp(
+  name: string,
+  email: string,
+  password: string,
+  userType: UserType = 'organizer'
+): Promise<User> {
   const credential = await createUserWithEmailAndPassword(auth, email, password);
   await updateProfile(credential.user, { displayName: name });
   await setDoc(doc(db, 'users', credential.user.uid), {
     displayName: name,
     email,
     role: 'basic',
+    userType,
     createdAt: serverTimestamp(),
   });
   return credential.user;
@@ -33,11 +41,13 @@ export async function signInWithGoogle(): Promise<User> {
   const userRef = doc(db, 'users', user.uid);
   const snap = await getDoc(userRef);
   if (!snap.exists()) {
-    // First Google login — create profile with basic role
+    // First Google login — create profile with basic role.
+    // Default persona is 'organizer' (safe default; can be refined later).
     await setDoc(userRef, {
       displayName: user.displayName,
       email: user.email,
       role: 'basic',
+      userType: 'organizer' as UserType,
       createdAt: serverTimestamp(),
     });
   } else {
