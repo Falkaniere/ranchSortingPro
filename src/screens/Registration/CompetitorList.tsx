@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Competitor, RiderCategory } from 'core/models/Competidor';
+import { Duo } from 'core/models/Duo';
 import { useToast } from '../../components/ui/Toast';
 import { Button } from '../../components/ui/Button';
 import { CategoryBadge } from '../../components/ui/Badge';
@@ -12,6 +13,8 @@ import { CATEGORIES } from '../../core/constants';
 interface CompetitorListProps {
   competitors: Competitor[];
   setCompetitors: (c: Competitor[]) => void;
+  duos: Duo[];
+  setDuos: (d: Duo[]) => void;
   isFinished: boolean;
   competitionId: string | undefined;
   numRounds: number;
@@ -23,6 +26,8 @@ interface CompetitorListProps {
 export const CompetitorList = React.memo(function CompetitorList({
   competitors,
   setCompetitors,
+  duos,
+  setDuos,
   isFinished,
   competitionId,
   numRounds,
@@ -64,7 +69,27 @@ export const CompetitorList = React.memo(function CompetitorList({
   function doDelete() {
     if (!deleteTarget) return;
     setCompetitors(competitors.filter((c) => c.id !== deleteTarget.id));
-    toast(`${deleteTarget.name} removido.`, 'info');
+
+    // Remove também as duplas que incluem o competidor removido, para não
+    // deixar duplas órfãs referenciando um competidor que não existe mais.
+    const removedDuos = duos.filter(
+      (d) => d.riderOneId === deleteTarget.id || d.riderTwoId === deleteTarget.id
+    );
+    if (removedDuos.length > 0) {
+      setDuos(
+        duos.filter(
+          (d) => d.riderOneId !== deleteTarget.id && d.riderTwoId !== deleteTarget.id
+        )
+      );
+      toast(
+        `${deleteTarget.name} removido junto com ${removedDuos.length} dupla${
+          removedDuos.length !== 1 ? 's' : ''
+        }.`,
+        'info'
+      );
+    } else {
+      toast(`${deleteTarget.name} removido.`, 'info');
+    }
     setDeleteTarget(null);
   }
 

@@ -16,7 +16,7 @@ export default function Registration() {
   const navigate = useNavigate();
   const toast = useToast();
   const { setDuosMeta } = useResults();
-  const { competitors, numRounds, setCompetitors, setDuos, competition } = useCompetition();
+  const { competitors, numRounds, setCompetitors, duos, setDuos, competition } = useCompetition();
   const isFinished = competition?.status === 'finished';
 
   const [isSorting, setIsSorting] = useState(false);
@@ -59,6 +59,11 @@ export default function Registration() {
     }
   }, [competitors, numRounds, id, toast, navigate, setDuos, setDuosMeta]);
 
+  const handleSetDuos = useCallback((next: typeof duos) => {
+    setDuos(next);
+    setDuosMeta(next);
+  }, [setDuos, setDuosMeta]);
+
   const openAthletePicker = useCallback(() => setAthletePickerOpen(true), []);
   const openSheetImport = useCallback(() => setSheetImportOpen(true), []);
 
@@ -93,6 +98,8 @@ export default function Registration() {
         <CompetitorList
           competitors={competitors}
           setCompetitors={setCompetitors}
+          duos={duos}
+          setDuos={handleSetDuos}
           isFinished={isFinished}
           competitionId={id}
           numRounds={numRounds}
