@@ -10,6 +10,7 @@ import { PrivateRoute } from './components/layout/PrivateRoute';
 import { CompetitionLayout } from './components/layout/CompetitionLayout';
 import { PageSpinner } from './components/ui/Spinner';
 
+import LandingScreen from './screens/Landing';
 import LoginScreen from './screens/Login';
 import RegisterScreen from './screens/Register';
 import DashboardScreen from './screens/Dashboard';
@@ -42,10 +43,11 @@ import CompetitorParticipar from './screens/competitor/Provas/Participar';
 // Organizer — pending duo registrations tab
 import PendingDuos from './screens/PendingDuos';
 
-// Routes the logged-in user to their persona home.
-function HomeRedirect() {
-  const { userType, isLoading } = useAuth();
+// Raiz "/": visitantes veem a landing page; usuários autenticados vão para a home da sua persona.
+function RootRoute() {
+  const { user, userType, isLoading } = useAuth();
   if (isLoading) return <PageSpinner />;
+  if (!user) return <LandingScreen />;
   if (userType === 'competitor') return <Navigate to="/competitor/provas" replace />;
   return <DashboardScreen />;
 }
@@ -59,6 +61,7 @@ export default function App() {
             <Router>
               <Routes>
                 {/* Public */}
+                <Route path="/" element={<RootRoute />} />
                 <Route path="/login" element={<LoginScreen />} />
                 <Route path="/register" element={<RegisterScreen />} />
 
@@ -83,8 +86,6 @@ export default function App() {
 
                 {/* Organizer protected routes */}
                 <Route element={<PrivateRoute />}>
-                  <Route path="/" element={<HomeRedirect />} />
-
                   <Route path="/competition/:id" element={<CompetitionLayout />}>
                     <Route path="registration" element={<Registration />} />
                     <Route path="duos" element={<Duos />} />
