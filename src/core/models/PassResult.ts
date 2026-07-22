@@ -1,25 +1,14 @@
 import { DuoGroup } from './Duo';
 
 /**
- * Representa o resultado de uma passada (qualificatória ou final).
+ * Campos comuns a qualquer passada (qualificatória ou final).
  */
-export interface PassResult {
+interface BasePassResult {
   /** Identificador único da passada */
   id: string;
 
   /** ID da dupla correspondente */
   duoId: string;
-
-  /** Etapa da competição: qualificatória ou final */
-  stage: 'Qualifier' | 'Final';
-
-  /**
-   * Qual final esta passada pertence (somente quando stage === 'Final').
-   * O bracket nem sempre é igual ao group da dupla: como as finais 1D e 2D são
-   * classificadas de forma independente, uma dupla 2D bem colocada pode disputar
-   * as duas — nesse caso ela corre uma passada em cada bracket.
-   */
-  bracket?: DuoGroup;
 
   /** Número de bois passados corretamente */
   cattleCount: number;
@@ -39,6 +28,35 @@ export interface PassResult {
   /** Data/hora da última edição (ISO) */
   updatedAtISO?: string;
 }
+
+/**
+ * Passada de qualificatória. Não pertence a um bracket de final — a categoria
+ * relevante vem sempre do `group` da dupla.
+ */
+export interface QualifierPass extends BasePassResult {
+  stage: 'Qualifier';
+  /** Qualificatórias nunca têm bracket. */
+  bracket?: never;
+}
+
+/**
+ * Passada de final. O `bracket` é obrigatório e indica em qual final ('1D' ou
+ * '2D') a passada foi corrida. Como as finais são classificadas de forma
+ * independente, uma dupla 2D bem colocada pode ter uma passada em cada bracket
+ * — por isso é o `bracket`, e não o `group` da dupla, que desambigua a passada.
+ */
+export interface FinalPass extends BasePassResult {
+  stage: 'Final';
+  bracket: DuoGroup;
+}
+
+/**
+ * Representa o resultado de uma passada (qualificatória ou final).
+ *
+ * União discriminada por `stage`: passadas de final carregam `bracket`
+ * obrigatório; qualificatórias nunca têm bracket.
+ */
+export type PassResult = QualifierPass | FinalPass;
 
 /**
  * Representa um placar consolidado de uma dupla.
