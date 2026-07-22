@@ -45,8 +45,9 @@ export default function Announcer() {
     return getFinalists(competition?.finalsCutoff);
   }, [status, results, competition?.finalsCutoff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Uma dupla 2D que também entra no top geral corre a final 1D em vez da
-  // 2D (nunca as duas) — por isso a fila é de (dupla, bracket), não só de duplas.
+  // As finais 1D e 2D são classificadas de forma independente, então uma dupla
+  // 2D bem colocada pode aparecer nas duas — por isso a fila é de (dupla,
+  // bracket), não só de duplas: ela pode entrar duas vezes, uma por bracket.
   const orderedEntries = useMemo(() => {
     if (status === 'final' && finalists) {
       // Exibe 2D primeiro, depois 1D — reverso (pior entra primeiro)

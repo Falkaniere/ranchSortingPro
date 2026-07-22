@@ -51,7 +51,7 @@ export interface FinalAggregationEntry {
   duoId: string;
   /** Categoria real da dupla (1D ou 2D). */
   group: DuoGroup;
-  /** Qual final este total pertence — pode diferir de `group` quando uma dupla 2D corre a final 1D em vez da 2D. */
+  /** Qual final este total pertence — pode diferir de `group` quando uma dupla 2D corre a final 1D (e, sendo independentes, ela ainda pode ter outro total na 2D). */
   bracket: DuoGroup;
   totalCattle: number;
   totalTimeSeconds: number;

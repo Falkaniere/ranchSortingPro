@@ -46,9 +46,9 @@ interface ResultsContextValue {
 
   /**
    * Adiciona resultado da final.
-   * `bracket` indica qual final ('1D' ou '2D') esta passada pertence — uma
-   * dupla 2D que também está no top geral corre a final 1D em vez da 2D,
-   * nunca as duas.
+   * `bracket` indica qual final ('1D' ou '2D') esta passada pertence. Como as
+   * finais são classificadas de forma independente, uma dupla 2D bem colocada
+   * pode correr as duas — nesse caso registra uma passada em cada bracket.
    */
   addFinalResult: (
     duoId: string,
