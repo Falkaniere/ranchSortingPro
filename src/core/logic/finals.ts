@@ -13,13 +13,15 @@ export interface FinalsSelection {
 /**
  * Seleciona os finalistas conforme o corte (top X) configurado na prova.
  *
- * A final 1D é aberta: reúne o top X geral, independente da categoria da
- * dupla — uma dupla 2D pode entrar nela se ranquear alto o suficiente.
+ * As duas finais são classificadas de forma INDEPENDENTE:
  *
- * A final 2D é restrita às duplas 2D (e às Principiante+Principiante, que
- * contam como 1D mas servem de reserva) que NÃO entraram no top X da 1D —
- * uma dupla nunca disputa as duas finais, e uma dupla 1D "de verdade" (sem
- * Principiante) nunca cai na 2D.
+ * - Final 1D (aberta): top X geral, independente da categoria da dupla — uma
+ *   dupla 2D pode entrar nela se ranquear alto o suficiente.
+ * - Final 2D: top X entre as duplas 2D (e as Principiante+Principiante, que
+ *   contam como 1D mas permanecem elegíveis à 2D), ranqueadas sozinhas.
+ *
+ * Como as etapas são independentes, uma dupla 2D bem colocada pode disputar as
+ * DUAS finais. Uma dupla 1D "de verdade" (sem Principiante) nunca entra na 2D.
  */
 export function selectFinalists(
   qualifierBestScores: Map<string, DuoScore>,
@@ -28,11 +30,13 @@ export function selectFinalists(
   const cutoff = Number.isFinite(topN) ? Math.max(1, Math.trunc(topN)) : DEFAULT_FINALS_CUTOFF;
   const overall = standingsFromScores(qualifierBestScores);
 
+  // Final 1D: top X geral (todos os tempos válidos, independente da categoria).
   const finalists1D = overall.slice(0, cutoff);
-  const finalists1DIds = new Set(finalists1D.map((e) => e.duoId));
 
+  // Final 2D: top X apenas entre as duplas 2D (+ Principiante+Principiante),
+  // classificada sem considerar a 1D.
   const finalists2D = overall
-    .filter((e) => (e.group === '2D' || e.doublePrincipiante) && !finalists1DIds.has(e.duoId))
+    .filter((e) => e.group === '2D' || e.doublePrincipiante)
     .slice(0, cutoff);
 
   return {

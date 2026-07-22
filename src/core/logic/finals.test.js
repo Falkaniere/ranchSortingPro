@@ -5,10 +5,10 @@ function score(duoId, group, cattleCount, timeSeconds, doublePrincipiante) {
 }
 
 describe('selectFinalists', () => {
-  it('classifica o top X geral para a final 1D e o top X restante da categoria 2D para a final 2D', () => {
+  it('classifica o top X geral para a final 1D e o top X das duplas 2D para a final 2D (etapas independentes)', () => {
     const scores = new Map([
       ['a', score('a', '1D', 10, 20)],
-      ['b', score('b', '2D', 10, 21)], // 2ª geral — entra no top 3 e "usa" sua vaga na 1D
+      ['b', score('b', '2D', 10, 21)], // 2ª geral — entra na 1D E lidera a 2D
       ['c', score('c', '1D', 9, 20)],
       ['d', score('d', '2D', 8, 20)],
       ['e', score('e', '1D', 7, 20)],
@@ -17,8 +17,8 @@ describe('selectFinalists', () => {
     const { finalists1D, finalists2D } = selectFinalists(scores, 3);
 
     expect(finalists1D.map((f) => f.duoId)).toEqual(['a', 'b', 'c']);
-    // b já garantiu vaga na 1D — não disputa também a 2D.
-    expect(finalists2D.map((f) => f.duoId)).toEqual(['d']);
+    // Classificação independente: b entra na 1D e, por ser 2D, também disputa a 2D.
+    expect(finalists2D.map((f) => f.duoId)).toEqual(['b', 'd']);
   });
 
   it('nunca inclui uma dupla 1D "de verdade" (sem Principiante) na final 2D', () => {
@@ -56,7 +56,7 @@ describe('selectFinalists', () => {
     expect(finalists2D.map((f) => f.duoId)).toEqual(['c2d', 'pp']);
   });
 
-  it('dupla Principiante+Principiante que entra no top geral não disputa também a 2D', () => {
+  it('dupla Principiante+Principiante bem colocada disputa as duas finais (classificação independente)', () => {
     const scores = new Map([
       ['pp', score('pp', '1D', 10, 10, true)],
       ['c2d', score('c2d', '2D', 2, 40)],
@@ -64,8 +64,10 @@ describe('selectFinalists', () => {
 
     const { finalists1D, finalists2D } = selectFinalists(scores, 1);
 
+    // pp lidera o geral (entra na 1D) e, por ser Principiante+Principiante,
+    // também lidera a 2D — as etapas são independentes.
     expect(finalists1D.map((f) => f.duoId)).toEqual(['pp']);
-    expect(finalists2D.map((f) => f.duoId)).toEqual(['c2d']);
+    expect(finalists2D.map((f) => f.duoId)).toEqual(['pp']);
   });
 
   it('normaliza um topN inválido (decimal, zero, negativo ou NaN) para um inteiro >= 1', () => {

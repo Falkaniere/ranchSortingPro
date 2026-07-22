@@ -15,9 +15,9 @@ export interface PassResult {
 
   /**
    * Qual final esta passada pertence (somente quando stage === 'Final').
-   * Uma dupla 2D que também entra no top geral corre a final 1D em vez da
-   * 2D, por isso o bracket nem sempre é igual ao group da dupla — mas cada
-   * dupla corre em apenas um bracket (nunca nos dois).
+   * O bracket nem sempre é igual ao group da dupla: como as finais 1D e 2D são
+   * classificadas de forma independente, uma dupla 2D bem colocada pode disputar
+   * as duas — nesse caso ela corre uma passada em cada bracket.
    */
   bracket?: DuoGroup;
 
