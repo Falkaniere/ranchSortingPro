@@ -13,13 +13,15 @@ export interface FinalsSelection {
 /**
  * Seleciona os finalistas conforme o corte (top X) configurado na prova.
  *
- * A final 1D é aberta: reúne o top X geral, independente da categoria da
- * dupla — uma dupla 2D pode entrar nela se ranquear alto o suficiente.
+ * As duas finais são classificadas de forma INDEPENDENTE:
  *
- * A final 2D é restrita às duplas 2D (e às Principiante+Principiante, que
- * contam como 1D mas servem de reserva) que NÃO entraram no top X da 1D —
- * uma dupla nunca disputa as duas finais, e uma dupla 1D "de verdade" (sem
- * Principiante) nunca cai na 2D.
+ * - Final 1D (aberta): top X geral, independente da categoria da dupla — uma
+ *   dupla 2D pode entrar nela se ranquear alto o suficiente.
+ * - Final 2D: top X entre as duplas 2D (e as Principiante+Principiante, que
+ *   contam como 1D mas permanecem elegíveis à 2D), ranqueadas sozinhas.
+ *
+ * Como as etapas são independentes, uma dupla 2D bem colocada pode disputar as
+ * DUAS finais. Uma dupla 1D "de verdade" (sem Principiante) nunca entra na 2D.
  */
 export function selectFinalists(
   qualifierBestScores: Map<string, DuoScore>,
@@ -28,11 +30,13 @@ export function selectFinalists(
   const cutoff = Number.isFinite(topN) ? Math.max(1, Math.trunc(topN)) : DEFAULT_FINALS_CUTOFF;
   const overall = standingsFromScores(qualifierBestScores);
 
+  // Final 1D: top X geral (todos os tempos válidos, independente da categoria).
   const finalists1D = overall.slice(0, cutoff);
-  const finalists1DIds = new Set(finalists1D.map((e) => e.duoId));
 
+  // Final 2D: top X apenas entre as duplas 2D (+ Principiante+Principiante),
+  // classificada sem considerar a 1D.
   const finalists2D = overall
-    .filter((e) => (e.group === '2D' || e.doublePrincipiante) && !finalists1DIds.has(e.duoId))
+    .filter((e) => e.group === '2D' || e.doublePrincipiante)
     .slice(0, cutoff);
 
   return {
@@ -47,12 +51,24 @@ export interface FinalAggregationEntry {
   duoId: string;
   /** Categoria real da dupla (1D ou 2D). */
   group: DuoGroup;
-  /** Qual final este total pertence — pode diferir de `group` quando uma dupla 2D corre a final 1D em vez da 2D. */
+  /** Qual final esta passada pertence — pode diferir de `group` quando uma dupla 2D corre a final 1D (e, sendo independentes, ela ainda pode ter outra passada na 2D). */
   bracket: DuoGroup;
-  totalCattle: number;
-  totalTimeSeconds: number;
+  /** Bois pegos na passada da final (não acumula com a qualificatória). */
+  finalCattle: number;
+  /** Tempo da passada da final em segundos (não acumula com a qualificatória). */
+  finalTimeSeconds: number;
 }
 
+/**
+ * Classificação da final. Na final todos começam zerados: vale apenas a passada
+ * da final, não o total acumulado com a qualificatória. A qualificatória só
+ * definiu quem são os finalistas (ver `selectFinalists`).
+ *
+ * O `qualifierBestScores` é usado apenas para obter a categoria (`group`) da
+ * dupla e para ignorar passadas sem finalista correspondente. A ordenação é
+ * a mesma de `compareByScore` (mais bois, depois menor tempo), aplicada aos
+ * números da final.
+ */
 export function aggregateFinals(
   qualifierBestScores: Map<string, DuoScore>,
   finalResults: PassResult[]
@@ -67,71 +83,57 @@ export function aggregateFinals(
       duoId: n.duoId,
       group: base.group,
       bracket,
-      totalCattle: base.cattleCount + n.cattleCount,
-      totalTimeSeconds: base.timeSeconds + n.timeSeconds,
+      finalCattle: n.cattleCount,
+      finalTimeSeconds: n.timeSeconds,
     });
   }
   return Array.from(map.values()).sort((a, b) => {
-    if (b.totalCattle !== a.totalCattle) return b.totalCattle - a.totalCattle;
-    return a.totalTimeSeconds - b.totalTimeSeconds;
+    if (b.finalCattle !== a.finalCattle) return b.finalCattle - a.finalCattle;
+    return a.finalTimeSeconds - b.finalTimeSeconds;
   });
 }
 
-/** Score da qualificatória de uma dupla — base fixa para o cálculo do total na final. */
-export interface QualiScore {
-  cattleCount: number;
-  timeSeconds: number;
-}
-
-/** Total (qualificatória + final) de um concorrente já classificado no bracket. */
-export interface FinalTotal {
-  totalCattle: number;
-  totalTimeSeconds: number;
+/** Resultado da passada da final do líder atual do bracket. */
+export interface FinalLeader {
+  finalCattle: number;
+  finalTimeSeconds: number;
 }
 
 /**
- * "Tempo a ser batido": o que a dupla prestes a correr precisa fazer na final
- * para assumir a liderança do bracket.
+ * "Tempo a ser batido": o que a dupla prestes a correr precisa fazer na passada
+ * da final para assumir a liderança do bracket.
  *
- * A classificação da final é pelo total acumulado (qualificatória + final):
- * mais bois primeiro, depois menor tempo somado (ver `aggregateFinals`). Como
- * a nota da qualificatória da dupla é fixa e conhecida, dá para dizer de
- * antemão o que ela precisa na passada da final.
+ * Como a classificação da final vale só pela passada da final (todos começam
+ * zerados), o alvo é simplesmente bater o líder: pegar pelo menos os bois dele
+ * e, empatando os bois, fazer um tempo menor.
  */
 export interface TimeToBeat {
-  /** Total de bois do líder atual (referência a superar/empatar). */
-  leaderTotalCattle: number;
-  /** Tempo somado do líder atual. */
-  leaderTotalTimeSeconds: number;
+  /** Bois do líder na final (referência a empatar/superar). */
+  leaderCattle: number;
+  /** Tempo do líder na final. */
+  leaderTimeSeconds: number;
   /**
-   * Bois que a dupla precisa pegar na final para EMPATAR o total de bois do
-   * líder. Pode ser <= 0 quando a qualificatória da dupla, sozinha, já empata
-   * (0) ou supera (< 0) o total de bois do líder — nesse caso a ponta em bois
-   * independe da passada da final.
+   * Bois que a dupla precisa pegar na final para EMPATAR o líder. Empatar os
+   * bois ainda exige um tempo menor; pegar mais bois vence independente do tempo.
    */
-  cattleToTie: number;
+  cattleToBeat: number;
   /**
-   * Tempo máximo na final (exclusivo) para superar o líder, assumindo que a
-   * dupla empate o total de bois. Se <= 0, empatar os bois não basta: é
-   * preciso pegar mais bois que o líder.
+   * Tempo máximo na final (exclusivo) para superar o líder empatando os bois.
    */
-  targetFinalTimeSeconds: number;
+  targetTimeSeconds: number;
 }
 
 /**
- * Calcula o tempo a ser batido pela `currentQuali` diante do `leader` atual do
- * bracket. Retorna `null` quando ainda não há líder (ninguém correu a final) —
- * nesse caso a dupla assume a ponta apenas completando a passada.
+ * Calcula o tempo a ser batido diante do `leader` atual do bracket. Retorna
+ * `null` quando ainda não há líder (ninguém correu a final) — nesse caso a
+ * dupla assume a ponta apenas completando a passada.
  */
-export function computeTimeToBeat(
-  currentQuali: QualiScore,
-  leader: FinalTotal | null
-): TimeToBeat | null {
+export function computeTimeToBeat(leader: FinalLeader | null): TimeToBeat | null {
   if (!leader) return null;
   return {
-    leaderTotalCattle: leader.totalCattle,
-    leaderTotalTimeSeconds: leader.totalTimeSeconds,
-    cattleToTie: leader.totalCattle - currentQuali.cattleCount,
-    targetFinalTimeSeconds: leader.totalTimeSeconds - currentQuali.timeSeconds,
+    leaderCattle: leader.finalCattle,
+    leaderTimeSeconds: leader.finalTimeSeconds,
+    cattleToBeat: leader.finalCattle,
+    targetTimeSeconds: leader.finalTimeSeconds,
   };
 }

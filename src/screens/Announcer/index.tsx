@@ -29,7 +29,7 @@ function requestFullscreen() {
 }
 
 export default function Announcer() {
-  const { results, finalResults, duosMeta, getFinalists, getBestQualifierScores, getFinalAggregates } = useResults();
+  const { results, finalResults, duosMeta, getFinalists, getFinalAggregates } = useResults();
   const { competition, duos: compDuos } = useCompetition();
 
   const status = competition?.status ?? 'qualifier';
@@ -45,8 +45,9 @@ export default function Announcer() {
     return getFinalists(competition?.finalsCutoff);
   }, [status, results, competition?.finalsCutoff]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Uma dupla 2D que também entra no top geral corre a final 1D em vez da
-  // 2D (nunca as duas) — por isso a fila é de (dupla, bracket), não só de duplas.
+  // As finais 1D e 2D são classificadas de forma independente, então uma dupla
+  // 2D bem colocada pode aparecer nas duas — por isso a fila é de (dupla,
+  // bracket), não só de duplas: ela pode entrar duas vezes, uma por bracket.
   const orderedEntries = useMemo(() => {
     if (status === 'final' && finalists) {
       // Exibe 2D primeiro, depois 1D — reverso (pior entra primeiro)
@@ -86,8 +87,8 @@ export default function Announcer() {
   const currentDuo = entryToDuo(pendingEntries[0]);
   const nextDuo = entryToDuo(pendingEntries[1]);
 
-  // "Tempo a bater" da próxima dupla da final: líder atual do bracket dela
-  // (agregado qualificatória + final) vs. a nota fixa de qualificatória dela.
+  // "Tempo a bater" da próxima dupla da final: resultado do líder atual do
+  // bracket na passada da final (a final vale só por si, todos começam zerados).
   // O agregado é reconstruído do zero (best scores + aggregate + sort), então
   // é memoizado uma vez e reaproveitado para o líder e para o tempo a bater.
   // Depende de id/bracket (primitivos estáveis) e não do objeto currentDuo, que
@@ -102,13 +103,8 @@ export default function Announcer() {
 
   const timeToBeat = useMemo(() => {
     if (status !== 'final' || !currentDuoId) return null;
-    const quali = getBestQualifierScores().get(currentDuoId);
-    if (!quali) return null;
-    return computeTimeToBeat(
-      { cattleCount: quali.cattleCount, timeSeconds: quali.timeSeconds },
-      bracketLeaderEntry
-    );
-  }, [status, currentDuoId, getBestQualifierScores, bracketLeaderEntry]);
+    return computeTimeToBeat(bracketLeaderEntry);
+  }, [status, currentDuoId, bracketLeaderEntry]);
 
   const leaderLabel = useMemo(() => {
     if (!bracketLeaderEntry) return undefined;
