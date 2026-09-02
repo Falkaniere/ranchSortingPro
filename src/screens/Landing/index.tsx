@@ -72,7 +72,7 @@ export default function Landing() {
       </section>
 
       {/* Recursos */}
-      <section id="recursos" className="px-5 sm:px-8 py-16 sm:py-20 bg-white">
+      <section id="recursos" className="scroll-mt-20 px-5 sm:px-8 py-16 sm:py-20 bg-white">
         <div className="max-w-5xl mx-auto">
           <h2 className="font-serif font-extrabold text-2xl sm:text-3xl text-rope-700 text-center mb-3">
             Feito para o ritmo da arena
@@ -98,7 +98,7 @@ export default function Landing() {
       </section>
 
       {/* Como funciona */}
-      <section id="como-funciona" className="px-5 sm:px-8 py-16 sm:py-20 bg-dust-100">
+      <section id="como-funciona" className="scroll-mt-20 px-5 sm:px-8 py-16 sm:py-20 bg-dust-100">
         <div className="max-w-5xl mx-auto">
           <h2 className="font-serif font-extrabold text-2xl sm:text-3xl text-rope-700 text-center mb-3">
             Da inscrição ao resultado, em três passos
@@ -121,7 +121,7 @@ export default function Landing() {
       </section>
 
       {/* Planos */}
-      <section id="planos" className="px-5 sm:px-8 py-16 sm:py-20 bg-white">
+      <section id="planos" className="scroll-mt-20 px-5 sm:px-8 py-16 sm:py-20 bg-white">
         <div className="max-w-4xl mx-auto">
           <h2 className="font-serif font-extrabold text-2xl sm:text-3xl text-rope-700 text-center mb-3">
             Comece de graça
