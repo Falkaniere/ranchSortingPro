@@ -12,7 +12,7 @@ export default function Landing() {
       <header className="sticky top-0 z-20 bg-saddle-800 text-white">
         <div className="max-w-6xl mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2.5">
-            <span className="text-2xl leading-none">🤠</span>
+            <span className="text-2xl leading-none" aria-hidden="true">🤠</span>
             <span className="font-serif font-bold text-lg tracking-tight">
               Ranch Sorting Pro
             </span>
@@ -86,7 +86,7 @@ export default function Landing() {
                 key={f.title}
                 className="border border-dust-300 rounded-2xl p-7 hover:shadow-md hover:border-saddle-200 transition-all"
               >
-                <div className="text-3xl mb-4">{f.icon}</div>
+                <div className="text-3xl mb-4" aria-hidden="true">{f.icon}</div>
                 <h3 className="font-serif font-bold text-lg text-rope-700 mb-2">
                   {f.title}
                 </h3>
@@ -140,7 +140,7 @@ export default function Landing() {
               <ul className="flex flex-col gap-2.5 text-sm text-rope-500 mb-8">
                 {['Registro de duplas e passadas', 'Classificação em tempo real', 'Exportação de resultados'].map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span className="text-pasture-500 mt-0.5">✓</span>
+                    <span className="text-pasture-500 mt-0.5" aria-hidden="true">✓</span>
                     {item}
                   </li>
                 ))}
@@ -166,7 +166,7 @@ export default function Landing() {
               <ul className="flex flex-col gap-2.5 text-sm text-rope-500 mb-8">
                 {['Tudo do plano gratuito', 'Finais e rodadas ilimitadas', 'Portal do competidor', 'Suporte prioritário'].map((item) => (
                   <li key={item} className="flex items-start gap-2">
-                    <span className="text-pasture-500 mt-0.5">✓</span>
+                    <span className="text-pasture-500 mt-0.5" aria-hidden="true">✓</span>
                     {item}
                   </li>
                 ))}
