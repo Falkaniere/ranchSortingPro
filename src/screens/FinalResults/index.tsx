@@ -51,14 +51,14 @@ export default function FinalResults() {
       passNumber: duo?.passNumber,
       group: a.group,
       bracket: a.bracket,
-      totalCattle: a.totalCattle,
-      totalTime: a.totalTimeSeconds,
+      finalCattle: a.finalCattle,
+      finalTime: a.finalTimeSeconds,
     };
   });
 
-  // Posição calculada dentro de cada final (bracket), não globalmente —
-  // uma dupla 2D pode aparecer na classificação 1D em vez da 2D, mas nunca
-  // nas duas ao mesmo tempo.
+  // Posição calculada dentro de cada final (bracket), não globalmente. Como as
+  // finais 1D e 2D são classificadas de forma independente, uma dupla 2D bem
+  // colocada pode aparecer nas duas classificações (uma linha por bracket).
   const rows1D = rows.filter((r) => r.bracket === '1D').map((r, idx) => ({ ...r, position: idx + 1 }));
   const rows2D = rows.filter((r) => r.bracket === '2D').map((r, idx) => ({ ...r, position: idx + 1 }));
 
@@ -99,8 +99,8 @@ export default function FinalResults() {
         Passada: r.passNumber ?? '',
         Dupla: r.duoLabel,
         Categoria: r.group,
-        'Total Bois': r.totalCattle,
-        'Total Tempo (s)': r.totalTime.toFixed(2),
+        Bois: r.finalCattle,
+        'Tempo (s)': r.finalTime.toFixed(2),
       })),
       'Resultados_Finais'
     );
@@ -120,8 +120,8 @@ export default function FinalResults() {
                   <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Passada</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-rope-500 uppercase tracking-wide">Dupla</th>
                   <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Grupo</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Total Bois</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Total Tempo</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Bois</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold text-rope-500 uppercase tracking-wide">Tempo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-dust-100">
@@ -138,11 +138,11 @@ export default function FinalResults() {
                     <td className="px-4 py-3 font-semibold text-rope-800 max-w-[160px] truncate">{r.duoLabel}</td>
                     <td className="px-4 py-3 text-center"><GroupBadge group={r.group} size="md" /></td>
                     <td className="px-4 py-3 text-center">
-                      <span className="font-bold text-saddle-700 text-base">{r.totalCattle}</span>
+                      <span className="font-bold text-saddle-700 text-base">{r.finalCattle}</span>
                       <span className="text-rope-400 text-xs ml-1">bois</span>
                     </td>
                     <td className="px-4 py-3 text-center text-rope-600 font-medium">
-                      {r.totalTime.toFixed(2)}s
+                      {r.finalTime.toFixed(2)}s
                     </td>
                   </tr>
                 ))}

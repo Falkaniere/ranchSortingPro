@@ -17,10 +17,11 @@ type Props = {
  * Mostra o "tempo a ser batido" pela próxima dupla da final: quanto tempo ela
  * precisa fazer na passada para assumir a liderança do bracket.
  *
- * A classificação é pelo total (qualificatória + final), então há três casos:
+ * A classificação vale só pela passada da final (todos começam zerados), então
+ * há dois casos:
  *  - ainda não há líder → basta completar a passada para liderar;
- *  - dá para vencer no tempo → mostra o alvo (< X, pegando N bois);
- *  - empatar os bois não basta → precisa pegar mais bois que o líder.
+ *  - já há líder → mostra o alvo: igualar os bois do líder em menos tempo (ou
+ *    pegar mais bois que ele).
  */
 export function TimeToBeatCard({ bracket, timeToBeat, leaderLabel, variant = 'compact' }: Props) {
   const isHero = variant === 'hero';
@@ -47,50 +48,21 @@ export function TimeToBeatCard({ bracket, timeToBeat, leaderLabel, variant = 'co
     );
   }
 
-  const { cattleToTie, targetFinalTimeSeconds, leaderTotalCattle, leaderTotalTimeSeconds } = timeToBeat;
-
-  // A nota de qualificatória já garante a ponta em bois, independente da final.
-  // (Apenas quando SUPERA — `cattleToTie === 0` significa empatar os bois e
-  //  ainda decidir no tempo, então esse caso segue para o tempo-alvo abaixo.)
-  if (cattleToTie < 0) {
-    return (
-      <div className={wrapper}>
-        <p className={label}>Tempo a bater — Final {bracket}</p>
-        <p className={bigValue}>Já lidera em bois</p>
-        <p className={note}>
-          A qualificatória já supera o líder em bois — basta completar a passada.
-        </p>
-      </div>
-    );
-  }
-
-  // Empatar os bois não é suficiente: precisa pegar mais bois que o líder.
-  if (targetFinalTimeSeconds <= 0) {
-    return (
-      <div className={wrapper}>
-        <p className={label}>Tempo a bater — Final {bracket}</p>
-        <p className={bigValue}>+ bois</p>
-        <p className={note}>
-          Empatar {cattleToTie} {cattleToTie === 1 ? 'boi' : 'bois'} não basta — é preciso
-          pegar mais bois que o líder{leaderLabel ? ` (${leaderLabel})` : ''}.
-        </p>
-      </div>
-    );
-  }
+  const { cattleToBeat, targetTimeSeconds, leaderCattle, leaderTimeSeconds } = timeToBeat;
 
   // O alvo é um limite estrito ("< X"). Trunca para baixo no centésimo em vez
   // de deixar o toFixed(2) arredondar para cima — arredondar exibiria um tempo
   // que na verdade empata/perde por centésimos (ex.: 22.995s viraria "< 23.00s").
-  const targetDisplay = Math.floor(targetFinalTimeSeconds * 100) / 100;
+  const targetDisplay = Math.floor(targetTimeSeconds * 100) / 100;
 
   return (
     <div className={wrapper}>
       <p className={label}>Tempo a bater — Final {bracket}</p>
       <p className={bigValue}>&lt; {formatTime(targetDisplay)}</p>
       <p className={note}>
-        Pegando {cattleToTie} {cattleToTie === 1 ? 'boi' : 'bois'} para ultrapassar
-        {leaderLabel ? ` ${leaderLabel}` : ' o líder'} (
-        {leaderTotalCattle}b / {formatTime(leaderTotalTimeSeconds)} no total).
+        Iguale {cattleToBeat} {cattleToBeat === 1 ? 'boi' : 'bois'} em menos tempo — ou
+        pegue mais bois que {leaderLabel ?? 'o líder'} ({leaderCattle}b /{' '}
+        {formatTime(leaderTimeSeconds)} na final).
       </p>
     </div>
   );

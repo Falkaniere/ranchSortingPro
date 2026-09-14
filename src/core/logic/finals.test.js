@@ -5,10 +5,10 @@ function score(duoId, group, cattleCount, timeSeconds, doublePrincipiante) {
 }
 
 describe('selectFinalists', () => {
-  it('classifica o top X geral para a final 1D e o top X restante da categoria 2D para a final 2D', () => {
+  it('classifica o top X geral para a final 1D e o top X das duplas 2D para a final 2D (etapas independentes)', () => {
     const scores = new Map([
       ['a', score('a', '1D', 10, 20)],
-      ['b', score('b', '2D', 10, 21)], // 2ª geral — entra no top 3 e "usa" sua vaga na 1D
+      ['b', score('b', '2D', 10, 21)], // 2ª geral — entra na 1D E lidera a 2D
       ['c', score('c', '1D', 9, 20)],
       ['d', score('d', '2D', 8, 20)],
       ['e', score('e', '1D', 7, 20)],
@@ -17,8 +17,8 @@ describe('selectFinalists', () => {
     const { finalists1D, finalists2D } = selectFinalists(scores, 3);
 
     expect(finalists1D.map((f) => f.duoId)).toEqual(['a', 'b', 'c']);
-    // b já garantiu vaga na 1D — não disputa também a 2D.
-    expect(finalists2D.map((f) => f.duoId)).toEqual(['d']);
+    // Classificação independente: b entra na 1D e, por ser 2D, também disputa a 2D.
+    expect(finalists2D.map((f) => f.duoId)).toEqual(['b', 'd']);
   });
 
   it('nunca inclui uma dupla 1D "de verdade" (sem Principiante) na final 2D', () => {
@@ -56,7 +56,7 @@ describe('selectFinalists', () => {
     expect(finalists2D.map((f) => f.duoId)).toEqual(['c2d', 'pp']);
   });
 
-  it('dupla Principiante+Principiante que entra no top geral não disputa também a 2D', () => {
+  it('dupla Principiante+Principiante bem colocada disputa as duas finais (classificação independente)', () => {
     const scores = new Map([
       ['pp', score('pp', '1D', 10, 10, true)],
       ['c2d', score('c2d', '2D', 2, 40)],
@@ -64,8 +64,10 @@ describe('selectFinalists', () => {
 
     const { finalists1D, finalists2D } = selectFinalists(scores, 1);
 
+    // pp lidera o geral (entra na 1D) e, por ser Principiante+Principiante,
+    // também lidera a 2D — as etapas são independentes.
     expect(finalists1D.map((f) => f.duoId)).toEqual(['pp']);
-    expect(finalists2D.map((f) => f.duoId)).toEqual(['c2d']);
+    expect(finalists2D.map((f) => f.duoId)).toEqual(['pp']);
   });
 
   it('normaliza um topN inválido (decimal, zero, negativo ou NaN) para um inteiro >= 1', () => {
@@ -83,7 +85,7 @@ describe('selectFinalists', () => {
 });
 
 describe('aggregateFinals', () => {
-  it('agrega o total (qualificatória + final) separando por bracket', () => {
+  it('classifica pela passada da final (todos zerados), sem somar a qualificatória, separando por bracket', () => {
     const base = new Map([
       ['b', score('b', '2D', 10, 21)],
     ]);
@@ -93,55 +95,41 @@ describe('aggregateFinals', () => {
 
     const aggregates = aggregateFinals(base, finalResults);
     expect(aggregates).toHaveLength(1);
-    expect(aggregates[0]).toMatchObject({ group: '2D', bracket: '2D', totalCattle: 19, totalTimeSeconds: 43 });
+    // Vale só a final: 9 bois / 22s (não 19 / 43 do acumulado).
+    expect(aggregates[0]).toMatchObject({ group: '2D', bracket: '2D', finalCattle: 9, finalTimeSeconds: 22 });
+  });
+
+  it('ordena por mais bois e depois menor tempo, usando apenas os números da final', () => {
+    const base = new Map([
+      ['slowMoreCattle', score('slowMoreCattle', '1D', 3, 15)],
+      ['fastLessCattle', score('fastLessCattle', '1D', 10, 15)],
+      ['fastMoreCattle', score('fastMoreCattle', '1D', 1, 90)],
+    ]);
+    const finalResults = [
+      // Melhor qualificatória não importa: só conta a final abaixo.
+      { id: '1', duoId: 'slowMoreCattle', stage: 'Final', bracket: '1D', cattleCount: 10, timeSeconds: 40 },
+      { id: '2', duoId: 'fastLessCattle', stage: 'Final', bracket: '1D', cattleCount: 8, timeSeconds: 20 },
+      { id: '3', duoId: 'fastMoreCattle', stage: 'Final', bracket: '1D', cattleCount: 10, timeSeconds: 30 },
+    ];
+
+    const aggregates = aggregateFinals(base, finalResults);
+    // 10 bois/30s vence 10 bois/40s (tempo), ambos à frente de 8 bois.
+    expect(aggregates.map((a) => a.duoId)).toEqual(['fastMoreCattle', 'slowMoreCattle', 'fastLessCattle']);
   });
 });
 
 describe('computeTimeToBeat', () => {
   it('retorna null quando ainda não há líder no bracket', () => {
-    expect(computeTimeToBeat({ cattleCount: 8, timeSeconds: 30 }, null)).toBeNull();
+    expect(computeTimeToBeat(null)).toBeNull();
   });
 
-  it('calcula bois a empatar e o tempo-alvo da final para ultrapassar o líder', () => {
-    // Líder: 19 bois / 43s no total. Dupla atual fez 8 bois / 20s na qualif.
-    const ttb = computeTimeToBeat(
-      { cattleCount: 8, timeSeconds: 20 },
-      { totalCattle: 19, totalTimeSeconds: 43 }
-    );
-    // Precisa pegar 19 - 8 = 11 bois no total... na verdade 11 na final para empatar.
-    expect(ttb.cattleToTie).toBe(11);
-    // E fazer a final em menos de 43 - 20 = 23s.
-    expect(ttb.targetFinalTimeSeconds).toBe(23);
-    expect(ttb.leaderTotalCattle).toBe(19);
-    expect(ttb.leaderTotalTimeSeconds).toBe(43);
-  });
-
-  it('sinaliza (tempo-alvo <= 0) quando empatar os bois não basta — precisa de mais bois', () => {
-    // Dupla tem qualif. muito lenta: mesmo empatando os bois, o tempo já estourou.
-    const ttb = computeTimeToBeat(
-      { cattleCount: 5, timeSeconds: 60 },
-      { totalCattle: 10, totalTimeSeconds: 50 }
-    );
-    expect(ttb.cattleToTie).toBe(5);
-    expect(ttb.targetFinalTimeSeconds).toBeLessThanOrEqual(0);
-  });
-
-  it('cattleToTie === 0 quando a qualif. empata o total de bois do líder — decisão fica no tempo', () => {
-    // Dupla com 10 bois na qualif. vs. líder com 10 bois no total: pegar 0 na
-    // final empata os bois; ainda dá para liderar fazendo a final em < 15s.
-    const ttb = computeTimeToBeat(
-      { cattleCount: 10, timeSeconds: 25 },
-      { totalCattle: 10, totalTimeSeconds: 40 }
-    );
-    expect(ttb.cattleToTie).toBe(0);
-    expect(ttb.targetFinalTimeSeconds).toBe(15);
-  });
-
-  it('sinaliza (bois a empatar < 0) quando a qualif. já supera o líder em bois', () => {
-    const ttb = computeTimeToBeat(
-      { cattleCount: 12, timeSeconds: 30 },
-      { totalCattle: 10, totalTimeSeconds: 40 }
-    );
-    expect(ttb.cattleToTie).toBeLessThanOrEqual(0);
+  it('expõe o resultado da final do líder como alvo a bater', () => {
+    // Líder fez 9 bois / 22s na passada da final.
+    const ttb = computeTimeToBeat({ finalCattle: 9, finalTimeSeconds: 22 });
+    // Para bater: igualar 9 bois em menos de 22s (ou pegar mais bois).
+    expect(ttb.cattleToBeat).toBe(9);
+    expect(ttb.targetTimeSeconds).toBe(22);
+    expect(ttb.leaderCattle).toBe(9);
+    expect(ttb.leaderTimeSeconds).toBe(22);
   });
 });

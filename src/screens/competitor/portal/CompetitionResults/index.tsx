@@ -119,10 +119,10 @@ export default function CompetitionResults() {
                         <GroupBadge group={row.group} />
                       </td>
                       <td className="px-4 py-2.5 text-center font-semibold text-rope-700">
-                        {row.totalCattle}
+                        {row.finalCattle}
                       </td>
                       <td className="px-4 py-2.5 text-center text-rope-600">
-                        {row.totalTimeSeconds.toFixed(2)}s
+                        {row.finalTimeSeconds.toFixed(2)}s
                       </td>
                     </tr>
                   ))}

@@ -99,8 +99,6 @@ export default function Finals() {
           finalTime: r.timeSeconds,
           finalIsSAT: r.isSAT ?? false,
           calledCattle: r.calledCattle,
-          avgCattle: (quali.cattleCount + r.cattleCount) / 2,
-          avgTime: (quali.timeSeconds + r.timeSeconds) / 2,
         };
       })
       .filter(Boolean);
@@ -153,17 +151,12 @@ export default function Finals() {
     const duo = duosMeta.find((d: Duo) => d.id === leader.duoId);
     return {
       label: duo?.label ?? leader.duoId,
-      totalCattle: leader.totalCattle,
-      totalTimeSeconds: leader.totalTimeSeconds,
+      finalCattle: leader.finalCattle,
+      finalTimeSeconds: leader.finalTimeSeconds,
     };
   }, [getFinalAggregates, activeTab, duosMeta]);
 
-  const timeToBeat = currentDuo
-    ? computeTimeToBeat(
-        { cattleCount: currentDuo.cattleCount, timeSeconds: currentDuo.timeSeconds },
-        bracketLeader
-      )
-    : null;
+  const timeToBeat = currentDuo ? computeTimeToBeat(bracketLeader) : null;
 
   const FINAL_COLUMNS = [
     { header: '#', width: 36, align: 'center' as const },
@@ -175,13 +168,11 @@ export default function Finals() {
     { header: 'Q.TEMPO', width: 64, align: 'center' as const },
     { header: 'F.BOIS', width: 52, align: 'center' as const },
     { header: 'F.TEMPO', width: 64, align: 'center' as const },
-    { header: 'MÉD.B', width: 52, align: 'center' as const },
-    { header: 'MÉD.T', width: 64, align: 'center' as const },
   ];
 
   function handleExportFinalPng() {
     const sorted = [...partialsFiltered].sort(
-      (a, b) => (b?.avgCattle ?? 0) - (a?.avgCattle ?? 0) || (a?.avgTime ?? 0) - (b?.avgTime ?? 0)
+      (a, b) => (b?.finalCattle ?? 0) - (a?.finalCattle ?? 0) || (a?.finalTime ?? 0) - (b?.finalTime ?? 0)
     );
     const rows = sorted.map((p, idx) => ({
       cells: [
@@ -194,8 +185,6 @@ export default function Finals() {
         formatTime(p?.qualiTime ?? 0, (p?.qualiTime ?? 0) >= SAT_TIME_SECONDS),
         String(p?.finalCattle ?? ''),
         formatTime(p?.finalTime ?? 0, p?.finalIsSAT),
-        (p?.avgCattle ?? 0).toFixed(1),
-        formatTime(p?.avgTime ?? 0, (p?.avgTime ?? 0) >= SAT_TIME_SECONDS),
       ],
       highlight: idx < 3,
       isSAT: p?.finalIsSAT ?? false,
@@ -234,8 +223,6 @@ export default function Finals() {
                           'Tempo Qualif.': p?.qualiTime?.toFixed(2),
                           'Bois Final': p?.finalCattle,
                           'Tempo Final': p?.finalTime?.toFixed(2),
-                          'Média Bois': p?.avgCattle?.toFixed(1),
-                          'Média Tempo': p?.avgTime?.toFixed(2),
                         })),
                         `Resultados_Finais_${activeTab}`
                       );
@@ -388,15 +375,13 @@ export default function Finals() {
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Q.T</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">F.B</th>
                     <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase">F.T</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Méd.B</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-semibold text-rope-500 uppercase hidden sm:table-cell">Méd.T</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-dust-100">
                   {partialsFiltered
                     .sort((a, b) => {
                       if (!a || !b) return 0;
-                      return b.avgCattle - a.avgCattle || a.avgTime - b.avgTime;
+                      return b.finalCattle - a.finalCattle || a.finalTime - b.finalTime;
                     })
                     .map((p, idx) => (
                       <tr key={p?.duoId} className={idx === 0 ? 'bg-hay-50' : 'hover:bg-dust-50 transition-colors'}>
@@ -410,8 +395,6 @@ export default function Finals() {
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{formatTime(p?.qualiTime ?? 0, (p?.qualiTime ?? 0) >= SAT_TIME_SECONDS)}</td>
                         <td className="px-3 py-2.5 text-center font-semibold text-rope-800 text-xs">{p?.finalCattle}</td>
                         <td className="px-3 py-2.5 text-center text-rope-600 text-xs">{formatTime(p?.finalTime ?? 0, p?.finalIsSAT)}</td>
-                        <td className="px-3 py-2.5 text-center font-bold text-saddle-700 text-xs hidden sm:table-cell">{p?.avgCattle?.toFixed(1)}</td>
-                        <td className="px-3 py-2.5 text-center text-rope-600 text-xs hidden sm:table-cell">{p?.avgTime?.toFixed(2)}s</td>
                       </tr>
                     ))}
                 </tbody>
