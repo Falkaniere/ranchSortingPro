@@ -31,7 +31,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
-      // '/' resolves to the persona home via HomeRedirect; fromPath returns to a deep link.
+      // '/' resolves to the persona home via RootRoute; fromPath returns to a deep link.
       navigate(fromPath || '/', { replace: true });
     } catch (err: any) {
       const msg =
